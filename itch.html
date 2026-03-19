@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — ???</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a000a;color:#ddd;font-family:'VT323',monospace;font-size:20px;min-height:100vh;overflow-x:hidden}
+
+  .bg{position:fixed;inset:0;z-index:0;background:
+    radial-gradient(ellipse at 50% 40%, rgba(217,70,239,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 30% 70%, rgba(0,255,255,0.04) 0%, transparent 50%)}
+  .scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);z-index:100;pointer-events:none}
+  .bar-top{position:fixed;top:0;left:0;right:0;height:4px;z-index:50;background:linear-gradient(90deg,#d946ef,#00ffff,#0f0,#00ffff,#d946ef);background-size:200% 100%;animation:barSlide 4s linear infinite}
+  @keyframes barSlide{0%{background-position:0% 0}100%{background-position:200% 0}}
+
+  .top-bar{position:fixed;top:4px;left:0;right:0;z-index:50;background:rgba(10,0,10,0.95);border-bottom:2px solid #d946ef;padding:8px 16px;display:flex;align-items:center;justify-content:space-between}
+  .top-bar a{color:#d946ef;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:1px;padding:5px 10px;border:1px solid #d946ef;background:rgba(217,70,239,0.05);transition:all 0.15s}
+  .top-bar a:hover{color:#000;background:#d946ef;box-shadow:0 0 10px rgba(217,70,239,0.3)}
+  .top-bar .site-name{color:#00ffff;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:2px;text-shadow:0 0 6px #00ffff}
+
+  .app{position:relative;z-index:10;max-width:660px;margin:0 auto;padding:70px 16px 80px;text-align:center}
+
+  .header{margin-bottom:24px;padding-bottom:16px;border-bottom:3px double #d946ef}
+  .header h1{font-family:'Press Start 2P',monospace;font-size:22px;color:#d946ef;text-shadow:0 0 15px #d946ef,3px 3px 0 #6b21a8;line-height:1.8}
+  .header .sub{font-size:18px;color:#00ffff;letter-spacing:4px;margin-top:6px;text-shadow:0 0 6px #00ffff}
+
+  .lock-display{margin:30px auto;width:200px;height:200px;border:3px solid #d946ef;background:#0f000f;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:all 0.5s;box-shadow:0 0 20px rgba(217,70,239,0.1)}
+  .lock-display.unlocked{border-color:#0f0;box-shadow:0 0 30px rgba(0,255,0,0.2)}
+  .lock-icon{font-size:60px;opacity:0.7;transition:all 0.5s}
+  .lock-display.unlocked .lock-icon{opacity:1}
+  .lock-status{font-family:'Press Start 2P',monospace;font-size:10px;color:#d946ef;margin-top:10px;letter-spacing:2px;text-shadow:0 0 4px #d946ef}
+
+  .combo-section{margin:24px 0}
+  .combo-label{font-family:'Press Start 2P',monospace;font-size:10px;color:#ffcc00;letter-spacing:2px;margin-bottom:12px;text-shadow:0 0 4px #ffcc00}
+  .combo-dials{display:flex;gap:12px;justify-content:center;align-items:center}
+  .dial{width:60px;height:80px;background:#1a001a;border:2px solid #d946ef;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .dial-up,.dial-down{font-size:18px;color:#00ffff;cursor:pointer;padding:4px;transition:color 0.1s;line-height:1}
+  .dial-up:hover,.dial-down:hover{color:#fff;text-shadow:0 0 6px #00ffff}
+  .dial-value{font-family:'Press Start 2P',monospace;font-size:16px;color:#0f0;margin:4px 0;text-shadow:0 0 6px #0f0}
+  .dial-sep{font-family:'Press Start 2P',monospace;font-size:16px;color:#d946ef}
+
+  .hint-area{margin:16px 0;min-height:24px}
+  .hint-text{font-size:17px;color:#ff00ff;font-style:italic}
+
+  .btn-try{font-family:'Press Start 2P',monospace;font-size:10px;padding:12px 24px;cursor:pointer;background:#1a001a;color:#d946ef;border:2px solid #d946ef;letter-spacing:2px;transition:all 0.15s;margin-top:12px}
+  .btn-try:hover{background:#d946ef;color:#000;box-shadow:0 0 15px rgba(217,70,239,0.3)}
+
+  .reward{display:none;margin-top:24px;padding:20px;background:#001a00;border:2px solid #0f0;box-shadow:0 0 20px rgba(0,255,0,0.1)}
+  .reward.visible{display:block;animation:fadeIn 0.5s}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  .reward h3{font-family:'Press Start 2P',monospace;font-size:12px;color:#0f0;letter-spacing:2px;margin-bottom:10px;text-shadow:0 0 8px #0f0}
+  .reward p{color:#ccc;font-size:18px;margin-bottom:12px}
+  .reward a{display:inline-block;font-family:'Press Start 2P',monospace;font-size:10px;padding:12px 24px;background:#0f0;color:#000;text-decoration:none;letter-spacing:2px;transition:all 0.15s}
+  .reward a:hover{background:#fff;box-shadow:0 0 20px rgba(0,255,0,0.3)}
+
+  .attempt-counter{font-size:15px;color:#00ffff;margin-top:12px;letter-spacing:2px}
+
+  /* NAV FOOTER */
+  .nav-footer{margin-top:30px;padding-top:16px;border-top:2px solid #d946ef;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .nav-footer a,.btn-random{color:#d946ef;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1px;padding:8px 14px;border:1px solid #d946ef;background:rgba(217,70,239,0.05);transition:all 0.15s;cursor:pointer}
+  .nav-footer a:hover,.btn-random:hover{color:#000;background:#d946ef;box-shadow:0 0 12px rgba(217,70,239,0.3)}
+  .webring{text-align:center;font-size:16px;color:#00ffff;border:2px ridge #d946ef;padding:6px 14px;background:#0f000f;margin-top:14px}
+  .webring a{color:#d946ef;text-decoration:none}.webring a:hover{color:#fff}
+
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}50%{transform:translateX(8px)}75%{transform:translateX(-4px)}}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="scanlines"></div><div class="bar-top"></div>
+<div class="top-bar">
+  <span class="site-name">TOMMY ALLEN ACOUSTICS</span>
+  <a href="home.html">&#9751; HOME</a>
+</div>
+<div class="app">
+  <div class="header">
+    <h1>? ? ?</h1>
+    <div class="sub">THIS LINK IS LOCKED</div>
+  </div>
+
+  <div class="lock-display" id="lockDisplay">
+    <div class="lock-icon" id="lockIcon">&#128274;</div>
+    <div class="lock-status" id="lockStatus">LOCKED</div>
+  </div>
+
+  <div class="combo-section">
+    <div class="combo-label">ENTER THE COMBINATION</div>
+    <div class="combo-dials">
+      <div class="dial">
+        <div class="dial-up" data-dial="0" data-dir="up">&#9650;</div>
+        <div class="dial-value" id="d0">0</div>
+        <div class="dial-down" data-dial="0" data-dir="down">&#9660;</div>
+      </div>
+      <div class="dial-sep">-</div>
+      <div class="dial">
+        <div class="dial-up" data-dial="1" data-dir="up">&#9650;</div>
+        <div class="dial-value" id="d1">0</div>
+        <div class="dial-down" data-dial="1" data-dir="down">&#9660;</div>
+      </div>
+      <div class="dial-sep">-</div>
+      <div class="dial">
+        <div class="dial-up" data-dial="2" data-dir="up">&#9650;</div>
+        <div class="dial-value" id="d2">0</div>
+        <div class="dial-down" data-dial="2" data-dir="down">&#9660;</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-try" id="tryBtn">TRY COMBINATION</button>
+
+  <div class="hint-area"><div class="hint-text" id="hintText"></div></div>
+  <div class="attempt-counter">Attempts: <span id="attempts">0</span></div>
+  <!-- THE CODE IS 4-2-0. you already knew that though -->
+
+  <div class="reward" id="reward">
+    <h3>UNLOCKED</h3>
+    <p>You cracked it. Here's the secret link to my itch.io page. Download the Click Factory exe and make some sounds.</p>
+    <a href="https://tommyallenacoustics.itch.io/click-factory-ui-sound-generator" target="_blank">&#9733; OPEN ITCH.IO PAGE &#9733;</a>
+  </div>
+
+  <div class="nav-footer">
+    <a href="home.html">&lt;&lt; HOME</a>
+    <button class="btn-random" id="randomBtn">&#127922; RANDOM</button>
+    <a href="noise-generator.html">NEXT &gt;&gt;</a>
+  </div>
+  <div class="webring">&lt;&lt; <a href="#">prev</a> | <a href="#">~ Acoustics WebRing ~</a> | <a href="#">next</a> &gt;&gt;</div>
+
+  <div style="text-align:center;margin-top:14px"><a href="home.html" style="display:inline-block;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:3px;padding:12px 30px;border:2px solid #d946ef;color:#d946ef;text-decoration:none;background:rgba(217,70,239,0.05);transition:all 0.15s" onmouseover="this.style.background='#d946ef';this.style.color='#000';this.style.boxShadow='0 0 20px rgba(217,70,239,0.3)'" onmouseout="this.style.background='rgba(217,70,239,0.05)';this.style.color='#d946ef';this.style.boxShadow='none'">&#9751; BACK TO HOME</a></div>
+</div>
+
+<script>
+const code=[4,2,0],vals=[0,0,0];let attempts=0,unlocked=false;
+document.querySelectorAll('.dial-up,.dial-down').forEach(btn=>{
+  btn.addEventListener('click',()=>{if(unlocked)return;const i=parseInt(btn.dataset.dial);
+    if(btn.dataset.dir==='up')vals[i]=(vals[i]+1)%10;else vals[i]=(vals[i]+9)%10;
+    document.getElementById('d'+i).textContent=vals[i];});});
+document.getElementById('tryBtn').addEventListener('click',()=>{if(unlocked)return;attempts++;document.getElementById('attempts').textContent=attempts;
+  if(vals[0]===code[0]&&vals[1]===code[1]&&vals[2]===code[2]){unlocked=true;
+    document.getElementById('lockDisplay').classList.add('unlocked');document.getElementById('lockIcon').innerHTML='&#128275;';
+    document.getElementById('lockStatus').textContent='UNLOCKED';document.getElementById('lockStatus').style.color='#0f0';document.getElementById('lockStatus').style.textShadow='0 0 8px #0f0';
+    document.getElementById('reward').classList.add('visible');document.getElementById('hintText').textContent='';
+    document.getElementById('tryBtn').textContent='NICE';document.getElementById('tryBtn').style.borderColor='#0f0';document.getElementById('tryBtn').style.color='#0f0';
+  }else{let correct=0;for(let i=0;i<3;i++)if(vals[i]===code[i])correct++;
+    var h=document.getElementById('hintText');
+    if(attempts>=8){h.textContent='The first digit is FOUR. The last digit is ZERO. Come on.';h.style.color='#0f0';}
+    else if(attempts>=6){h.textContent='Snoop Dogg would know this number instantly.';h.style.color='#ffcc00';}
+    else if(attempts>=4){h.textContent="It\'s a date. April something. Very memeable.";h.style.color='#ffcc00';}
+    else if(correct===2){h.textContent='Two digits right! One more.';h.style.color='#0f0';}
+    else if(correct===1){h.textContent='One digit is correct. Keep going.';h.style.color='#ffcc00';}
+    else{var msgs=["Nope. Think meme numbers.","Wrong. It\'s a famous number...","Not it. Blaze it?","Cold. It\'s a stoner thing."];h.textContent=msgs[Math.floor(Math.random()*msgs.length)];h.style.color='#ff00ff';}
+    var lock=document.getElementById('lockDisplay');lock.style.animation='none';lock.offsetHeight;lock.style.animation='shake 0.3s';}});
+const pages=['noise-generator.html','sweep-generator.html','mls-generator.html','click-factory.html','shot-forge.html','babel.html','about.html','games.html'];
+document.getElementById('randomBtn').addEventListener('click',()=>{window.location.href=pages[Math.floor(Math.random()*pages.length)];});
+</script>
+</body>
+</html>

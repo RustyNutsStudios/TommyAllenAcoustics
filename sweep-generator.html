@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — SWEEP GENERATOR</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    color: #ccc;
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .starfield {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+      radial-gradient(1px 1px at 40px 70px, #fff, transparent),
+      radial-gradient(1px 1px at 50px 160px, #fff, transparent),
+      radial-gradient(1px 1px at 90px 40px, #aaf, transparent),
+      radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+      radial-gradient(1px 1px at 160px 120px, #ffa, transparent),
+      radial-gradient(1px 1px at 200px 50px, #fff, transparent),
+      radial-gradient(1px 1px at 80px 190px, #aff, transparent);
+    background-size: 220px 200px;
+    z-index: 0;
+  }
+
+  .scanlines {
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px);
+    z-index: 100; pointer-events: none;
+  }
+
+  .bar-top {
+    position: fixed; top: 0; left: 0; right: 0; height: 24px; z-index: 50;
+    background: repeating-linear-gradient(-45deg, #ffcc00, #ffcc00 10px, #000 10px, #000 20px);
+  }
+  .bar-bottom {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 24px; z-index: 50;
+    background: repeating-linear-gradient(45deg, #ffcc00, #ffcc00 10px, #000 10px, #000 20px);
+  }
+
+  .app {
+    position: relative; z-index: 10;
+    max-width: 760px; margin: 0 auto;
+    padding: 44px 16px 60px;
+  }
+
+  .header { text-align: center; margin-bottom: 10px; padding-bottom: 12px; border-bottom: 2px dashed #444; }
+  .header h1 {
+    font-family: 'Press Start 2P', monospace; font-size: 20px;
+    color: #00ffff; text-shadow: 0 0 10px #00ffff, 0 0 20px #0088ff, 3px 3px 0 #005588;
+    line-height: 1.6; animation: flicker 3s infinite;
+  }
+  .header .subtitle {
+    font-size: 22px; color: #ff00ff; text-shadow: 0 0 6px #ff00ff;
+    margin-top: 6px; animation: rainbow 4s linear infinite;
+  }
+
+  @keyframes flicker {
+    0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:.7} 94%{opacity:1} 96%{opacity:.8} 97%{opacity:1}
+  }
+  @keyframes rainbow {
+    0%{color:#ff00ff} 25%{color:#ff0066} 50%{color:#ffcc00} 75%{color:#00ffcc} 100%{color:#ff00ff}
+  }
+
+  .marquee-wrapper {
+    width: 100%; overflow: hidden; border: 2px solid #333;
+    background: #111; padding: 4px 0; margin: 12px 0;
+  }
+  .marquee-text {
+    font-size: 18px; color: #0f0; white-space: nowrap;
+    animation: scroll-left 16s linear infinite;
+  }
+  @keyframes scroll-left { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+
+  .desc { color: #aaa; font-size: 20px; line-height: 1.5; margin-bottom: 16px; text-align: center; }
+
+  .panel {
+    background: #0a0a0a; border: 3px inset #555;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .panel-title {
+    font-family: 'Press Start 2P', monospace; font-size: 11px;
+    color: #ffcc00; text-shadow: 0 0 4px #ffcc00;
+    margin-bottom: 12px; letter-spacing: 1px;
+  }
+
+  .controls-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px;
+  }
+  .control-group { display: flex; flex-direction: column; gap: 4px; }
+  .control-group label { font-size: 16px; color: #888; }
+  .control-group select,
+  .control-group input[type="number"] {
+    font-family: 'VT323', monospace; font-size: 20px;
+    padding: 6px 8px; background: #000; border: 2px inset #666;
+    color: #0f0; outline: none; width: 100%;
+  }
+  .control-group select:focus,
+  .control-group input:focus { border-color: #00ffff; }
+  .control-group select option { background: #000; color: #0f0; }
+  .control-group .unit { font-size: 14px; color: #555; margin-top: 1px; }
+
+  .info-strip {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px dashed #333; font-size: 18px; color: #888;
+  }
+  .info-strip span { color: #0f0; }
+
+  .btn-row {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    padding: 14px 16px; background: #0a0a0a;
+    border: 3px inset #555; margin-bottom: 14px;
+  }
+  .btn {
+    font-family: 'Press Start 2P', monospace; font-size: 10px;
+    padding: 10px 18px; cursor: pointer; border: 3px outset;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5); transition: filter 0.1s;
+  }
+  .btn:hover { filter: brightness(1.2); }
+  .btn:active { border-style: inset; }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .btn-generate { background: linear-gradient(180deg, #0c0, #090); color: #fff; border-color: #4f4; box-shadow: 0 0 10px rgba(0,255,0,0.2); }
+  .btn-play { background: linear-gradient(180deg, #0088ff, #0066cc); color: #fff; border-color: #44aaff; }
+  .btn-stop { background: linear-gradient(180deg, #cc0000, #990000); color: #fff; border-color: #ff4444; }
+  .btn-download { background: linear-gradient(180deg, #cc6600, #994400); color: #fff; border-color: #ff8844; }
+
+  .sweep-info-box {
+    background: #060606; border: 2px inset #444;
+    padding: 10px 14px; margin-bottom: 14px; display: none;
+  }
+  .sweep-info-label { font-size: 14px; color: #888; margin-bottom: 4px; }
+  .sweep-info-text { font-size: 20px; color: #00ccff; text-shadow: 0 0 4px #00ccff; }
+  .sweep-info-detail { font-size: 16px; color: #0f0; margin-top: 6px; }
+
+  .viz-box {
+    background: #060606; border: 2px inset #444;
+    margin-bottom: 14px; overflow: hidden; display: none;
+  }
+  .viz-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; border-bottom: 1px solid #222; background: #0a0a0a;
+  }
+  .viz-title { font-family: 'Press Start 2P', monospace; font-size: 9px; color: #ffcc00; }
+  .viz-info { font-size: 16px; color: #666; }
+  .viz-canvas-wrap { padding: 6px; background: #030308; }
+  .viz-canvas-wrap canvas { display: block; width: 100%; }
+
+  .status-bar {
+    position: fixed; bottom: 24px; left: 0; right: 0;
+    background: #0a0a0a; border-top: 2px solid #333;
+    padding: 5px 16px; display: flex; align-items: center;
+    gap: 10px; font-size: 16px; color: #666; z-index: 50;
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #333; transition: all 0.3s;
+  }
+  .status-dot.active { background: #0f0; box-shadow: 0 0 6px #0f0; }
+  .status-bar .right { margin-left: auto; font-size: 14px; }
+
+  .visitor-counter { text-align: center; color: #666; font-size: 16px; margin: 10px 0; }
+  .counter-digits {
+    background: #111; border: 2px inset #444; padding: 2px 8px;
+    color: #0f0; font-size: 18px; letter-spacing: 2px;
+  }
+
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .badge {
+    font-family: 'Press Start 2P', monospace; font-size: 6px;
+    padding: 5px 8px; border: 2px outset; display: inline-block; line-height: 1.5;
+  }
+  .badge-1 { background: #0000aa; color: #fff; border-color: #4444ff; }
+  .badge-2 { background: #006600; color: #0f0; border-color: #44ff44; }
+  .badge-3 { background: #aa4400; color: #ffcc00; border-color: #ff8844; }
+
+  .webring {
+    text-align: center; font-size: 16px; color: #555;
+    border: 1px solid #222; padding: 6px 14px;
+    background: rgba(0,0,0,0.5); margin-top: 14px;
+  }
+  .webring a { color: #ff0; text-decoration: none; }
+  .webring a:hover { text-decoration: underline; }
+
+  .back-link { display: block; text-align: center; margin-top: 14px; }
+  .back-link a { color: #00ccff; text-decoration: none; font-size: 20px; }
+  .back-link a:hover { color: #ff0; text-decoration: underline; }
+
+  .links-row {
+    display: flex; gap: 16px; justify-content: center; margin-top: 14px; flex-wrap: wrap;
+  }
+  .links-row a { color: #00ccff; text-decoration: none; font-size: 18px; }
+  .links-row a:hover { color: #ff0; text-decoration: underline; }
+
+  @media (max-width: 500px) {
+    .header h1 { font-size: 14px; }
+    .controls-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .ta-topbar{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(0,0,0,0.9);border-bottom:2px solid #ff8844;padding:8px 16px;display:flex;align-items:center;justify-content:space-between}
+  .ta-topbar a{color:#ffcc00;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:1px;padding:5px 10px;border:1px solid #ffcc00;background:rgba(255,204,0,0.05);transition:all 0.15s}
+  .ta-topbar a:hover{color:#000;border-color:#ffcc00;background:#ffcc00;box-shadow:0 0 10px rgba(255,204,0,0.3)}
+  .ta-topbar .ta-sitename{color:#ff8844;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:2px;text-shadow:0 0 6px #ff8844}
+
+  .ta-navfooter{margin-top:30px;padding-top:16px;border-top:2px solid #ff8844;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .ta-navfooter a{color:#ffcc00;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1px;padding:8px 14px;border:1px solid #ffcc00;background:rgba(255,204,0,0.05);transition:all 0.15s}
+  .ta-navfooter a:hover{color:#000;border-color:#ffcc00;background:#ffcc00;box-shadow:0 0 12px rgba(255,204,0,0.3)}
+  .ta-navfooter .ta-btn-random{font-family:'Press Start 2P',monospace;font-size:9px;padding:8px 14px;cursor:pointer;background:rgba(255,204,0,0.05);color:#00ccff;border:1px solid #00ccff;letter-spacing:1px;transition:all 0.15s;text-shadow:0 0 4px #00ccff}
+  .ta-navfooter .ta-btn-random:hover{background:#00ccff;color:#000;border-color:#00ccff;box-shadow:0 0 12px rgba(255,204,0,0.3);text-shadow:none}
+
+</style>
+</head>
+<body>
+
+<div class="starfield"></div>
+<div class="scanlines"></div>
+<div class="ta-topbar"><span class="ta-sitename">TOMMY ALLEN ACOUSTICS</span><a href="home.html">&#9751; HOME</a></div>
+<div class="bar-top"></div>
+<div class="bar-bottom"></div>
+
+<div class="app">
+  <div class="header">
+    <h1>~ * SWEEP GEN * ~</h1>
+    <div class="subtitle">Sine Sweep Generator for Acoustics</div>
+  </div>
+
+  <div class="marquee-wrapper">
+    <div class="marquee-text">
+      *** LOGARITHMIC SINE SWEEPS *** LINEAR SWEEPS *** INVERSE FILTERS *** IMPULSE RESPONSE MEASUREMENT *** ROOM ACOUSTICS *** FREE .WAV DOWNLOAD ***
+    </div>
+  </div>
+
+  <div class="desc">
+    Generate sine sweep test signals for acoustic measurement and impulse response extraction.
+    Pick your sweep type, frequency range, duration, and download the .WAV.
+  </div>
+
+  <!-- Controls -->
+  <div class="panel">
+    <div class="panel-title">&gt;&gt; PARAMETERS</div>
+    <div class="controls-grid">
+      <div class="control-group">
+        <label>Sweep Type</label>
+        <select id="sweepType">
+          <option value="log" selected>Logarithmic (Farina)</option>
+          <option value="linear">Linear</option>
+          <option value="invlog">Inverse Filter (Log)</option>
+          <option value="invlinear">Inverse Filter (Linear)</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Start Freq (Hz)</label>
+        <input type="number" id="freqStart" value="20" min="1" max="20000" step="1">
+      </div>
+      <div class="control-group">
+        <label>End Freq (Hz)</label>
+        <input type="number" id="freqEnd" value="20000" min="1" max="96000" step="1">
+      </div>
+      <div class="control-group">
+        <label>Duration (s)</label>
+        <input type="number" id="duration" value="5" min="0.1" max="60" step="0.1">
+      </div>
+      <div class="control-group">
+        <label>Sample Rate</label>
+        <select id="sampleRate">
+          <option value="22050">22,050 Hz</option>
+          <option value="44100" selected>44,100 Hz</option>
+          <option value="48000">48,000 Hz</option>
+          <option value="96000">96,000 Hz</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Amplitude</label>
+        <select id="amplitude">
+          <option value="0">0 dBFS</option>
+          <option value="-3" selected>-3 dBFS</option>
+          <option value="-6">-6 dBFS</option>
+          <option value="-12">-12 dBFS</option>
+          <option value="-20">-20 dBFS</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Bit Depth</label>
+        <select id="bitDepth">
+          <option value="16" selected>16-bit</option>
+          <option value="24">24-bit</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Fade In/Out</label>
+        <select id="fade">
+          <option value="0">None</option>
+          <option value="0.01" selected>10 ms</option>
+          <option value="0.05">50 ms</option>
+          <option value="0.1">100 ms</option>
+          <option value="0.5">500 ms</option>
+        </select>
+      </div>
+    </div>
+    <div class="info-strip">
+      <div>Samples: <span id="infoSamples">220,500</span></div>
+      <div>File: <span id="infoSize">~430 KB</span></div>
+      <div>Nyquist: <span id="infoNyquist">22,050 Hz</span></div>
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="btn-row">
+    <button class="btn btn-generate" id="generateBtn">GENERATE</button>
+    <button class="btn btn-play" id="playBtn" disabled>&#9654; PLAY</button>
+    <button class="btn btn-stop" id="stopBtn" disabled>&#9632; STOP</button>
+    <button class="btn btn-download" id="downloadBtn" disabled>DOWNLOAD .WAV</button>
+  </div>
+
+  <!-- Sweep info -->
+  <div class="sweep-info-box" id="sweepInfoBox">
+    <div class="sweep-info-label">Sweep Configuration:</div>
+    <div class="sweep-info-text" id="sweepInfoText"></div>
+    <div class="sweep-info-detail" id="sweepInfoDetail"></div>
+  </div>
+
+  <!-- Waveform -->
+  <div class="viz-box" id="waveformBox">
+    <div class="viz-header">
+      <span class="viz-title">WAVEFORM</span>
+      <span class="viz-info" id="waveformInfo"></span>
+    </div>
+    <div class="viz-canvas-wrap">
+      <canvas id="waveformCanvas" height="160"></canvas>
+    </div>
+  </div>
+
+  <!-- Spectrogram -->
+  <div class="viz-box" id="spectrogramBox">
+    <div class="viz-header">
+      <span class="viz-title">FREQUENCY vs TIME</span>
+      <span class="viz-info" id="spectrogramInfo"></span>
+    </div>
+    <div class="viz-canvas-wrap">
+      <canvas id="spectrogramCanvas" height="160"></canvas>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="visitor-counter">
+    Sweeps generated: <span class="counter-digits" id="genCount">000,000</span>
+  </div>
+
+  <div class="badge-row">
+    <div class="badge badge-1">WORKS IN<br>NETSCAPE</div>
+    <div class="badge badge-2">NO SERVER<br>REQUIRED</div>
+    <div class="badge badge-3">FARINA<br>METHOD</div>
+  </div>
+
+  
+  <div class="ta-navfooter">
+    <a href="noise-generator.html">&lt;&lt; NOISE GEN</a>
+    <button class="ta-btn-random" id="taRandomBtn">&#127922; RANDOM</button>
+    <a href="mls-generator.html">MLS GEN &gt;&gt;</a>
+  </div>
+  <div style="text-align:center;font-size:14px;color:#ff8844;border:2px ridge #ff8844;padding:6px 14px;background:rgba(0,0,0,0.5);margin-top:14px">&lt;&lt; <a href="#" style="color:#ffcc00;text-decoration:none">prev</a> | <a href="#" style="color:#ffcc00;text-decoration:none">~ Acoustics WebRing ~</a> | <a href="#" style="color:#ffcc00;text-decoration:none">next</a> &gt;&gt;</div>
+  <div style="text-align:center;margin-top:14px"><a href="home.html" style="display:inline-block;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:3px;padding:12px 30px;border:2px solid #fff;color:#fff;text-decoration:none;background:rgba(255,255,255,0.05);transition:all 0.15s" onmouseover="this.style.background='#fff';this.style.color='#000';this.style.boxShadow='0 0 20px rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='#fff';this.style.boxShadow='none'">&#9751; BACK TO HOME</a></div>
+</div>
+
+<div class="status-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span id="statusText">Ready</span>
+  <span class="right">SWEEP GEN v1.0</span>
+</div>
+
+<script>
+// ============================
+// SWEEP GENERATION
+// ============================
+
+// Logarithmic (exponential) sine sweep — Farina method
+// Uses incremental phase accumulation for numerical stability at high frequencies
+function generateLogSweep(f1, f2, duration, sampleRate) {
+  const N = Math.round(duration * sampleRate);
+  const samples = new Float32Array(N);
+  const T = duration;
+  const ratio = f2 / f1;
+  let phase = 0;
+
+  for (let i = 0; i < N; i++) {
+    const t = i / sampleRate;
+    const fInst = f1 * Math.pow(ratio, t / T);
+    phase += 2 * Math.PI * fInst / sampleRate;
+    samples[i] = Math.sin(phase);
+  }
+  return samples;
+}
+
+// Linear sine sweep
+// Uses incremental phase accumulation for numerical stability
+function generateLinearSweep(f1, f2, duration, sampleRate) {
+  const N = Math.round(duration * sampleRate);
+  const samples = new Float32Array(N);
+  const T = duration;
+  let phase = 0;
+
+  for (let i = 0; i < N; i++) {
+    const t = i / sampleRate;
+    const fInst = f1 + (f2 - f1) * (t / T);
+    phase += 2 * Math.PI * fInst / sampleRate;
+    samples[i] = Math.sin(phase);
+  }
+  return samples;
+}
+
+// Inverse filter for log sweep (Farina method)
+// Time-reversed sweep with amplitude envelope that decays at 6dB/oct
+function generateInverseLogSweep(f1, f2, duration, sampleRate) {
+  const N = Math.round(duration * sampleRate);
+  const T = duration;
+  const ratio = f2 / f1;
+
+  // Generate forward sweep with incremental phase
+  const forward = new Float32Array(N);
+  let phase = 0;
+  for (let i = 0; i < N; i++) {
+    const t = i / sampleRate;
+    const fInst = f1 * Math.pow(ratio, t / T);
+    phase += 2 * Math.PI * fInst / sampleRate;
+    forward[i] = Math.sin(phase);
+  }
+
+  // Time-reverse and apply decaying envelope
+  const inverse = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const t = i / sampleRate;
+    const envelope = Math.pow(ratio, -t / T);
+    inverse[i] = forward[N - 1 - i] * envelope;
+  }
+
+  // Normalize
+  let maxAbs = 0;
+  for (let i = 0; i < N; i++) maxAbs = Math.max(maxAbs, Math.abs(inverse[i]));
+  if (maxAbs > 0) for (let i = 0; i < N; i++) inverse[i] /= maxAbs;
+
+  return inverse;
+}
+
+// Inverse filter for linear sweep
+function generateInverseLinearSweep(f1, f2, duration, sampleRate) {
+  const N = Math.round(duration * sampleRate);
+  const T = duration;
+
+  // Generate forward sweep with incremental phase
+  const forward = new Float32Array(N);
+  let phase = 0;
+  for (let i = 0; i < N; i++) {
+    const t = i / sampleRate;
+    const fInst = f1 + (f2 - f1) * (t / T);
+    phase += 2 * Math.PI * fInst / sampleRate;
+    forward[i] = Math.sin(phase);
+  }
+
+  // Time-reverse with amplitude taper
+  const inverse = new Float32Array(N);
+  for (let i = 0; i < N; i++) {
+    const t = (N - 1 - i) / sampleRate;
+    const fInst = f1 + (f2 - f1) * (t / T);
+    const envelope = f1 / Math.max(fInst, f1);
+    inverse[i] = forward[N - 1 - i] * envelope;
+  }
+
+  let maxAbs = 0;
+  for (let i = 0; i < N; i++) maxAbs = Math.max(maxAbs, Math.abs(inverse[i]));
+  if (maxAbs > 0) for (let i = 0; i < N; i++) inverse[i] /= maxAbs;
+
+  return inverse;
+}
+
+// Apply fade in/out (half-cosine)
+function applyFade(samples, sampleRate, fadeDuration) {
+  if (fadeDuration <= 0) return;
+  const fadeSamples = Math.min(Math.floor(fadeDuration * sampleRate), Math.floor(samples.length / 4));
+  for (let i = 0; i < fadeSamples; i++) {
+    const gain = 0.5 * (1 - Math.cos(Math.PI * i / fadeSamples));
+    samples[i] *= gain;
+    samples[samples.length - 1 - i] *= gain;
+  }
+}
+
+// ============================
+// WAV ENCODING
+// ============================
+function encodeWAV(floatSamples, sampleRate, amplitudeDB, bitDepth) {
+  const N = floatSamples.length;
+  const amplitude = Math.pow(10, amplitudeDB / 20);
+  const bps = bitDepth / 8;
+  const dataSize = N * bps;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const v = new DataView(buffer);
+  const ws = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+
+  ws(0,'RIFF'); v.setUint32(4, 36+dataSize, true);
+  ws(8,'WAVE'); ws(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sampleRate,true); v.setUint32(28,sampleRate*bps,true);
+  v.setUint16(32,bps,true); v.setUint16(34,bitDepth,true);
+  ws(36,'data'); v.setUint32(40,dataSize,true);
+
+  if (bitDepth === 16) {
+    for (let i = 0; i < N; i++) {
+      const s = Math.max(-1, Math.min(1, floatSamples[i] * amplitude));
+      v.setInt16(44 + i*2, Math.round(s * 32767), true);
+    }
+  } else {
+    for (let i = 0; i < N; i++) {
+      const s = Math.max(-1, Math.min(1, floatSamples[i] * amplitude));
+      const val = Math.round(s * 8388607);
+      const o = 44 + i*3;
+      v.setUint8(o, val & 0xFF);
+      v.setUint8(o+1, (val >> 8) & 0xFF);
+      v.setUint8(o+2, (val >> 16) & 0xFF);
+    }
+  }
+  return buffer;
+}
+
+// ============================
+// WAVEFORM DRAWING
+// ============================
+function drawWaveform(canvas, samples, sampleRate) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 160 * dpr;
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width, H = 160;
+  const pad = { top: 16, bottom: 22, left: 44, right: 12 };
+  const pW = W - pad.left - pad.right;
+  const pH = H - pad.top - pad.bottom;
+
+  ctx.fillStyle = '#010108';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#0a1a0a';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 8; i++) {
+    const x = pad.left + (pW / 8) * i;
+    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, H - pad.bottom); ctx.stroke();
+  }
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (pH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+  }
+
+  // Labels
+  ctx.fillStyle = '#335533';
+  ctx.font = '12px VT323, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('+1', pad.left - 4, pad.top + 5);
+  ctx.fillText(' 0', pad.left - 4, pad.top + pH/2 + 5);
+  ctx.fillText('-1', pad.left - 4, pad.top + pH + 5);
+  ctx.textAlign = 'center';
+  const dur = samples.length / sampleRate;
+  for (let i = 0; i <= 4; i++) {
+    const x = pad.left + (pW / 4) * i;
+    ctx.fillText(((dur / 4) * i).toFixed(2) + 's', x, H - 4);
+  }
+
+  const zeroY = pad.top + pH / 2;
+  ctx.strokeStyle = '#1a3a1a'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.left, zeroY); ctx.lineTo(W - pad.right, zeroY); ctx.stroke();
+
+  // Waveform — draw min/max per pixel column for dense signals
+  const N = samples.length;
+  ctx.fillStyle = '#00ff44';
+
+  for (let px = 0; px < pW; px++) {
+    const startIdx = Math.floor((px / pW) * N);
+    const endIdx = Math.min(Math.floor(((px + 1) / pW) * N), N);
+    let minVal = 1, maxVal = -1;
+    for (let j = startIdx; j < endIdx; j++) {
+      if (samples[j] < minVal) minVal = samples[j];
+      if (samples[j] > maxVal) maxVal = samples[j];
+    }
+    const yMin = zeroY - maxVal * (pH / 2 - 3);
+    const yMax = zeroY - minVal * (pH / 2 - 3);
+    const height = Math.max(1, yMax - yMin);
+    ctx.fillRect(pad.left + px, yMin, 1, height);
+  }
+
+  // Glow
+  ctx.globalAlpha = 0.15;
+  ctx.shadowColor = '#00ff44';
+  ctx.shadowBlur = 4;
+  for (let px = 0; px < pW; px += 2) {
+    const startIdx = Math.floor((px / pW) * N);
+    const endIdx = Math.min(Math.floor(((px + 1) / pW) * N), N);
+    let minVal = 1, maxVal = -1;
+    for (let j = startIdx; j < endIdx; j++) {
+      if (samples[j] < minVal) minVal = samples[j];
+      if (samples[j] > maxVal) maxVal = samples[j];
+    }
+    const yMin = zeroY - maxVal * (pH / 2 - 3);
+    const yMax = zeroY - minVal * (pH / 2 - 3);
+    ctx.fillRect(pad.left + px, yMin, 2, Math.max(1, yMax - yMin));
+  }
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+}
+
+// ============================
+// FREQUENCY vs TIME PLOT
+// ============================
+function drawFreqVsTime(canvas, sweepType, f1, f2, duration, sampleRate) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 160 * dpr;
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width, H = 160;
+  const pad = { top: 16, bottom: 22, left: 50, right: 12 };
+  const pW = W - pad.left - pad.right;
+  const pH = H - pad.top - pad.bottom;
+
+  ctx.fillStyle = '#010108';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#0a0a1a';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 8; i++) {
+    const x = pad.left + (pW / 8) * i;
+    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, H - pad.bottom); ctx.stroke();
+  }
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (pH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+  }
+
+  // Use log scale for Y axis (frequency)
+  const logF1 = Math.log10(Math.max(1, f1));
+  const logF2 = Math.log10(Math.max(2, f2));
+  const logRange = logF2 - logF1;
+
+  // Y axis labels
+  ctx.fillStyle = '#333355';
+  ctx.font = '12px VT323, monospace';
+  ctx.textAlign = 'right';
+
+  const freqLabels = [20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 40000];
+  for (const f of freqLabels) {
+    if (f < f1 * 0.8 || f > f2 * 1.2) continue;
+    const logF = Math.log10(f);
+    const yNorm = (logF - logF1) / logRange;
+    const y = pad.top + pH - yNorm * pH;
+    if (y < pad.top - 5 || y > H - pad.bottom + 5) continue;
+
+    ctx.fillStyle = '#333355';
+    const label = f >= 1000 ? (f / 1000) + 'k' : f + '';
+    ctx.fillText(label, pad.left - 4, y + 4);
+
+    ctx.strokeStyle = '#0a0a1a';
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+  }
+
+  // X axis labels
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#333355';
+  for (let i = 0; i <= 4; i++) {
+    const x = pad.left + (pW / 4) * i;
+    ctx.fillText(((duration / 4) * i).toFixed(2) + 's', x, H - 4);
+  }
+
+  // Draw frequency curve
+  const isInverse = sweepType.startsWith('inv');
+  const isLog = sweepType === 'log' || sweepType === 'invlog';
+
+  ctx.strokeStyle = '#ff8844';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+
+  for (let px = 0; px < pW; px++) {
+    let t = (px / pW) * duration;
+    if (isInverse) t = duration - t;
+
+    let freq;
+    if (isLog) {
+      freq = f1 * Math.pow(f2 / f1, t / duration);
+    } else {
+      freq = f1 + (f2 - f1) * (t / duration);
+    }
+
+    const logFreq = Math.log10(Math.max(1, freq));
+    const yNorm = (logFreq - logF1) / logRange;
+    const y = pad.top + pH - yNorm * pH;
+
+    if (px === 0) ctx.moveTo(pad.left + px, y);
+    else ctx.lineTo(pad.left + px, y);
+  }
+  ctx.stroke();
+
+  // Glow
+  ctx.globalAlpha = 0.2;
+  ctx.strokeStyle = '#ff8844';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.globalAlpha = 0.06;
+  ctx.lineWidth = 10;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+// ============================
+// AUDIO PLAYBACK
+// ============================
+let audioCtx = null, currentSource = null, currentCtxRate = 0;
+
+function playSweep(samples, sampleRate, ampDB) {
+  stopSweep();
+  // Create context at the buffer's sample rate to avoid resampling artifacts
+  if (!audioCtx || currentCtxRate !== sampleRate) {
+    if (audioCtx) audioCtx.close();
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: sampleRate });
+    currentCtxRate = sampleRate;
+  }
+  const amp = Math.pow(10, ampDB / 20);
+  const buf = audioCtx.createBuffer(1, samples.length, sampleRate);
+  const ch = buf.getChannelData(0);
+  for (let i = 0; i < samples.length; i++) ch[i] = samples[i] * amp;
+  currentSource = audioCtx.createBufferSource();
+  currentSource.buffer = buf;
+  currentSource.connect(audioCtx.destination);
+  currentSource.start();
+  currentSource.onended = () => setStatus('Playback complete', false);
+  setStatus('Playing...', true);
+}
+
+function stopSweep() {
+  if (currentSource) { try { currentSource.stop(); } catch(e){} currentSource = null; }
+}
+
+function downloadBlob(blob, fn) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fn;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ============================
+// UI
+// ============================
+let currentSamples = null;
+let totalGens = 0;
+
+const sweepTypeEl = document.getElementById('sweepType');
+const freqStartEl = document.getElementById('freqStart');
+const freqEndEl = document.getElementById('freqEnd');
+const durationEl = document.getElementById('duration');
+const srEl = document.getElementById('sampleRate');
+const ampEl = document.getElementById('amplitude');
+const bdEl = document.getElementById('bitDepth');
+const fadeEl = document.getElementById('fade');
+
+const SWEEP_NAMES = {
+  log: 'Logarithmic Sine Sweep',
+  linear: 'Linear Sine Sweep',
+  invlog: 'Inverse Filter (Log Sweep)',
+  invlinear: 'Inverse Filter (Linear Sweep)',
+};
+
+function getP() {
+  return {
+    type: sweepTypeEl.value,
+    f1: Math.max(1, +freqStartEl.value),
+    f2: Math.max(2, +freqEndEl.value),
+    dur: Math.max(0.01, +durationEl.value),
+    sr: +srEl.value,
+    amp: +ampEl.value,
+    bd: +bdEl.value,
+    fade: +fadeEl.value,
+  };
+}
+
+function updateInfo() {
+  const p = getP();
+  const samples = Math.round(p.dur * p.sr);
+  const sz = 44 + samples * (p.bd / 8);
+  document.getElementById('infoSamples').textContent = samples.toLocaleString();
+  document.getElementById('infoSize').textContent = sz > 1048576 ? '~'+(sz/1048576).toFixed(1)+' MB' : '~'+Math.round(sz/1024)+' KB';
+  document.getElementById('infoNyquist').textContent = (p.sr / 2).toLocaleString() + ' Hz';
+}
+
+function setStatus(t, active) {
+  document.getElementById('statusText').textContent = t;
+  document.getElementById('statusDot').classList.toggle('active', !!active);
+}
+
+// Generate
+document.getElementById('generateBtn').addEventListener('click', () => {
+  const p = getP();
+
+  if (p.f2 > p.sr / 2) {
+    setStatus('End freq exceeds Nyquist (' + (p.sr/2) + ' Hz) — clamping', false);
+    p.f2 = p.sr / 2;
+    freqEndEl.value = p.f2;
+  }
+  if (p.f1 >= p.f2) {
+    setStatus('Start freq must be less than end freq', false);
+    return;
+  }
+
+  setStatus('Generating ' + SWEEP_NAMES[p.type] + '...', true);
+
+  setTimeout(() => {
+    const t0 = performance.now();
+
+    switch (p.type) {
+      case 'log':       currentSamples = generateLogSweep(p.f1, p.f2, p.dur, p.sr); break;
+      case 'linear':    currentSamples = generateLinearSweep(p.f1, p.f2, p.dur, p.sr); break;
+      case 'invlog':    currentSamples = generateInverseLogSweep(p.f1, p.f2, p.dur, p.sr); break;
+      case 'invlinear': currentSamples = generateInverseLinearSweep(p.f1, p.f2, p.dur, p.sr); break;
+    }
+
+    applyFade(currentSamples, p.sr, p.fade);
+
+    const ms = (performance.now() - t0).toFixed(0);
+    totalGens++;
+    document.getElementById('genCount').textContent =
+      String(totalGens).padStart(6, '0').replace(/(\d)(?=(\d{3})+$)/g, '$1,');
+
+    // Sweep info
+    document.getElementById('sweepInfoBox').style.display = 'block';
+    document.getElementById('sweepInfoText').textContent = SWEEP_NAMES[p.type];
+    document.getElementById('sweepInfoDetail').textContent =
+      p.f1 + ' Hz \u2192 ' + p.f2 + ' Hz | ' + p.dur + 's | ' +
+      p.sr.toLocaleString() + ' Hz | ' + currentSamples.length.toLocaleString() +
+      ' samples | Generated in ' + ms + 'ms';
+
+    // Waveform
+    document.getElementById('waveformBox').style.display = 'block';
+    document.getElementById('waveformInfo').textContent = currentSamples.length.toLocaleString() + ' samples';
+    drawWaveform(document.getElementById('waveformCanvas'), currentSamples, p.sr);
+
+    // Freq vs time
+    document.getElementById('spectrogramBox').style.display = 'block';
+    document.getElementById('spectrogramInfo').textContent = SWEEP_NAMES[p.type];
+    drawFreqVsTime(document.getElementById('spectrogramCanvas'), p.type, p.f1, p.f2, p.dur, p.sr);
+
+    document.getElementById('playBtn').disabled = false;
+    document.getElementById('stopBtn').disabled = false;
+    document.getElementById('downloadBtn').disabled = false;
+
+    setStatus('Generated in ' + ms + 'ms', false);
+  }, 30);
+});
+
+// Play
+document.getElementById('playBtn').addEventListener('click', () => {
+  if (!currentSamples) return;
+  playSweep(currentSamples, getP().sr, getP().amp);
+});
+
+// Stop
+document.getElementById('stopBtn').addEventListener('click', () => {
+  stopSweep(); setStatus('Stopped', false);
+});
+
+// Download
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if (!currentSamples) return;
+  const p = getP();
+  setStatus('Encoding WAV...', true);
+  setTimeout(() => {
+    const wav = encodeWAV(currentSamples, p.sr, p.amp, p.bd);
+    const fn = 'sweep_' + p.type + '_' + p.f1 + '-' + p.f2 + 'Hz_' + p.dur + 's_' + p.sr + 'Hz.wav';
+    downloadBlob(new Blob([wav], {type:'audio/wav'}), fn);
+    setStatus('Downloaded ' + fn, false);
+  }, 20);
+});
+
+// Update info on change
+[sweepTypeEl, freqStartEl, freqEndEl, durationEl, srEl, ampEl, bdEl, fadeEl].forEach(el =>
+  el.addEventListener('change', updateInfo)
+);
+freqStartEl.addEventListener('input', updateInfo);
+freqEndEl.addEventListener('input', updateInfo);
+durationEl.addEventListener('input', updateInfo);
+
+window.addEventListener('resize', () => {
+  if (currentSamples) {
+    const p = getP();
+    drawWaveform(document.getElementById('waveformCanvas'), currentSamples, p.sr);
+    drawFreqVsTime(document.getElementById('spectrogramCanvas'), p.type, p.f1, p.f2, p.dur, p.sr);
+  }
+});
+
+updateInfo();
+</script>
+
+<script>
+(function(){var btn=document.getElementById('taRandomBtn');if(btn){btn.addEventListener('click',function(){var p='noise-generator.html,sweep-generator.html,mls-generator.html,click-factory.html,shot-forge.html,babel.html,about.html,games.html,itch.html'.split(',');window.location.href=p[Math.floor(Math.random()*p.length)];});}})();
+</script>
+</body>
+</html>

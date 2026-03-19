@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — ABOUT</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Cinzel:wght@400;700;900&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#000;color:#ccc;font-family:'VT323',monospace;font-size:20px;min-height:100vh;overflow-x:hidden}
+
+  .starfield{position:fixed;inset:0;background:
+    radial-gradient(1px 1px at 20px 30px,#fff,transparent),
+    radial-gradient(1px 1px at 40px 70px,#fff,transparent),
+    radial-gradient(1px 1px at 90px 40px,#aaf,transparent),
+    radial-gradient(1px 1px at 160px 120px,#ffa,transparent),
+    radial-gradient(1px 1px at 200px 50px,#fff,transparent),
+    radial-gradient(1px 1px at 80px 190px,#aff,transparent);background-size:220px 200px;z-index:0}
+  .scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);z-index:100;pointer-events:none}
+
+  .top-bar{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(0,0,0,0.9);border-bottom:2px solid #0f0;padding:8px 16px;display:flex;align-items:center;justify-content:space-between}
+  .top-bar a{color:#0f0;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:1px;padding:5px 10px;border:1px solid #0f0;background:rgba(0,255,0,0.05);transition:all 0.15s}
+  .top-bar a:hover{color:#000;background:#0f0;box-shadow:0 0 10px rgba(0,255,0,0.3)}
+  .top-bar .site-name{color:#00ffff;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:2px;text-shadow:0 0 6px #00ffff}
+
+  .app{position:relative;z-index:10;max-width:660px;margin:0 auto;padding:60px 16px 80px}
+
+  .header{text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:3px double #0f0}
+  .header h1{font-family:'Press Start 2P',monospace;font-size:20px;color:#0f0;text-shadow:0 0 10px #0f0,0 0 20px #0a0;line-height:1.8;animation:flicker 3s infinite}
+  @keyframes flicker{0%,95%,100%{opacity:1}96%{opacity:0.8}97%{opacity:1}98%{opacity:0.9}}
+  .header .sub{font-size:18px;color:#ff00ff;text-shadow:0 0 6px #ff00ff;margin-top:8px;letter-spacing:3px}
+
+  .avatar-box{text-align:center;margin-bottom:24px}
+  .avatar{width:120px;height:120px;border:3px solid #00ffff;box-shadow:0 0 15px rgba(0,255,255,0.2);background:#0a1a1a;display:inline-flex;align-items:center;justify-content:center;font-size:60px}
+
+  .bio-section{margin-bottom:24px}
+  .bio-section h2{font-family:'Press Start 2P',monospace;font-size:11px;color:#ffcc00;letter-spacing:2px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px dashed #ffcc00;text-shadow:0 0 4px #ffcc00}
+  .bio-section p{color:#ccc;font-size:18px;line-height:1.7;margin-bottom:10px}
+  .bio-section ul{list-style:none;padding:0}
+  .bio-section li{color:#ccc;font-size:17px;padding:6px 0;border-bottom:1px solid #1a1a1a}
+  .bio-section li::before{content:">> ";color:#0f0;text-shadow:0 0 4px #0f0}
+
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:24px}
+  .stat{background:#0a1a0a;border:2px solid #0f0;padding:12px 8px;text-align:center;box-shadow:0 0 8px rgba(0,255,0,0.1)}
+  .stat .num{font-family:'Press Start 2P',monospace;font-size:14px;color:#0f0;display:block;margin-bottom:4px;text-shadow:0 0 6px #0f0}
+  .stat .label{font-size:13px;color:#00ffff;letter-spacing:2px}
+
+  .links-section{margin-bottom:24px}
+  .links-section a{display:block;color:#06b6d4;text-decoration:none;font-size:18px;padding:8px 0;border-bottom:1px solid #1a3a3a;transition:all 0.15s}
+  .links-section a:hover{color:#fff;text-shadow:0 0 6px #06b6d4;padding-left:8px}
+  .links-section a::before{content:"\2605 ";color:#ffcc00}
+
+  /* NAV FOOTER */
+  .nav-footer{margin-top:30px;padding-top:16px;border-top:2px solid #0f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .nav-footer a,.btn-random{color:#0f0;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1px;padding:8px 14px;border:1px solid #0f0;background:rgba(0,255,0,0.05);transition:all 0.15s;cursor:pointer}
+  .nav-footer a:hover,.btn-random:hover{color:#000;background:#0f0;box-shadow:0 0 12px rgba(0,255,0,0.3)}
+  .webring{text-align:center;font-size:16px;color:#ff00ff;border:2px ridge #0f0;padding:6px 14px;background:#0a1a0a;margin-top:14px}
+  .webring a{color:#00ffff;text-decoration:none}.webring a:hover{color:#fff}
+
+  @media(max-width:500px){.header h1{font-size:14px}.stats-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="starfield"></div><div class="scanlines"></div>
+<div class="top-bar">
+  <span class="site-name">TOMMY ALLEN ACOUSTICS</span>
+  <a href="home.html">&#9751; HOME</a>
+</div>
+<div class="app">
+  <div class="header">
+    <h1>~ * ABOUT ME * ~</h1>
+    <div class="sub">WHO IS THIS PERSON</div>
+  </div>
+
+  <div class="avatar-box"><div class="avatar">&#9786;</div></div>
+
+  <div class="bio-section">
+    <h2>&gt;&gt; THE SHORT VERSION</h2>
+    <p>I'm Tommy Allen. I have an MSc in Acoustics and a passion for video games. I make little browser-based audio tools because I find them interesting, and sometimes I make actual video games too.</p>
+    <p>This site is a messy hub for all the mini projects I build. Some are useful. Some are weird. All of them run entirely in your browser.</p>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat"><span class="num">MSc</span><span class="label">ACOUSTICS</span></div>
+    <div class="stat"><span class="num">6</span><span class="label">TOOLS BUILT</span></div>
+    <div class="stat"><span class="num">&infin;</span><span class="label">PLANNED</span></div>
+  </div>
+
+  <div class="bio-section">
+    <h2>&gt;&gt; WHAT'S HERE</h2>
+    <ul>
+      <li>Noise generators (white, pink, brown, and weirder)</li>
+      <li>Sweep generators for room acoustics testing</li>
+      <li>MLS sequence generators for impulse response measurement</li>
+      <li>A UI click sound synthesizer</li>
+      <li>A gunshot/explosion sound forge</li>
+      <li>The Audio File of Babel (every sound that ever was)</li>
+      <li>More stuff coming. Always more stuff.</li>
+    </ul>
+  </div>
+
+  <div class="bio-section">
+    <h2>&gt;&gt; ALSO I MAKE GAMES</h2>
+    <p>I'm building video games under <a href="https://rustynutsstudios.com" target="_blank" style="color:#ff00ff;text-shadow:0 0 4px #ff00ff">Rusty Nuts Studios</a>. Acoustics nerd by day, game dev by night. Check out the <a href="games.html" style="color:#ff00ff;text-shadow:0 0 4px #ff00ff">games page</a> for more.</p>
+  </div>
+
+  <div class="links-section">
+    <h2 style="font-family:'Press Start 2P',monospace;font-size:11px;color:#ffcc00;letter-spacing:2px;margin-bottom:10px;padding-bottom:6px;border-bottom:2px dashed #ffcc00;text-shadow:0 0 4px #ffcc00">&gt;&gt; FIND ME</h2>
+    <a href="https://tommyallenacoustics.itch.io/click-factory-ui-sound-generator" target="_blank">itch.io</a>
+    <a href="https://rustynutsstudios.com" target="_blank">rustynutsstudios.com</a>
+  </div>
+
+  <div class="nav-footer">
+    <a href="home.html">&lt;&lt; HOME</a>
+    <button class="btn-random" id="randomBtn">&#127922; RANDOM</button>
+    <a href="games.html">NEXT &gt;&gt;</a>
+  </div>
+  <div class="webring">&lt;&lt; <a href="#">prev</a> | <a href="#">~ Acoustics WebRing ~</a> | <a href="#">next</a> &gt;&gt;</div>
+
+  <div style="text-align:center;margin-top:14px"><a href="home.html" style="display:inline-block;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:3px;padding:12px 30px;border:2px solid #0f0;color:#0f0;text-decoration:none;background:rgba(0,255,0,0.05);transition:all 0.15s" onmouseover="this.style.background='#0f0';this.style.color='#000';this.style.boxShadow='0 0 20px rgba(0,255,0,0.3)'" onmouseout="this.style.background='rgba(0,255,0,0.05)';this.style.color='#0f0';this.style.boxShadow='none'">&#9751; BACK TO HOME</a></div>
+</div>
+
+<script>
+const pages=['noise-generator.html','sweep-generator.html','mls-generator.html','click-factory.html','shot-forge.html','babel.html','games.html','itch.html'];
+document.getElementById('randomBtn').addEventListener('click',()=>{window.location.href=pages[Math.floor(Math.random()*pages.length)];});
+</script>
+</body>
+</html>

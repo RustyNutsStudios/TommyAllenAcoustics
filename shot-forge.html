@@ -1,0 +1,2569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — SHOT FORGE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Bungee+Shade&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1a0a2e;color:#ddd;font-family:'VT323',monospace;font-size:20px;min-height:100vh;overflow-x:hidden}
+.bg{position:fixed;inset:0;z-index:0;background:radial-gradient(circle at 25% 25%,#2a1050 0%,transparent 50%),radial-gradient(circle at 75% 75%,#0a2040 0%,transparent 50%),radial-gradient(circle at 50% 50%,#1a0a2e 0%,#0a0618 100%)}
+.bg-grid{position:fixed;inset:0;z-index:1;opacity:0.06;background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:40px 40px}
+.scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.08) 3px,rgba(0,0,0,0.08) 6px);z-index:100;pointer-events:none}
+.bar-top{position:fixed;top:0;left:0;right:0;height:16px;z-index:50;background:repeating-linear-gradient(-45deg,#dc2626,#dc2626 10px,#1a0a2e 10px,#1a0a2e 20px);border-bottom:3px solid #f97316}
+.bar-bottom{position:fixed;bottom:0;left:0;right:0;height:16px;z-index:50;background:repeating-linear-gradient(45deg,#f97316,#f97316 10px,#1a0a2e 10px,#1a0a2e 20px);border-top:3px solid #dc2626}
+.app{position:relative;z-index:10;max-width:780px;margin:0 auto;padding:28px 12px 50px}
+.header{text-align:center;margin-bottom:8px;padding-bottom:8px;border-bottom:3px double #dc2626}
+.header h1{font-family:'Bungee Shade',cursive;font-size:22px;color:#f97316;text-shadow:3px 3px 0 #dc2626,0 0 20px rgba(249,115,22,0.3);line-height:1.4}
+.header .sub{font-size:18px;color:#fb923c;margin-top:4px}
+.marquee-wrapper{width:100%;overflow:hidden;border:2px ridge #dc2626;background:#0f0520;padding:2px 0;margin:6px 0}
+.marquee-text{font-size:14px;color:#f97316;white-space:nowrap;animation:sl 14s linear infinite}
+@keyframes sl{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+.mode-row{display:flex;gap:0;margin-bottom:10px}
+.mode-btn{flex:1;font-family:'Press Start 2P',monospace;font-size:9px;padding:12px 8px;cursor:pointer;border:3px outset #dc2626;background:#1a0a2e;color:#dc2626;text-align:center;transition:all 0.1s}
+.mode-btn:hover{background:#2a1050}
+.mode-btn.active{background:linear-gradient(180deg,#dc2626,#991b1b);color:#fff;border-style:inset}
+.fire-params{display:none;gap:14px;padding:12px 14px;background:rgba(15,5,32,0.9);border:3px ridge #dc2626;margin-bottom:10px}
+.fire-params.show{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.fire-params select{font-family:'VT323',monospace;font-size:20px;padding:5px 7px;background:#0f0520;border:2px ridge #dc2626;color:#f97316;outline:none;cursor:pointer}
+.layers{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
+.layer{background:rgba(15,5,32,0.9);border:2px solid #2a1050;overflow:hidden}
+.layer.off{opacity:0.35}
+.layer.off .lc{display:none}
+.layer-blast{border-color:#dc2626}
+.layer-crack{border-color:#f97316}
+.layer-noise{border-color:#fbbf24}
+.layer-airrush{border-color:#34d399}
+.layer-shhk{border-color:#f87171}
+.layer-tink{border-color:#e879f9}
+.layer-chuk{border-color:#fb923c}
+.layer-shing{border-color:#facc15}
+.layer-room{border-color:#67e8f9}
+.layer-lfe{border-color:#a78bfa}
+.layer-tail{border-color:#4ade80}
+.layer-sub{border-color:#a855f7}
+.layer-refl{border-color:#22d3ee}
+.layer-body{border-color:#4ade80}
+.layer-mic{border-color:#f43f5e}
+.lt-noise{background:#d97706;border-color:#fbbf24}
+.lt-noise.off{background:#1a0a2e;color:#78350f}
+.lt-airrush{background:#059669;border-color:#34d399}
+.lt-airrush.off{background:#1a0a2e;color:#064e3b}
+.lt-shhk{background:#dc2626;border-color:#f87171}
+.lt-shhk.off{background:#1a0a2e;color:#7f1d1d}
+.lt-tink{background:#a21caf;border-color:#e879f9}
+.lt-tink.off{background:#1a0a2e;color:#4a044e}
+.lt-chuk{background:#c2410c;border-color:#fb923c}
+.lt-chuk.off{background:#1a0a2e;color:#7c2d12}
+.lt-shing{background:#a16207;border-color:#facc15}
+.lt-shing.off{background:#1a0a2e;color:#713f12}
+.lt-room{background:#0e7490;border-color:#67e8f9}
+.lt-room.off{background:#1a0a2e;color:#164e63}
+.lt-lfe{background:#7c3aed;border-color:#a78bfa}
+.lt-lfe.off{background:#1a0a2e;color:#4c1d95}
+.lt-tail{background:#166534;border-color:#4ade80}
+.lt-tail.off{background:#1a0a2e;color:#14532d}
+.lt-sub{background:#a855f7;border-color:#c084fc}
+.lt-sub.off{background:#1a0a2e;color:#6b21a8}
+.lt-refl{background:#0891b2;border-color:#22d3ee}
+.lt-refl.off{background:#1a0a2e;color:#155e75}
+.lt-body{background:#16a34a;border-color:#4ade80}
+.lt-body.off{background:#1a0a2e;color:#14532d}
+.lt-mic{background:#be123c;border-color:#f43f5e}
+.lt-mic.off{background:#1a0a2e;color:#881337}
+.lh{display:flex;align-items:center;gap:8px;padding:4px 8px;border-bottom:1px solid #1a0a2e;min-height:28px}
+.lt{font-family:'Press Start 2P',monospace;font-size:8px;padding:3px 8px;cursor:pointer;border:2px outset #dc2626;background:#dc2626;color:#fff;user-select:none;white-space:nowrap}
+.lt:hover{filter:brightness(1.2)}
+.lt.off{background:#1a0a2e;color:#991b1b;border-style:inset;opacity:0.6}
+.lt-orange{background:#f97316;border-color:#fb923c}
+.lt-orange.off{background:#1a0a2e;color:#7c3a00}
+.ll{font-size:13px;color:#991b1b}
+.sonic-badge{font-family:'Press Start 2P',monospace;font-size:7px;padding:2px 5px;margin-left:6px;border:1px solid #f97316;color:#f97316;background:rgba(249,115,22,0.1);transition:opacity 0.2s}
+.lc{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 10px;padding:6px 8px}
+.lc-6{grid-template-columns:repeat(6,1fr)}
+.cg{display:flex;flex-direction:column;gap:3px}
+.cg label{font-size:14px;color:#dc2626;letter-spacing:1px}
+input[type="range"]{-webkit-appearance:none;height:6px;border-radius:0;background:linear-gradient(90deg,#dc2626,#f97316);border:2px ridge #dc2626;padding:0;width:100%;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:16px;background:#f97316;border:2px outset #dc2626;cursor:pointer}
+.rv{font-size:15px;color:#f97316;text-align:center}
+.out-layer{border-color:#f97316}
+.out-layer .lc{grid-template-columns:1fr}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px;background:rgba(15,5,32,0.9);border:3px ridge #dc2626;margin-bottom:14px;align-items:center}
+.btn{font-family:'Press Start 2P',monospace;font-size:9px;padding:8px 14px;cursor:pointer;border:3px outset;text-shadow:1px 1px 0 rgba(0,0,0,0.5);transition:all 0.1s}
+.btn:hover{filter:brightness(1.3)}.btn:active{border-style:inset}.btn:disabled{opacity:0.3;cursor:not-allowed}
+.btn-r{background:linear-gradient(180deg,#d946ef,#a21caf);color:#fff;border-color:#e879f9}
+.btn-g{background:linear-gradient(180deg,#dc2626,#991b1b);color:#fff;border-color:#f87171}
+.btn-t{background:linear-gradient(180deg,#f97316,#c2410c);color:#fff;border-color:#fb923c}
+.btn-d{background:linear-gradient(180deg,#444,#222);color:#ccc;border-color:#666}
+.viz-box{background:rgba(10,3,22,0.95);border:3px ridge #dc2626;margin-bottom:14px;overflow:hidden;display:none}
+.viz-header{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:2px solid #1a0a2e}
+.viz-title{font-family:'Press Start 2P',monospace;font-size:9px;color:#f97316}
+.viz-info{font-size:16px;color:#dc2626}
+.viz-cw{padding:6px;background:#050210}
+.viz-cw canvas{display:block;width:100%}
+.status-bar{position:fixed;bottom:16px;left:0;right:0;background:#0f0520;border-top:3px solid #dc2626;padding:5px 16px;display:flex;align-items:center;gap:10px;font-size:16px;color:#dc2626;z-index:50}
+.status-dot{width:8px;height:6px;border-radius:50%;background:#2a1050;transition:all 0.3s}
+.status-dot.active{background:#f97316;box-shadow:0 0 8px #f97316}
+.status-bar .right{margin-left:auto;font-size:12px;color:#991b1b}
+
+  .ta-topbar{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(0,0,0,0.9);border-bottom:2px solid #dc2626;padding:8px 16px;display:flex;align-items:center;justify-content:space-between}
+  .ta-topbar a{color:#f97316;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:1px;padding:5px 10px;border:1px solid #f97316;background:rgba(249,115,22,0.05);transition:all 0.15s}
+  .ta-topbar a:hover{color:#000;border-color:#f97316;background:#f97316;box-shadow:0 0 10px rgba(249,115,22,0.3)}
+  .ta-topbar .ta-sitename{color:#dc2626;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:2px;text-shadow:0 0 6px #dc2626}
+
+  .ta-navfooter{margin-top:30px;padding-top:16px;border-top:2px solid #dc2626;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .ta-navfooter a{color:#f97316;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1px;padding:8px 14px;border:1px solid #f97316;background:rgba(249,115,22,0.05);transition:all 0.15s}
+  .ta-navfooter a:hover{color:#000;border-color:#f97316;background:#f97316;box-shadow:0 0 12px rgba(249,115,22,0.3)}
+  .ta-navfooter .ta-btn-random{font-family:'Press Start 2P',monospace;font-size:9px;padding:8px 14px;cursor:pointer;background:rgba(249,115,22,0.05);color:#ffcc00;border:1px solid #ffcc00;letter-spacing:1px;transition:all 0.15s;text-shadow:0 0 4px #ffcc00}
+  .ta-navfooter .ta-btn-random:hover{background:#ffcc00;color:#000;border-color:#ffcc00;box-shadow:0 0 12px rgba(249,115,22,0.3);text-shadow:none}
+
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="bg-grid"></div><div class="scanlines"></div>
+<div class="ta-topbar"><span class="ta-sitename">TOMMY ALLEN ACOUSTICS</span><a href="home.html">&#9751; HOME</a></div>
+<div class="bar-top"></div><div class="bar-bottom"></div>
+<div class="app">
+
+<div class="header">
+  <h1>*~SHOT FORGE~*</h1>
+  <div class="sub">Friedlander Blast + N-Wave Crack_</div>
+</div>
+<div class="marquee-wrapper">
+  <div class="marquee-text">*** FRIEDLANDER MUZZLE BLAST *** N-WAVE BALLISTIC CRACK *** Hacihabiboglu 2017 *** Beck 2011 *** pygunshot ***</div>
+</div>
+
+<div class="mode-row">
+  <div class="mode-btn active" data-mode="single">SINGLE</div>
+  <div class="mode-btn" data-mode="burst">BURST</div>
+  <div class="mode-btn" data-mode="auto">AUTO</div>
+</div>
+<div class="fire-params" id="fireParams">
+  <div class="cg"><label>RPM</label><input type="range" id="pRPM" min="60" max="1200" value="600" step="10"><div class="rv" id="vRPM">600 RPM</div></div>
+  <div class="cg" id="burstGroup" style="display:none"><label>Burst</label><select id="pBurst"><option value="2">2</option><option value="3" selected>3</option><option value="5">5</option></select></div>
+  <div class="cg"><label>Variation</label><input type="range" id="pVariation" min="0" max="50" value="10"><div class="rv" id="vVariation">10%</div></div>
+</div>
+
+<div class="layers">
+
+
+
+<div style="display:flex;align-items:center;gap:8px;padding:4px 12px;margin:8px 0 2px 0">
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:#6b7280;text-transform:uppercase;border-left:2px solid #dc2626;padding-left:8px">TRANSIENT</div>
+  <input type="range" class="sp" data-p="secTransient" min="0" max="150" value="100" style="width:80px;flex-shrink:0">
+  <div class="rv" style="min-width:32px;font-size:13px">100%</div>
+</div>
+<div class="layer" style="border-color:#ef4444;background:rgba(220,38,38,0.05)" data-layer="slam">
+  <div class="lh">
+    <span class="lt" style="background:#991b1b;border-color:#ef4444" data-toggle="slam">PFFF</span>
+    <span class="ll">Pressure front wall — squared bipolar shockwave</span>
+  </div>
+  <div class="lc lc-6">
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="slamLvl" min="0" max="100" value="50"><div class="rv">50%</div></div>
+    <div class="cg"><label>Width</label><input type="range" class="sp" data-p="slamLen" min="1" max="8" value="3"><div class="rv">3ms</div></div>
+    <div class="cg"><label>Neg</label><input type="range" class="sp" data-p="slamWeight" min="0" max="100" value="70"><div class="rv">70%</div></div>
+    <div class="cg"><label>Edge</label><input type="range" class="sp" data-p="slamColour" min="0" max="100" value="30"><div class="rv">30%</div></div>
+    <div class="cg"><label>Clip</label><input type="range" class="sp" data-p="slamClip" min="0" max="100" value="80"><div class="rv">80%</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="slamDelay" min="0" max="10" value="0"><div class="rv">0ms</div></div>
+  </div>
+</div>
+<div class="layer" style="border-color:#f87171;background:rgba(248,113,113,0.04)" data-layer="ffff">
+  <div class="lh">
+    <span class="lt" style="background:#7f1d1d;border-color:#f87171" data-toggle="ffff">FFFF</span>
+    <span class="ll">Gas blowout — gated noise following the pressure front</span>
+  </div>
+  <div class="lc lc-6">
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="ffffLvl" min="0" max="100" value="40"><div class="rv">40%</div></div>
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="ffffLen" min="1" max="15" value="4"><div class="rv">4ms</div></div>
+    <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="ffffTone" min="0" max="100" value="40"><div class="rv">40%</div></div>
+    <div class="cg"><label>Gate</label><input type="range" class="sp" data-p="ffffGate" min="0" max="100" value="80"><div class="rv">80%</div></div>
+    <div class="cg"><label>Chain</label><input type="range" class="sp" data-p="ffffChain" min="0" max="100" value="70"><div class="rv">70%</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="ffffDelay" min="0" max="10" value="0"><div class="rv">0ms</div></div>
+  </div>
+</div>
+<div class="layer layer-blast" data-layer="blast">
+  <div class="lh">
+    <span class="lt" data-toggle="blast">BLAST</span>
+    <span class="ll">Friedlander muzzle pressure wave</span>
+  </div>
+  <div class="lc lc-6">
+    <div class="cg"><label>Caliber</label><input type="range" class="sp" data-p="caliber" min="0" max="100" value="40"><div class="rv">40%</div></div>
+    <div class="cg"><label>Propellant</label><input type="range" class="sp" data-p="propellant" min="0" max="100" value="60"><div class="rv">60%</div></div>
+    <div class="cg"><label>Saturation</label><input type="range" class="sp" data-p="saturation" min="0" max="100" value="40"><div class="rv">40%</div></div>
+    <div class="cg"><label>Neg Phase</label><input type="range" class="sp" data-p="negphase" min="0" max="100" value="80"><div class="rv">80%</div></div>
+    <div class="cg"><label>Exaggerate</label><input type="range" class="sp" data-p="exaggerate" min="0" max="100" value="0"><div class="rv">0%</div></div>
+    <div class="cg"><label>Tau Mult</label><input type="range" class="sp" data-p="tauMult" min="100" max="800" value="100"><div class="rv">1.0x</div></div>
+  </div>
+</div>
+
+<div class="layer layer-crack" data-layer="crack">
+  <div class="lh">
+    <span class="lt lt-orange" data-toggle="crack">CRACK</span>
+    <span class="ll">N-wave ballistic shockwave</span>
+    <span class="sonic-badge" id="sonicBadge">SUPERSONIC</span>
+  </div>
+  <div class="lc">
+    <div class="cg"><label>Velocity</label><input type="range" class="sp" data-p="crackVel" min="200" max="1000" value="380"><div class="rv">380 m/s</div></div>
+    <div class="cg"><label>Miss Dist</label><input type="range" class="sp" data-p="crackMiss" min="0" max="30" value="5"><div class="rv">5m</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="crackLvl" min="0" max="100" value="70"><div class="rv">70%</div></div>
+    <div class="cg"><label>Offset</label><input type="range" class="sp" data-p="crackOffset" min="0" max="30" value="1"><div class="rv">1ms</div></div>
+  </div>
+</div>
+
+
+<div class="layer" style="border-color:#f472b6" data-layer="pop2">
+  <div class="lh">
+    <span class="lt" style="background:#9d174d;border-color:#f472b6" data-toggle="pop2">POP2</span>
+    <span class="ll">v6 projectile release pop — bipolar gas burst</span>
+  </div>
+  <div class="lc">
+    <div class="cg"><label>Power</label><input type="range" class="sp" data-p="pop2Pow" min="0" max="100" value="80"><div class="rv">80%</div></div>
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="pop2Freq" min="30" max="300" value="90"><div class="rv">90Hz</div></div>
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="pop2Len" min="1" max="30" value="4"><div class="rv">4ms</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="pop2Delay" min="0" max="100" value="0"><div class="rv">0ms</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="pop2Lvl" min="0" max="100" value="0"><div class="rv">0%</div></div>
+  </div>
+</div>
+<div class="layer" style="border-color:#fb923c" data-layer="crack2">
+  <div class="lh">
+    <span class="lt" style="background:#9a3412;border-color:#fb923c" data-toggle="crack2">CRACK2</span>
+    <span class="ll">v6 N-wave spike + swept LP noise burst</span>
+  </div>
+  <div class="lc">
+    <div class="cg"><label>Power</label><input type="range" class="sp" data-p="crack2Pow" min="0" max="150" value="75"><div class="rv">75%</div></div>
+    <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="crack2Tone" min="0" max="150" value="60"><div class="rv">60%</div></div>
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="crack2Len" min="1" max="40" value="5"><div class="rv">5ms</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="crack2Delay" min="0" max="100" value="0"><div class="rv">0ms</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="crack2Lvl" min="0" max="100" value="0"><div class="rv">0%</div></div>
+  </div>
+</div>
+<div class="layer layer-noise" data-layer="noise">
+  <div class="lh">
+    <span class="lt lt-noise" data-toggle="noise">WHOOSH</span>
+    <span class="ll">Gas exit turbulence — muzzle "SHHH"</span>
+  </div>
+  <div class="lc lc-6">
+    <div class="cg"><label>Build</label><input type="range" class="sp" data-p="whooshBuild" min="1" max="30" value="8"><div class="rv">8ms</div></div>
+    <div class="cg"><label>Tail</label><input type="range" class="sp" data-p="whooshTail" min="1" max="20" value="4"><div class="rv">4ms</div></div>
+    <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="whooshTone" min="0" max="100" value="50"><div class="rv">50%</div></div>
+    <div class="cg"><label>Drive</label><input type="range" class="sp" data-p="whooshDrive" min="0" max="100" value="50"><div class="rv">50%</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="noiseDelay" min="0" max="20" value="0"><div class="rv">0ms</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="noiseLvl" min="0" max="100" value="30"><div class="rv">30%</div></div>
+  </div>
+</div>
+
+<div class="layer" style="border-color:#fbbf24" data-layer="woosh2">
+  <div class="lh">
+    <span class="lt" style="background:#92400e;border-color:#fbbf24" data-toggle="woosh2">WOOSH2</span>
+    <span class="ll">v6 projectile air displacement — pass-by whoosh</span>
+  </div>
+  <div class="lc">
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="woosh2Lvl" min="0" max="150" value="50"><div class="rv">50%</div></div>
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="woosh2Len" min="5" max="120" value="25"><div class="rv">25ms</div></div>
+    <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="woosh2Tone" min="0" max="100" value="50"><div class="rv">50%</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="woosh2Delay" min="0" max="100" value="0"><div class="rv">0ms</div></div>
+    <div class="cg"><label>Mix</label><input type="range" class="sp" data-p="woosh2Mix" min="0" max="100" value="0"><div class="rv">0%</div></div>
+  </div>
+</div>
+<div class="layer" style="border-color:#7dd3fc" data-layer="sizzle2">
+  <div class="lh">
+    <span class="lt" style="background:#075985;border-color:#7dd3fc" data-toggle="sizzle2">SIZZLE2</span>
+    <span class="ll">v6 HP noise burst — high fire hiss</span>
+  </div>
+  <div class="lc">
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="sizzle2Lvl" min="0" max="100" value="0"><div class="rv">0%</div></div>
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="sizzle2Freq" min="4000" max="18000" value="10000"><div class="rv">10000Hz</div></div>
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="sizzle2Len" min="3" max="60" value="15"><div class="rv">15ms</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="sizzle2Delay" min="0" max="100" value="1"><div class="rv">1ms</div></div>
+  </div>
+</div>
+
+<div class="layer layer-airrush" data-layer="airrush">
+  <div class="lh">
+    <span class="lt lt-airrush" data-toggle="airrush">AIR</span>
+    <span class="ll">Negative phase backflow — smooth turbulent "fft"</span>
+  </div>
+  <div class="lc">
+    <div class="cg"><label>Onset</label><input type="range" class="sp" data-p="airOnset" min="0" max="20" value="3"><div class="rv">3ms</div></div>
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="airLen" min="2" max="30" value="8"><div class="rv">8ms</div></div>
+    <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="airTone" min="0" max="100" value="50"><div class="rv">50%</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="airLvl" min="0" max="100" value="25"><div class="rv">25%</div></div>
+  </div>
+</div>
+
+
+<div style="display:flex;align-items:center;gap:8px;padding:4px 12px;margin:8px 0 2px 0">
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:#6b7280;text-transform:uppercase;border-left:2px solid #a855f7;padding-left:8px">SUBS</div>
+  <input type="range" class="sp" data-p="secSubs" min="0" max="150" value="100" style="width:80px;flex-shrink:0">
+  <div class="rv" style="min-width:32px;font-size:13px">100%</div>
+</div>
+<div class="layer layer-lfe" data-layer="lfe">
+  <div class="lh">
+    <span class="lt lt-lfe" data-toggle="lfe">LFE</span>
+    <span class="ll">Bipolar Friedlander sub-pulse — positive + rarefaction</span>
+  </div>
+  <div class="lc">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="lfeFreq" min="20" max="80" value="40"><div class="rv">40Hz</div></div>
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="lfeLen" min="2" max="15" value="5"><div class="rv">5ms</div></div>
+    <div class="cg"><label>Drive</label><input type="range" class="sp" data-p="lfeDrive" min="0" max="100" value="60"><div class="rv">60%</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="lfeLvl" min="0" max="100" value="35"><div class="rv">35%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-sub" data-layer="sub">
+  <div class="lh">
+    <span class="lt lt-sub" data-toggle="sub">SUB</span>
+    <span class="ll">Friedlander slow-decay — bipolar LP (DC-blocked)</span>
+  </div>
+  <div class="lc">
+    <div class="cg"><label>Tau Mult</label><input type="range" class="sp" data-p="subTau" min="4" max="40" value="14"><div class="rv">14x</div></div>
+    <div class="cg"><label>Cutoff</label><input type="range" class="sp" data-p="subCutoff" min="40" max="200" value="100"><div class="rv">100Hz</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="subLvl" min="0" max="100" value="40"><div class="rv">40%</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="subDelay" min="0" max="10" value="2"><div class="rv">2ms</div></div>
+  </div>
+</div>
+
+<div class="layer" style="border-color:#818cf8" data-layer="sub2">
+  <div class="lh">
+    <span class="lt" style="background:#3730a3;border-color:#818cf8" data-toggle="sub2">SUB2</span>
+    <span class="ll">v6 freq-sweep sine chest punch</span>
+  </div>
+  <div class="lc">
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="sub2Lvl" min="0" max="100" value="0"><div class="rv">0%</div></div>
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="sub2Freq" min="25" max="150" value="55"><div class="rv">55Hz</div></div>
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="sub2Len" min="5" max="80" value="30"><div class="rv">30ms</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="sub2Delay" min="0" max="100" value="0"><div class="rv">0ms</div></div>
+  </div>
+</div>
+<div class="layer layer-body" data-layer="body">
+  <div class="lh">
+    <span class="lt lt-body" data-toggle="body">BODY</span>
+    <span class="ll">Impulse-excited chamber resonance + Brownian noise</span>
+  </div>
+  <div class="lc lc-6">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="bodyFreq" min="25" max="150" value="60"><div class="rv">60Hz</div></div>
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="bodyLen" min="5" max="120" value="40"><div class="rv">40ms</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="bodyDelay" min="0" max="30" value="0"><div class="rv">0ms</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="bodyLvl" min="0" max="100" value="45"><div class="rv">45%</div></div>
+    <div class="cg"><label>Noise</label><input type="range" class="sp" data-p="bodyNoise" min="0" max="100" value="30"><div class="rv">30%</div></div>
+    <div class="cg"><label>EQ Freq</label><input type="range" class="sp" data-p="bodyEQFreq" min="40" max="300" value="100"><div class="rv">100Hz</div></div>
+    <div class="cg"><label>EQ Gain</label><input type="range" class="sp" data-p="bodyEQGain" min="0" max="100" value="50"><div class="rv">50%</div></div>
+  </div>
+</div>
+
+
+<div style="display:flex;align-items:center;gap:8px;padding:4px 12px;margin:8px 0 2px 0">
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:#6b7280;text-transform:uppercase;border-left:2px solid #34d399;padding-left:8px">MECHS</div>
+  <input type="range" class="sp" data-p="secMechs" min="0" max="150" value="100" style="width:80px;flex-shrink:0">
+  <div class="rv" style="min-width:32px;font-size:13px">100%</div>
+</div>
+<div class="layer layer-tink" data-layer="tink">
+  <div class="lh">
+    <span class="lt lt-tink" data-toggle="tink">TINK</span>
+    <span class="ll">Firing pin strike — inharmonic modal synthesis</span>
+  </div>
+  <div class="lc lc-6">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="tinkFreq" min="800" max="8000" value="3200"><div class="rv">3200Hz</div></div>
+    <div class="cg"><label>Decay</label><input type="range" class="sp" data-p="tinkDecay" min="1" max="1" value="1" style="display:none"><div class="rv">3ms</div></div>
+    <div class="cg"><label>Bright</label><input type="range" class="sp" data-p="tinkBright" min="0" max="100" value="60"><div class="rv">60%</div></div>
+    <div class="cg"><label>Click</label><input type="range" class="sp" data-p="tinkClick" min="0" max="100" value="70"><div class="rv">70%</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="tinkDelay" min="0" max="50" value="0"><div class="rv">0ms</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="tinkLvl" min="0" max="100" value="15"><div class="rv">15%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-shhk" data-layer="shhk">
+  <div class="lh">
+    <span class="lt lt-shhk" data-toggle="shhk">SHHK</span>
+    <span class="ll">BCG rail scrape — resonant modes + stick-slip friction</span>
+  </div>
+  <div class="lc lc-6">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="shhkFreq" min="300" max="4000" value="1200"><div class="rv">1200Hz</div></div>
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="shhkDecay" min="2" max="20" value="6"><div class="rv">6ms</div></div>
+    <div class="cg"><label>Rough</label><input type="range" class="sp" data-p="shhkBody" min="0" max="100" value="65"><div class="rv">65%</div></div>
+    <div class="cg"><label>Bite</label><input type="range" class="sp" data-p="shhkThud" min="0" max="100" value="55"><div class="rv">55%</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="shhkDelay" min="0" max="50" value="1"><div class="rv">1ms</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="shhkLvl" min="0" max="100" value="20"><div class="rv">20%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-chuk" data-layer="chuk">
+  <div class="lh">
+    <span class="lt lt-chuk" data-toggle="chuk">CHUK</span>
+    <span class="ll">Casing pop — gas release + ejection scrape</span>
+  </div>
+  <div class="lc lc-6">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="chukFreq" min="60" max="300" value="220"><div class="rv">220Hz</div></div>
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="chukLen" min="5" max="60" value="18"><div class="rv">18ms</div></div>
+    <div class="cg"><label>Scrape</label><input type="range" class="sp" data-p="chukScrape" min="0" max="100" value="55"><div class="rv">55%</div></div>
+    <div class="cg"><label>Ring</label><input type="range" class="sp" data-p="chukRing" min="0" max="100" value="45"><div class="rv">45%</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="chukDelay" min="0" max="50" value="4"><div class="rv">4ms</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="chukLvl" min="0" max="100" value="30"><div class="rv">30%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-shing" data-layer="shing">
+  <div class="lh">
+    <span class="lt lt-shing" data-toggle="shing">SHING</span>
+    <span class="ll">Casing ejection — clattery multi-impact metallic burst</span>
+  </div>
+  <div class="lc lc-6">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="shingFreq" min="800" max="5000" value="1800"><div class="rv">1800Hz</div></div>
+    <div class="cg"><label>Decay</label><input type="range" class="sp" data-p="shingDecay" min="3" max="35" value="12"><div class="rv">12ms</div></div>
+    <div class="cg"><label>Shimmer</label><input type="range" class="sp" data-p="shingShimmer" min="0" max="100" value="50"><div class="rv">50%</div></div>
+    <div class="cg"><label>Bite</label><input type="range" class="sp" data-p="shingBite" min="0" max="100" value="65"><div class="rv">65%</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="shingDelay" min="0" max="50" value="12"><div class="rv">12ms</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="shingLvl" min="0" max="100" value="12"><div class="rv">12%</div></div>
+  </div>
+</div>
+
+<div class="layer" style="border-color:#34d399" data-layer="mech2">
+  <div class="lh">
+    <span class="lt" style="background:#065f46;border-color:#34d399" data-toggle="mech2">MECH2</span>
+    <span class="ll">v6 bolt carrier recoil — impact + scrape + spring</span>
+  </div>
+  <div class="lc">
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="mech2Lvl" min="0" max="100" value="0"><div class="rv">0%</div></div>
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="mech2Freq" min="1000" max="8000" value="3500"><div class="rv">3500Hz</div></div>
+    <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="mech2Tone" min="0" max="100" value="50"><div class="rv">50%</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="mech2Delay" min="0" max="100" value="8"><div class="rv">8ms</div></div>
+  </div>
+</div>
+
+<div class="layer" style="border-color:#6ee7b7" data-layer="recv">
+  <div class="lh">
+    <span class="lt" style="background:#064e3b;border-color:#6ee7b7" data-toggle="recv">RECV</span>
+    <span class="ll">Receiver body resonance — steel housing modal ring</span>
+  </div>
+  <div class="lc lc-6">
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="recvLvl" min="0" max="100" value="0"><div class="rv">0%</div></div>
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="recvFreq" min="150" max="800" value="350"><div class="rv">350Hz</div></div>
+    <div class="cg"><label>Mass</label><input type="range" class="sp" data-p="recvMass" min="0" max="100" value="60"><div class="rv">60%</div></div>
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="recvLen" min="10" max="60" value="25"><div class="rv">25ms</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="recvDelay" min="0" max="100" value="3"><div class="rv">3ms</div></div>
+    <div class="cg"><label>Damp</label><input type="range" class="sp" data-p="recvDamp" min="0" max="100" value="40"><div class="rv">40%</div></div>
+  </div>
+</div>
+
+<div class="layer" style="border-color:#a7f3d0" data-layer="bslap">
+  <div class="lh">
+    <span class="lt" style="background:#022c22;border-color:#a7f3d0" data-toggle="bslap">BSLAP</span>
+    <span class="ll">Buffer tube slam — bolt rear impact thud</span>
+  </div>
+  <div class="lc">
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="bslapLvl" min="0" max="100" value="0"><div class="rv">0%</div></div>
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="bslapFreq" min="60" max="250" value="120"><div class="rv">120Hz</div></div>
+    <div class="cg"><label>Weight</label><input type="range" class="sp" data-p="bslapWeight" min="0" max="100" value="70"><div class="rv">70%</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="bslapDelay" min="2" max="80" value="12"><div class="rv">12ms</div></div>
+  </div>
+</div>
+
+<div class="layer" style="border-color:#bbf7d0" data-layer="rattle">
+  <div class="lh">
+    <span class="lt" style="background:#14532d;border-color:#bbf7d0" data-toggle="rattle">RATTLE</span>
+    <span class="ll">Action rattle — loose parts clatter from bolt travel</span>
+  </div>
+  <div class="lc lc-6">
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="rattleLvl" min="0" max="100" value="0"><div class="rv">0%</div></div>
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="rattleFreq" min="800" max="4000" value="2000"><div class="rv">2000Hz</div></div>
+    <div class="cg"><label>Density</label><input type="range" class="sp" data-p="rattleDens" min="0" max="100" value="50"><div class="rv">50%</div></div>
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="rattleLen" min="5" max="60" value="20"><div class="rv">20ms</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="rattleDelay" min="0" max="100" value="5"><div class="rv">5ms</div></div>
+    <div class="cg"><label>Spread</label><input type="range" class="sp" data-p="rattleSpread" min="0" max="100" value="60"><div class="rv">60%</div></div>
+  </div>
+</div>
+
+<div style="display:flex;align-items:center;gap:8px;padding:4px 12px;margin:8px 0 2px 0">
+  <div style="font-size:10px;font-weight:700;letter-spacing:0.15em;color:#6b7280;text-transform:uppercase;border-left:2px solid #67e8f9;padding-left:8px">VERB</div>
+  <input type="range" class="sp" data-p="secVerb" min="0" max="150" value="100" style="width:80px;flex-shrink:0">
+  <div class="rv" style="min-width:32px;font-size:13px">100%</div>
+</div>
+<div class="layer layer-refl" data-layer="refl">
+  <div class="lh">
+    <span class="lt lt-refl" data-toggle="refl">REFL</span>
+    <span class="ll">Ground reflection — Maher 2007</span>
+  </div>
+  <div class="lc">
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="reflDelay" min="1" max="30" value="8"><div class="rv">8ms</div></div>
+    <div class="cg"><label>Decay</label><input type="range" class="sp" data-p="reflDecay" min="10" max="90" value="55"><div class="rv">55%</div></div>
+    <div class="cg"><label>Cutoff</label><input type="range" class="sp" data-p="reflCutoff" min="500" max="8000" value="3000"><div class="rv">3000Hz</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="reflLvl" min="0" max="100" value="35"><div class="rv">35%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-room" data-layer="room">
+  <div class="lh">
+    <span class="lt lt-room" data-toggle="room">ROOM</span>
+    <span class="ll">Early reflections — confined space pressure slam</span>
+  </div>
+  <div class="lc lc-6">
+    <div class="cg"><label>Size</label><input type="range" class="sp" data-p="roomSize" min="1" max="30" value="8"><div class="rv">8ms</div></div>
+    <div class="cg"><label>Density</label><input type="range" class="sp" data-p="roomDensity" min="2" max="6" value="4"><div class="rv">4</div></div>
+    <div class="cg"><label>Decay</label><input type="range" class="sp" data-p="roomDecay" min="10" max="90" value="55"><div class="rv">55%</div></div>
+    <div class="cg"><label>Cutoff</label><input type="range" class="sp" data-p="roomCutoff" min="500" max="12000" value="6000"><div class="rv">6000Hz</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="roomDelay" min="0" max="10" value="0"><div class="rv">0ms</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="roomLvl" min="0" max="100" value="40"><div class="rv">40%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-tail" data-layer="tail">
+  <div class="lh">
+    <span class="lt lt-tail" data-toggle="tail">TAIL</span>
+    <span class="ll">Distant acoustic decay — dry shot excited IR (shot-forge v6)</span>
+  </div>
+  <div class="lc">
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="tailLen" min="30" max="2000" value="300"><div class="rv">300ms</div></div>
+    <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="tailTone" min="0" max="100" value="40"><div class="rv">40%</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="tailDelay" min="0" max="100" value="2"><div class="rv">2ms</div></div>
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="tailLvl" min="0" max="100" value="30"><div class="rv">30%</div></div>
+  </div>
+</div>
+
+
+<div class="layer layer-mic" data-layer="mic">
+  <div class="lh">
+    <span class="lt lt-mic" data-toggle="mic">MIC</span>
+    <span class="ll">Mic saturation — Hacihabiboglu 2017</span>
+  </div>
+  <div class="lc">
+    <div class="cg"><label>Clip</label><input type="range" class="sp" data-p="micClip" min="0" max="100" value="40"><div class="rv">40%</div></div>
+    <div class="cg"><label>Pos Ceil</label><input type="range" class="sp" data-p="micPos" min="50" max="100" value="80"><div class="rv">80%</div></div>
+    <div class="cg"><label>Neg Floor</label><input type="range" class="sp" data-p="micNeg" min="50" max="100" value="80"><div class="rv">80%</div></div>
+  </div>
+</div>
+
+
+<div class="layer out-layer">
+  <div class="lh"><span class="lt" style="background:#f97316;border-color:#fb923c;cursor:default">OUT</span></div>
+  <div class="lc">
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="outLevel" min="10" max="100" value="85"><div class="rv">85%</div></div>
+  </div>
+</div>
+
+</div>
+
+<div class="btn-row">
+  <button class="btn btn-r" id="randomBtn">RANDOMISE</button>
+  <button class="btn btn-g" id="generateBtn">GENERATE</button>
+  <button class="btn btn-t" id="testBtn" disabled>&#9654; TEST</button>
+  <button class="btn btn-d" id="downloadBtn" disabled>DOWNLOAD .WAV</button>
+</div>
+
+<div class="viz-box" id="waveformBox">
+  <div class="viz-header">
+    <span class="viz-title">WAVEFORM</span>
+    <span class="viz-info" id="waveformInfo"></span>
+  </div>
+  <div class="viz-cw"><canvas id="waveformCanvas" height="120"></canvas></div>
+</div>
+
+
+  <div class="ta-navfooter">
+    <a href="click-factory.html">&lt;&lt; CLICK FACTORY</a>
+    <button class="ta-btn-random" id="taRandomBtn">&#127922; RANDOM</button>
+    <a href="babel.html">BABEL &gt;&gt;</a>
+  </div>
+  <div style="text-align:center;font-size:14px;color:#dc2626;border:2px ridge #dc2626;padding:6px 14px;background:rgba(0,0,0,0.5);margin-top:14px">&lt;&lt; <a href="#" style="color:#f97316;text-decoration:none">prev</a> | <a href="#" style="color:#f97316;text-decoration:none">~ Acoustics WebRing ~</a> | <a href="#" style="color:#f97316;text-decoration:none">next</a> &gt;&gt;</div>
+  <div style="text-align:center;margin-top:14px"><a href="home.html" style="display:inline-block;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:3px;padding:12px 30px;border:2px solid #fff;color:#fff;text-decoration:none;background:rgba(255,255,255,0.05);transition:all 0.15s" onmouseover="this.style.background='#fff';this.style.color='#000';this.style.boxShadow='0 0 20px rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='#fff';this.style.boxShadow='none'">&#9751; BACK TO HOME</a></div>
+</div>
+<div class="status-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span id="statusText">Ready</span>
+  <span class="right">SHOT FORGE — BLAST + CRACK</span>
+</div>
+
+<script>
+var SR=48000, P0=101000, C=341.0, GAMMA=1.24;
+var fireMode='single', curBuf=null, nGen=0, layerOff={};
+function rnd(){ return Math.random(); }
+
+// ── Parameter mapping ──────────────────────────────
+function calDiam(pct){ return 0.0055+(pct/100)*(0.0127-0.0055); }
+function calLen(pct){ return calDiam(pct)*3.2; }
+function boreArea(d){ return Math.PI*(d/2)*(d/2); }
+function propPa(pct){ return (1000+(pct/100)*3500)*98066.5; }
+function propUe(pct){ return 250+(pct/100)*750; }
+function barrelLen(cal,prop){ return 0.07+(cal/100)*0.35+(prop/100)*0.15; }
+
+// ── Friedlander physics (Hacihabiboglu / pygunshot) ─
+function momentumIndex(M,pe){
+  var x=M*Math.sqrt(GAMMA*(pe/P0)/2);
+  return Math.max(0.05,Math.min(0.99,0.87-0.01*x));
+}
+function scalingLengths(pe,ue,Ae,mu,theta){
+  var Me=ue/C,peb=pe/P0;
+  var dEdt=(GAMMA*peb*ue)/(GAMMA-1)*(1+(GAMMA-1)/2*Me*Me)*Ae;
+  var l=Math.sqrt(dEdt/(P0*C));
+  var ratio=mu*Math.cos(theta)+Math.sqrt(1-mu*mu*Math.sin(theta)*Math.sin(theta));
+  return {l:l,lp:l*ratio*10};
+}
+function peakOverpressure(r,lp){
+  var rb=r/lp,Pb;
+  if(rb<50) Pb=0.89*(lp/r)+1.61*(lp/r)*(lp/r);
+  else Pb=3.48975/(rb*Math.sqrt(Math.log(33119.0*rb)));
+  return Pb/100;
+}
+function posPhase(r,lp,l,L,Vp){
+  var rb=r/lp,X=Math.sqrt(rb*rb+1.04*rb+1.88);
+  var delta=(L*C)/(Vp*l);
+  var G=0.09-0.00379*delta+1.07*(1-1.36*Math.exp(-0.049*rb))*l/lp;
+  var tb;
+  if(rb<50) tb=rb-X+0.52*Math.log(2*X+2*rb+1.04)+0.56+G;
+  else tb=2.99*Math.sqrt(Math.log(33119.0*rb))-8.534+G;
+  return Math.max(0.00015,tb*lp/C);
+}
+
+// ── Friedlander generator ──────────────────────────
+function genFriedlander(p){
+  // Fixed observer position: 20m, 15 degrees — removed from UI as perceptually negligible
+  var theta=0.262; // 15 degrees
+  var r=20.0;
+  var d=calDiam(p.caliber),Ae=boreArea(d);
+  var pe=propPa(p.propellant),ue=propUe(p.propellant);
+  var L=barrelLen(p.caliber,p.propellant);
+  var M=ue/C,mu=momentumIndex(M,pe);
+  var sl=scalingLengths(pe,ue,Ae,mu,theta);
+  var lp=sl.lp,l=sl.l;
+  var tau=posPhase(r,lp,l,L,ue);
+  var Pp=peakOverpressure(r,lp);
+  var satAmt=(p.saturation||0)/100;
+  var negPhase=(p.negphase||80)/100;
+
+  // Tau multiplier: stretches the positive phase duration beyond physical limits
+  // 100% = physics (0.15-1.3ms), 800% = up to ~10ms cinematic
+  var tauMult=(p.tauMult||100)/100;
+  tau=tau*tauMult;
+
+  // Exaggerate: boosts negative phase depth and adds a secondary bump
+  // 0% = clean Friedlander, 100% = dramatic undershoot + low-freq body
+  var exag=(p.exaggerate||0)/100;
+  var negBoost=negPhase + exag*(1-negPhase); // push neg phase toward full
+  var secondBump=exag*0.4; // secondary pressure wave
+
+  var tauSamp=tau*SR;
+  var riseSamp=Math.max(1,Math.round(SR*0.00004));
+  var durN=Math.ceil(tau*16*SR)+riseSamp;
+  var out=new Float32Array(durN);
+
+  for(var i=0;i<durN;i++){
+    var s;
+    if(i<riseSamp){
+      s=Pp*(i/riseSamp);
+    } else {
+      var t=(i-riseSamp)/tauSamp;
+      var raw=(1-t)*Math.exp(-t);
+      if(raw<0) raw*=negBoost;
+      // Secondary bump from exaggerate (echoed pressure reflection feel)
+      if(secondBump>0.01){
+        var t2=t-2.5; // arrives at 2.5x tau
+        if(t2>0) raw+=secondBump*0.3*(1-t2)*Math.exp(-t2*1.5);
+      }
+      s=Pp*raw;
+    }
+    out[i]=s;
+  }
+  if(satAmt>0.01){
+    var drive=1.0+satAmt*4.0,denom=Math.tanh(drive*0.9);
+    for(var i=0;i<durN;i++) out[i]=Math.tanh(out[i]*drive)/denom;
+  }
+  var pk=0;
+  for(var i=0;i<durN;i++) pk=Math.max(pk,Math.abs(out[i]));
+  var last=durN-1;
+  while(last>0&&Math.abs(out[last])<pk*0.001) last--;
+  return out.subarray(0,last+Math.round(SR*0.002));
+}
+
+// ── N-wave generator (Beck / pygunshot) ───────────
+// The N-wave is the ballistic shockwave from a supersonic projectile.
+// It's called N-wave because the pressure trace looks like the letter N:
+// sharp positive spike → linear sweep through zero → sharp negative spike.
+// This is inherently BIPOLAR. The old version was mostly positive.
+// NEW: true bipolar N-shape, followed by a short HP noise burst that gives
+// the "crack" its breaking/snapping character (the shockwave diffracting).
+function genNwave(p){
+  var v=p.crackVel, Lm=Math.max(0.3,p.crackMiss);
+  var lvl=(p.crackLvl||70)/100;
+  var offsetMs=(p.crackOffset||1);
+  if(v<=C) return null;
+
+  var Me=v/C;
+  var d=calDiam(p.caliber), l=calLen(p.caliber);
+
+  var PN=0.53*P0*Math.pow(Me*Me-1,0.125)*d/(Math.pow(Lm,0.75)*Math.pow(l,0.25));
+  var Td=1.82*Me*Math.pow(Lm,0.25)*d/(C*Math.pow(Me*Me-1,0.375)*Math.pow(l,0.25));
+  var tr=Math.max(1/SR,(68e-9/C)*(P0/PN));
+
+  var trSamp=Math.max(1,Math.round(tr*SR));
+  var TdSamp=Math.max(trSamp*4,Math.round(Td*SR));
+  var offSamp=Math.round(offsetMs/1000*SR);
+
+  // Crack noise tail: 2-6ms of HP noise that follows the N-wave shock
+  // This is the diffraction/turbulence behind the shock front — gives the "snap"
+  var crackTailMs = 2 + (Me-1)*3; // longer tail at higher mach
+  crackTailMs = Math.min(crackTailMs, 8);
+  var crackTailS = Math.round(crackTailMs/1000*SR);
+
+  var N=offSamp+TdSamp+crackTailS+48;
+  var out=new Float32Array(N);
+
+  // True N-wave: positive spike → linear through zero → negative spike
+  for(var i=0;i<TdSamp;i++){
+    var wv;
+    if(i<trSamp){
+      // Rising edge of positive shock
+      wv=PN*(i/trSamp);
+    } else if(i<=TdSamp-trSamp){
+      // Linear sweep from +PN to -PN (the "N" shape)
+      wv=PN*(1-2*(i-trSamp)/(TdSamp-2*trSamp));
+    } else {
+      // Falling edge of negative shock
+      wv=PN*((i-TdSamp+trSamp)/trSamp-1);
+    }
+    out[offSamp+i]=wv*lvl;
+  }
+
+  // Post-shock crack noise: HP-filtered noise burst
+  // This is the turbulent wake behind the shock — gives the "CRACK" snap
+  var noiseStart = offSamp + TdSamp;
+  var hpState = 0;
+  var hpAlpha = 1/(1+SR/(6.28318*3000)); // 3kHz HP — crispy
+  for(var i=0;i<crackTailS;i++){
+    var n = Math.random()*2-1;
+    hpState += hpAlpha*(n-hpState);
+    var hp = n - hpState; // highpassed noise
+    var t = i/crackTailS;
+    // Fast attack, exponential decay
+    var env = Math.min(1, i/Math.max(1,Math.round(SR*0.0001))) * Math.exp(-t*5);
+    // Scale relative to N-wave peak — the crack noise is lower than the shock
+    if((noiseStart+i)<N) out[noiseStart+i] += hp * env * PN * lvl * 0.3;
+  }
+
+  return out;
+}
+
+// ── Mix + norm ─────────────────────────────────────
+function mixInto(a,b){
+  var N=Math.max(a.length,b.length),out=new Float32Array(N);
+  for(var i=0;i<a.length;i++) out[i]+=a[i];
+  for(var i=0;i<b.length;i++) out[i]+=b[i];
+  return out;
+}
+function norm(buf,vol){
+  // DC centre first so asymmetric waveforms (Friedlander) use full ±1 excursion
+  var sum=0;
+  for(var i=0;i<buf.length;i++) sum+=buf[i];
+  var dc=sum/buf.length;
+  for(var i=0;i<buf.length;i++) buf[i]-=dc;
+  // Now normalise to ±vol
+  var mx=0;
+  for(var i=0;i<buf.length;i++) mx=Math.max(mx,Math.abs(buf[i]));
+  if(mx>1e-9) for(var i=0;i<buf.length;i++) buf[i]*=vol/mx;
+  return buf;
+}
+
+// ── Biquad lowpass filter ──────────────────────────
+function biquadLP(sig, cutoff, Q){
+  Q=Q||0.6;
+  var w0=2*Math.PI*cutoff/SR, sinW=Math.sin(w0), cosW=Math.cos(w0);
+  var alpha=sinW/(2*Q);
+  var b0=(1-cosW)/2, b1=1-cosW, b2=(1-cosW)/2;
+  var a0=1+alpha, a1=-2*cosW, a2=1-alpha;
+  b0/=a0; b1/=a0; b2/=a0; a1/=a0; a2/=a0;
+  var out=new Float32Array(sig.length);
+  var x1=0,x2=0,y1=0,y2=0;
+  for(var i=0;i<sig.length;i++){
+    var x=sig[i], y=b0*x+b1*x1+b2*x2-a1*y1-a2*y2;
+    out[i]=y; x2=x1; x1=x; y2=y1; y1=y;
+  }
+  return out;
+}
+
+// ── Sub-bass: Friedlander slow tail with preserved bipolarity ──
+// The original double-LP at 100Hz was killing the negative phase.
+// Now: single LP pass, higher minimum cutoff, DC-blocked after
+// filtering so the negative excursion survives as rarefaction.
+function genSub(p){
+  var theta=0.262, r=20.0;
+  var d=calDiam(p.caliber), Ae=boreArea(d);
+  var pe=propPa(p.propellant), ue=propUe(p.propellant);
+  var L=barrelLen(p.caliber,p.propellant);
+  var M=ue/C, mu=momentumIndex(M,pe);
+  var sl=scalingLengths(pe,ue,Ae,mu,theta);
+  var baseTau=posPhase(r,sl.lp,sl.l,L,ue);
+  var tau=baseTau*(p.subTau||14);
+  var tauSamp=tau*SR;
+  var riseSamp=Math.max(4,Math.round(SR*0.001));
+  var durN=Math.ceil(tau*16*SR)+riseSamp;
+  var out=new Float32Array(durN);
+
+  // Generate Friedlander shape — this naturally has a negative phase
+  for(var i=0;i<durN;i++){
+    if(i<riseSamp){ out[i]=i/riseSamp; }
+    else{ var t=(i-riseSamp)/tauSamp; out[i]=(1-t)*Math.exp(-t); }
+  }
+
+  // Single LP pass instead of double — preserves more of the negative phase
+  var cut=Math.max(60, p.subCutoff||100); // floor at 60Hz to keep some shape
+  out=biquadLP(out,cut,0.5); // lower Q for gentler rolloff
+
+  // DC block — removes any offset that LP filtering introduced,
+  // ensuring the waveform swings properly around zero
+  var dcHP = 0, dcAlpha = 1/(1+SR/(6.28318*10)); // 10Hz HP
+  for(var i=0;i<out.length;i++){
+    dcHP += dcAlpha*(out[i]-dcHP);
+    out[i] = out[i] - dcHP;
+  }
+
+  var pk=0;
+  for(var i=0;i<out.length;i++) pk=Math.max(pk,Math.abs(out[i]));
+  var last=out.length-1;
+  while(last>0&&Math.abs(out[last])<pk*0.001) last--;
+  return out.subarray(0,last+Math.round(SR*0.005));
+}
+
+// ── Whoosh: gas exit turbulence — the "SHHH" ──────
+// When propellant gas exits the muzzle, it creates a turbulent jet.
+// This is NOT a pitched resonance — it's broadband turbulent airflow
+// with a frequency distribution that sweeps down as pressure drops.
+// Think of the "SHH" you hear after the initial crack.
+// Envelope: fast onset as gas hits open air, then decaying rush.
+function genWhoosh(p){
+  var L        = barrelLen(p.caliber, p.propellant);
+  var buildMs  = p.whooshBuild || 8;
+  var tailMs   = p.whooshTail  || 4;
+  var tone     = (p.whooshTone || 50)/100;
+  var drive    = (p.whooshDrive|| 50)/100;
+
+  var buildS   = Math.round(buildMs/1000*SR);
+  var tailS    = Math.round(tailMs /1000*SR);
+  var totalN   = buildS + tailS;
+  var out      = new Float32Array(totalN);
+
+  // Turbulent jet noise: white noise → swept LP + HP to shape the "SHH"
+  // Frequency band starts wide (2-12kHz) and narrows downward as gas dissipates
+  var lpStart = 8000 + tone*8000;  // top of band: 8-16kHz
+  var lpEnd   = 1500 + tone*3000;  // settles to 1.5-4.5kHz
+  var hpFreq  = 400 + (1-tone)*800; // bottom of band: 400-1200Hz
+
+  var lpState = 0, lpState2 = 0;
+  var hpState = 0;
+  var hpAlpha = 1/(1+SR/(6.28318*hpFreq));
+
+  for(var i=0;i<totalN;i++){
+    var t = i/totalN;
+    var n = Math.random()*2-1;
+
+    // HP to remove low-end rumble (this is airy, not bassy)
+    hpState += hpAlpha*(n-hpState);
+    var hp = n - hpState;
+
+    // Swept LP: frequency drops over time as gas pressure falls
+    var lpFreq = lpStart + (lpEnd-lpStart)*t;
+    var lpAlpha = Math.min(0.99, 6.28318*lpFreq/SR);
+    lpState += lpAlpha*(hp-lpState);
+    lpState2 += lpAlpha*(lpState-lpState2); // 2nd order for smooth rolloff
+
+    // Envelope: build phase → peak → tail decay
+    var env;
+    if(i < buildS){
+      var bt = i/buildS;
+      env = 1 - Math.exp(-bt*6); // fast onset
+    } else {
+      var dt = i - buildS;
+      env = Math.exp(-dt/(tailS*0.35)); // quick decay after gas exits
+    }
+
+    out[i] = lpState2 * env;
+  }
+
+  // Drive: adds gritty character at high pressures
+  if(drive > 0.01){
+    var pregain = 1 + drive * 5;
+    for(var i=0;i<totalN;i++) out[i] = Math.tanh(out[i]*pregain) / Math.tanh(pregain);
+  }
+
+  return out;
+}
+
+// ── Air rush: negative phase turbulent backflow ────
+// After the Friedlander positive phase, the pressure deficit pulls
+// air back toward the muzzle. This creates broadband turbulence.
+// Character: soft "fft" or "ffsh" — NOT clicking, NOT pulsed.
+// OLD version used a sharp attack + tight BP = sounded like woodpecker.
+// NEW: smoother onset, wider band, multiple LP passes for soft character.
+function genAirRush(p){
+  var onsetMs = p.airOnset || 3;
+  var lenMs   = p.airLen   || 8;
+  var tone    = (p.airTone || 50)/100;
+
+  var onsetS  = Math.round(onsetMs/1000*SR);
+  var lenS    = Math.round(lenMs/1000*SR);
+  var N       = onsetS + lenS;
+  var out     = new Float32Array(N);
+
+  // White noise → gentle shaping (NOT pink — we want the airy brightness)
+  // Multiple single-pole filters for smooth frequency response
+  var lpState1=0, lpState2=0, hpState=0;
+
+  // Band: 300Hz-4kHz, centre shifts with tone
+  var hpFreq = 250 + (1-tone)*400; // 250-650Hz
+  var lpFreq = 2500 + tone*3000;   // 2500-5500Hz
+  var hpA = 1/(1+SR/(6.28318*hpFreq));
+
+  // Smooth attack: 1.5ms ramp (not 0.3ms — that was causing clicks)
+  var attackS = Math.max(4, Math.round(SR*0.0015));
+
+  for(var i=0;i<lenS;i++){
+    var n = Math.random()*2-1;
+
+    // HP to remove rumble
+    hpState += hpA*(n-hpState);
+    var hp = n - hpState;
+
+    // LP sweeps down over time (turbulence dissipating)
+    var t = i/lenS;
+    var currentLP = lpFreq * (1 - t*0.6); // sweeps down to 40% of start
+    var lpA = Math.min(0.99, 6.28318*currentLP/SR);
+    lpState1 += lpA*(hp-lpState1);
+    lpState2 += lpA*(lpState1-lpState2);
+
+    // Smooth envelope: gradual rise, sustained, gradual fade
+    var env;
+    if(i < attackS){
+      env = (i/attackS) * (i/attackS); // quadratic rise — smooth, no click
+    } else {
+      env = Math.exp(-t*3) * (1-t*0.5); // gentle decay
+    }
+
+    out[onsetS+i] = lpState2 * env;
+  }
+
+  return out;
+}
+
+// ── Ground reflection (Maher 2007) ────────────────
+// Delayed, attenuated, LP-filtered copy of combined blast+crack
+// Simulates acoustic reflection off ground surface
+function genRefl(directBuf, p){
+  var delaySamp = Math.round((p.reflDelay||8)/1000*SR);
+  var decay     = (p.reflDecay||55)/100;
+  var cutoff    = p.reflCutoff||3000;
+  // LP filter the source then delay
+  var filt = biquadLP(directBuf, cutoff, 0.707);
+  var N = filt.length + delaySamp;
+  var out = new Float32Array(N);
+  for(var i=0;i<filt.length;i++) out[i+delaySamp] += filt[i]*decay;
+  return out;
+}
+
+// ── Body: impulse-excited resonant chamber model ──────────
+// OLD: sine sweep ("synth kick" sound — too synthetic)
+// NEW: short broadband impulse → resonant bandpass filters at gun body modes.
+// The impulse provides the "thump", the resonances provide tonal character.
+// Spectral sweep: filter frequencies drop over time (pressure dissipation).
+// Brownian noise layer adds low-freq texture (Hacihabiboglu 2017 s5.2).
+function genBody(p){
+  var freq    = p.bodyFreq    || 60;
+  var lenMs   = p.bodyLen     || 40;
+  var noiseLvl= (p.bodyNoise  ||30)/100;
+  var eqFreq  = p.bodyEQFreq  || 100;
+  var eqGain  = (p.bodyEQGain ||50)/100;
+
+  var N = Math.round(lenMs/1000*SR);
+  var out = new Float32Array(N);
+
+  // Phase 1: Generate broadband impulse exciter (1.5ms shaped noise burst)
+  var exciterLen = Math.round(SR*0.0015);
+  var exciter = new Float32Array(N);
+  for(var i=0;i<Math.min(exciterLen, N);i++){
+    var t = i/exciterLen;
+    // Fast attack, exponential decay — mimics the pressure burst
+    var env = (i < 3 ? i/3 : 1) * Math.exp(-t*4);
+    exciter[i] = (Math.random()*2-1) * env;
+  }
+
+  // Phase 2: Two resonant bandpass filters at body modal frequencies
+  // Mode 1: fundamental chamber resonance (user freq)
+  // Mode 2: first overtone (~2.7x, inharmonic — cylindrical cavity mode)
+  var f1 = freq;
+  var f2 = Math.min(freq * 2.7, SR*0.4);
+
+  // Filter exciter through resonant BPs with frequency sweep
+  // State variables for two SVF bandpass filters
+  var bp1_lo=0, bp1_band=0, bp2_lo=0, bp2_band=0;
+  var sweepStart = 1.6; // start freq multiplier (higher at onset)
+
+  for(var i=0;i<N;i++){
+    var t = i/N;
+    var x = exciter[i];
+
+    // Frequency sweeps downward over duration (pressure dissipation)
+    var sweep = sweepStart + (1.0 - sweepStart) * (1 - Math.exp(-t*6));
+    var cf1 = f1 * sweep;
+    var cf2 = f2 * sweep;
+
+    // SVF bandpass - mode 1 (fundamental, Q=3)
+    var g1 = Math.tan(Math.PI * Math.min(cf1, SR*0.45) / SR);
+    var k1 = 1/3.0; // 1/Q
+    var a1_1 = 1/(1 + g1*(g1+k1));
+    bp1_band = a1_1 * (bp1_band + g1*(x - bp1_lo - k1*bp1_band));
+    bp1_lo += 2*g1*bp1_band;
+
+    // SVF bandpass - mode 2 (overtone, Q=4 — tighter)
+    var g2 = Math.tan(Math.PI * Math.min(cf2, SR*0.45) / SR);
+    var k2 = 1/4.0;
+    var a2_1 = 1/(1 + g2*(g2+k2));
+    bp2_band = a2_1 * (bp2_band + g2*(x - bp2_lo - k2*bp2_band));
+    bp2_lo += 2*g2*bp2_band;
+
+    // Mix modes with exponential decay envelope
+    var env = Math.exp(-t*(2.5 + (1-eqGain)*3));
+    out[i] = (bp1_band * 0.7 + bp2_band * 0.3) * env;
+  }
+
+  // Brownian noise — LP'd, adds low-freq texture
+  if(noiseLvl > 0.01){
+    var brown = 0;
+    var nArr = new Float32Array(N);
+    for(var i=0;i<N;i++){
+      brown += (Math.random()*2-1)*0.05;
+      brown *= 0.998;
+      nArr[i] = brown * Math.exp(-i/(N*0.3));
+    }
+    nArr = biquadLP(nArr, 120, 0.6);
+    var npk=0; for(var i=0;i<nArr.length;i++) npk=Math.max(npk,Math.abs(nArr[i]));
+    if(npk>1e-9) for(var i=0;i<nArr.length;i++) out[i]+=nArr[i]/npk*noiseLvl;
+  }
+
+  // Resonant peaking EQ — gun body resonance boost
+  if(eqGain > 0.02){
+    var boost = 1 + eqGain*4;
+    var w0    = 2*Math.PI*eqFreq/SR;
+    var A     = Math.sqrt(boost);
+    var alpha = Math.sin(w0)*0.5/0.8;
+    var b0=(1+alpha*A), b1=-2*Math.cos(w0), b2=(1-alpha*A);
+    var a0=(1+alpha/A),  a1=-2*Math.cos(w0), a2=(1-alpha/A);
+    b0/=a0; b1/=a0; b2/=a0; a1/=a0; a2/=a0;
+    var x1=0,x2=0,y1=0,y2=0;
+    for(var i=0;i<out.length;i++){
+      var x=out[i],y=b0*x+b1*x1+b2*x2-a1*y1-a2*y2;
+      out[i]=y; x2=x1; x1=x; y2=y1; y1=y;
+    }
+  }
+  return out;
+}
+
+// ── Mic saturation (Hacihabiboglu 2017 section 5.2) ──
+// Hard clip the normalised mix — emulates mic diaphragm saturation
+// ══════════════════════════════════════════════════
+// MECHANICAL LAYERS — modal synthesis
+// Each metallic sound = impulse into N damped sine oscillators
+// h(t) = sum_n [ a_n * sin(2π*f_n*t) * exp(-d_n*t) ]
+// Metal: inharmonic partials, long decay, high damping sensitivity
+// ──────────────────────────────────────────────────
+
+// Core modal synth: partials = [{f, a, d}], lenS = buffer length
+function modalSynth(partials, lenS){
+  var out = new Float32Array(lenS);
+  for(var n=0; n<partials.length; n++){
+    var f=partials[n].f, a=partials[n].a, d=partials[n].d;
+    var w=2*Math.PI*f/SR;
+    for(var i=0;i<lenS;i++) out[i]+=a*Math.sin(w*i)*Math.exp(-d*i/SR);
+  }
+  return out;
+}
+
+// Impulse noise burst: broadband click, decays in clickMs
+function impulseBurst(lenS, clickMs){
+  var out = new Float32Array(lenS);
+  var clickS = Math.round(clickMs/1000*SR);
+  for(var i=0;i<Math.min(clickS,lenS);i++){
+    out[i] = (Math.random()*2-1) * Math.exp(-i/(clickS*0.3));
+  }
+  return out;
+}
+
+
+// ── SHHK: BCG rail scrape — metallic sliding contact ──
+// BCG slides along receiver rails. The metal-on-metal contact
+// excites resonant modes of the receiver while producing friction noise.
+// NEW: mix of resonant modal ringing (metallic) + stick-slip BP noise (scrape).
+// More metal, less pure noise.
+function genShhk(p){
+  var centreHz = Math.max(p.shhkFreq || 1200, 800);
+  var lenMs    = Math.min(p.shhkDecay || 6, 20);
+  var rough    = (p.shhkBody || 65)/100;
+  var bite     = (p.shhkThud || 55)/100;
+
+  var lenS = Math.ceil(lenMs/1000*SR);
+  var out  = new Float32Array(lenS);
+
+  // The scrape frequency — push it up for metallic character
+  var metalFreq = centreHz * 1.8;
+  metalFreq = Math.min(metalFreq, SR*0.42);
+
+  // Component 1: Resonant modes of the receiver (metallic ring)
+  // 3 inharmonic modes excited by a noise impulse — gives the "metal" character
+  var modes = [
+    {f: metalFreq,       a: 0.4, d: 400 + rough*300},
+    {f: metalFreq*1.73,  a: 0.25, d: 600 + rough*400},  // inharmonic
+    {f: metalFreq*3.1,   a: 0.15*rough, d: 900}          // high shimmer
+  ];
+
+  for(var m=0;m<modes.length;m++){
+    var freq = Math.min(modes[m].f, SR*0.42);
+    var w = 2*Math.PI*freq/SR;
+    var amp = modes[m].a;
+    var dRate = modes[m].d;
+    for(var i=0;i<lenS;i++){
+      var t = i/lenS;
+      // Envelope: fast attack, sustain during scrape, then decay
+      var env;
+      if(t < 0.08) env = t/0.08;
+      else if(t < 0.7) env = 1.0 - (t-0.08)*0.3;
+      else env = Math.exp(-(t-0.7)*8);
+      out[i] += amp * Math.sin(w*i) * Math.exp(-dRate*i/SR) * env;
+    }
+  }
+
+  // Component 2: Friction noise — stick-slip modulated BP noise
+  var b0n=0,b1n=0,b2n=0,b3n=0,b4n=0,b5n=0,b6rn=0;
+  var slipFreq = 300 + rough*250;
+  var slipW = 2*Math.PI*slipFreq/SR;
+
+  // BP filter for friction noise at higher freq than modes
+  var frictionHz = Math.min(metalFreq*2.2, SR*0.42);
+  var Qf = 2.0 + rough*2.0;
+  var wf=2*Math.PI*frictionHz/SR, sf=Math.sin(wf), cf=Math.cos(wf), alf=sf/(2*Qf);
+  var af0=1+alf, fb0=alf/af0, fb2=-alf/af0, fa1=(-2*cf)/af0, fa2=(1-alf)/af0;
+  var fx1=0,fx2=0,fy1=0,fy2=0;
+
+  for(var i=0;i<lenS;i++){
+    var wh=Math.random()*2-1;
+    b0n=0.99886*b0n+wh*0.0555179; b1n=0.99332*b1n+wh*0.0750759;
+    b2n=0.96900*b2n+wh*0.1538520; b3n=0.86650*b3n+wh*0.3104856;
+    b4n=0.55000*b4n+wh*0.5329522; b5n=-0.7616*b5n-wh*0.0168980;
+    var pink=(b0n+b1n+b2n+b3n+b4n+b5n+b6rn+wh*0.5362)*0.11; b6rn=wh*0.115926;
+
+    var ya=fb0*pink+fb2*fx2-fa1*fy1-fa2*fy2; fx2=fx1;fx1=pink;fy2=fy1;fy1=ya;
+
+    // Stick-slip AM
+    var slip = 1.0 - (0.3+rough*0.4)*Math.max(0, Math.sin(slipW*i));
+    ya *= slip;
+
+    var t=i/lenS;
+    var env = i<Math.round(SR*0.00015) ? i/Math.round(SR*0.00015) : Math.exp(-t*4);
+    out[i] += ya*env*rough*0.5; // noise is quieter than modes
+  }
+
+  // Hard initial contact click
+  if(bite>0.01){
+    var ckS=Math.round(SR*0.0003);
+    for(var i=0;i<Math.min(ckS,lenS);i++){
+      out[i] += (Math.random()*2-1)*Math.exp(-i/(ckS*0.08))*bite*0.5;
+    }
+  }
+
+  return out;
+}
+
+// ── TINK: firing pin strike — inharmonic modal synthesis ──
+// Metal-on-metal impact: short impulse exciting 4 inharmonic modes
+// of a small steel cylinder. Ratios from cylindrical bar modes.
+// Impulse exciter provides the initial "click", modes provide the ring.
+function genTink(p){
+  var f0     = p.tinkFreq   || 3200;
+  var bright = (p.tinkBright|| 60)/100;
+  var click  = (p.tinkClick || 70)/100;
+
+  // Extended to 2.5ms to let modal ringing develop slightly
+  var lenS = Math.ceil(SR*0.0025);
+  var out  = new Float32Array(lenS);
+
+  // Broadband impulse exciter — the initial contact click
+  var clickS = Math.round(SR*0.0004); // 0.4ms
+  for(var i=0;i<Math.min(clickS,lenS);i++){
+    out[i] += (Math.random()*2-1) * Math.exp(-i/(clickS*0.15)) * click;
+  }
+
+  // Inharmonic modal partials — small steel cylinder ratios
+  // Ratios: 1.0, 2.76, 5.4, 8.93 (typical for cylindrical bar bending modes)
+  var modes = [
+    {r: 1.0,  a: 0.35, decay: 600},   // fundamental
+    {r: 2.76, a: 0.25, decay: 800},   // mode 2 — brighter
+    {r: 5.4,  a: 0.15*bright, decay: 1200},  // mode 3
+    {r: 8.93, a: 0.08*bright, decay: 1800}   // mode 4 — shimmer
+  ];
+
+  for(var m=0;m<modes.length;m++){
+    var freq = Math.min(f0 * modes[m].r, SR*0.45);
+    var w = 2*Math.PI*freq/SR;
+    var amp = modes[m].a;
+    var d = modes[m].decay;
+    for(var i=0;i<lenS;i++){
+      out[i] += amp * Math.sin(w*i) * Math.exp(-d*i/SR);
+    }
+  }
+
+  return out;
+}
+
+// ── CHUK: casing pop — the case being ejected with force ──────
+// The casing is kicked out by the extractor. It's a sharp, punchy pop:
+// a short pressure burst (gas behind the casing) + brief metallic scrape.
+// NOT a sustained ring. NOT wood-knock tone. Think: small explosive release.
+function genChuk(p){
+  var f0      = p.chukFreq || 220;
+  var lenMs   = p.chukLen    || 18;
+  var scrape  = (p.chukScrape|| 55)/100;
+  var ring    = (p.chukRing  || 45)/100;
+
+  var lenS = Math.ceil(lenMs/1000*SR);
+  var out = new Float32Array(lenS);
+
+  // Map freq slider to useful range for the pop character
+  var popFreq = Math.min(f0 * 3, 1200); // 180-900Hz pop centre
+
+  // Component 1: Pressure pop — bipolar impulse (gas release behind casing)
+  var popLen = Math.round(SR*0.002); // 2ms sharp pop
+  for(var i=0;i<Math.min(popLen, lenS);i++){
+    var t = i/popLen;
+    // Bipolar: positive push then negative suck
+    var s = (1 - 2.5*t) * Math.exp(-t*3);
+    // Add a touch of the pop frequency
+    s += 0.3*Math.sin(2*Math.PI*popFreq*i/SR) * Math.exp(-t*5);
+    out[i] += s * ring;
+  }
+
+  // Component 2: Short scrape as casing slides out (broadband, 2-5kHz)
+  if(scrape > 0.01){
+    var scrapeStart = Math.round(popLen * 0.5); // overlaps slightly with pop
+    var scrapeLen = Math.round(lenS * 0.5);
+    var hpS=0, lpS=0;
+    var hpA = 1/(1+SR/(6.28318*1500));
+    for(var i=0;i<scrapeLen&&(scrapeStart+i)<lenS;i++){
+      var t = i/scrapeLen;
+      var n = Math.random()*2-1;
+      // BP: HP at 1.5kHz, LP sweeping down from 6kHz
+      hpS += hpA*(n-hpS);
+      var hp = n - hpS;
+      var lpF = 6000 - t*3000;
+      var lpA = Math.min(0.99, 6.28318*lpF/SR);
+      lpS += lpA*(hp-lpS);
+
+      var env;
+      if(t < 0.1) env = t/0.1;
+      else env = Math.exp(-(t-0.1)*4);
+
+      out[scrapeStart+i] += lpS * env * scrape * 0.6;
+    }
+  }
+
+  // Component 3: Very short metallic click at ejection point (not a ring)
+  if(ring > 0.01){
+    var clickAt = Math.round(lenS * 0.3);
+    var ckS = Math.round(SR*0.0005);
+    for(var i=0;i<ckS&&(clickAt+i)<lenS;i++){
+      out[clickAt+i] += (Math.random()*2-1)*Math.exp(-i/(ckS*0.12))*ring*0.4;
+    }
+  }
+
+  return out;
+}
+
+// ── SHING: casing ejection — clattery metallic burst ───────
+// Casing scraping/slapping the ejection port lip as it exits.
+// NEW: random frequency detuning per generation, wider bandwidth,
+// multiple micro-impacts for clattery character instead of single scrape.
+function genShing(p){
+  var f0      = p.shingFreq    || 1800;
+  var decMs   = Math.min(p.shingDecay   || 10, 35); // raised cap from 20 to 35ms
+  var shimmer = (p.shingShimmer|| 50)/100;
+  var bite    = (p.shingBite   || 65)/100;
+
+  var lenS = Math.ceil(decMs/1000*SR);
+  var out  = new Float32Array(lenS);
+
+  // Random detune per generation: ±20% around centre freq
+  var detune = 0.8 + rnd()*0.4;
+  var centreFreq = f0 * detune;
+
+  // Wider bandwidth: shimmer controls Q (lower Q = wider = more clatter)
+  var Q = 0.8 + shimmer*1.5; // range 0.8-2.3 — wider than before
+
+  // Bandpass noise
+  var b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6r=0;
+  var w0=2*Math.PI*centreFreq/SR, sinW=Math.sin(w0), cosW=Math.cos(w0);
+  var alpha=sinW/(2*Q);
+  var a0=1+alpha, ib0=alpha/a0, ib2=-alpha/a0, ia1=(-2*cosW)/a0, ia2=(1-alpha)/a0;
+  var x1=0,x2=0,y1=0,y2=0;
+
+  for(var i=0;i<lenS;i++){
+    var wh=Math.random()*2-1;
+    b0=0.99886*b0+wh*0.0555179; b1=0.99332*b1+wh*0.0750759;
+    b2=0.96900*b2+wh*0.1538520; b3=0.86650*b3+wh*0.3104856;
+    b4=0.55000*b4+wh*0.5329522; b5=-0.7616*b5-wh*0.0168980;
+    var pink=(b0+b1+b2+b3+b4+b5+b6r+wh*0.5362)*0.11; b6r=wh*0.115926;
+    var xv=pink, yv=ib0*xv+ib2*x2-ia1*y1-ia2*y2;
+    x2=x1;x1=xv;y2=y1;y1=yv;
+    var env=Math.exp(-i/(lenS*0.25));
+    out[i]=yv*env;
+  }
+
+  // Multiple micro-impacts: 2-3 tiny clicks spread across the first 60%
+  // simulates casing bouncing/rattling as it clears the port
+  var numClicks = 2 + Math.round(rnd());
+  for(var c=0;c<numClicks;c++){
+    var clickPos = Math.round((0.05 + rnd()*0.55) * lenS);
+    var ckS = Math.round(SR*(0.0003+rnd()*0.0005));
+    var clickAmp = (0.3 + rnd()*0.4) * bite;
+    for(var i=0;i<Math.min(ckS,lenS-clickPos);i++){
+      out[clickPos+i] += (Math.random()*2-1)*Math.exp(-i/(ckS*0.15))*clickAmp;
+    }
+  }
+
+  // Primary bite: sharp initial contact
+  if(bite>0.01){
+    var ckS=Math.round(SR*0.0006);
+    for(var i=0;i<Math.min(ckS,lenS);i++){
+      out[i]+=(Math.random()*2-1)*Math.exp(-i/(ckS*0.15))*bite*0.5;
+    }
+  }
+
+  return out;
+}
+
+
+// ── ROOM: early reflections — confined space slam ──
+// 3-6 discrete copies of the direct signal arriving 1-8ms apart.
+// NOT reverb — no tail. Just the first hard reflections off walls/floor.
+// Each copy is LP filtered and attenuated. Together they create the
+// "enclosed space" slam that makes a shot feel enormous.
+function genRoom(direct, p){
+  var sizeMs   = p.roomSize    || 8;   // max reflection delay
+  var density  = Math.round(p.roomDensity || 4); // number of reflections 2-6
+  var decay    = (p.roomDecay  || 55)/100; // attenuation per reflection
+  var cutoff   = p.roomCutoff  || 6000; // LP cutoff — walls absorb highs
+
+  // LP biquad coeffs
+  var w0=2*Math.PI*cutoff/SR, cosW=Math.cos(w0), alpha=Math.sin(w0)/1.414;
+  var b0=(1-cosW)/2/( 1+alpha), b1=(1-cosW)/(1+alpha), b2=b0;
+  var a1=(-2*cosW)/(1+alpha), a2=(1-alpha)/(1+alpha);
+
+  var maxDelaySamp = Math.round(sizeMs/1000*SR);
+  var N = direct.length + maxDelaySamp + 48;
+  var out = new Float32Array(N);
+
+  for(var r=0; r<density; r++){
+    // Spread reflections evenly across the size window
+    var delayFrac = (r+1)/(density+1);
+    var delaySamp = Math.round(delayFrac * maxDelaySamp);
+    var atten = Math.pow(decay, r+1); // each reflection attenuated more
+
+    // Copy direct → LP filter → write at delay offset
+    var x1=0,x2=0,y1=0,y2=0;
+    for(var i=0;i<direct.length;i++){
+      var x=direct[i]*atten;
+      var y=b0*x+b1*x1+b2*x2-a1*y1-a2*y2;
+      x2=x1;x1=x;y2=y1;y1=y;
+      if((i+delaySamp)<N) out[i+delaySamp]+=y;
+    }
+  }
+  return out;
+}
+
+// ── LFE: bipolar Friedlander sub-pulse ─────────────
+// Real pressure wave: positive overpressure → negative rarefaction → settle.
+// NOT a half-sine bump. Uses Friedlander shape at infrasonic freq range.
+// Negative phase ~0.4x positive peak (Rigby et al. 2014 measurements).
+// Drive adds saturation for cinematic weight without losing bipolarity.
+function genLfe(p){
+  var freq   = p.lfeFreq || 40;   // 20-80Hz — controls tonal centre
+  var lenMs  = p.lfeLen  || 5;    // 2-15ms positive phase
+  var drive  = (p.lfeDrive||60)/100;
+
+  // Positive phase + negative phase + settle = ~4x positive duration
+  var posS = Math.ceil(lenMs/1000*SR);
+  var totalS = posS * 5;
+  var out = new Float32Array(totalS);
+
+  // Friedlander-shaped bipolar pulse at infrasonic rate
+  // Positive phase: fast rise, exponential decay to zero crossing
+  var riseS = Math.max(2, Math.round(SR*0.00008)); // ~80μs rise (shock front)
+  for(var i=0;i<totalS;i++){
+    var s;
+    if(i < riseS){
+      // Sharp attack
+      s = i/riseS;
+    } else {
+      // Friedlander decay with stronger negative phase
+      var t = (i - riseS) / posS;
+      var raw = (1 - t) * Math.exp(-t);
+      // Boost the negative excursion to ~0.6x positive (more than Rigby's 0.4x)
+      // This gives the "gut suck" feeling after the push
+      if(raw < 0) raw *= 1.5;
+      s = raw;
+    }
+    out[i] = s;
+  }
+
+  // Lowpass to infrasonic range — shapes the pulse to the target frequency
+  // Single-pole for gentle rolloff that preserves the negative phase
+  var w = 2*Math.PI*freq/SR;
+  var a = w/(w+1);
+  var prev = 0;
+  for(var i=0;i<totalS;i++){
+    prev += a*(out[i]-prev);
+    out[i] = prev;
+  }
+  // Second pass for smoother shape
+  prev = 0;
+  for(var i=0;i<totalS;i++){
+    prev += a*(out[i]-prev);
+    out[i] = prev;
+  }
+
+  // Drive: tanh saturation for cinematic weight
+  if(drive>0.01){
+    var d=1+drive*3;
+    for(var i=0;i<totalS;i++) out[i]=Math.tanh(out[i]*d)/Math.tanh(d);
+  }
+
+  // Trim silence
+  var pk=0;
+  for(var i=0;i<totalS;i++) pk=Math.max(pk,Math.abs(out[i]));
+  var last=totalS-1;
+  while(last>0&&Math.abs(out[last])<pk*0.001) last--;
+  return out.subarray(0,last+Math.round(SR*0.002));
+}
+
+// ── Transient thickener: applied to blast buffer ───
+// Multiplies a 2ms burst of shaped bandpass noise into the
+// Friedlander spike peak. Adds physical "pressure wall" texture
+// without affecting the tail. Keeps the spike but makes it violent.
+function thickenBlast(blast, p){
+  var thickMs = 2.5; // fixed — just the spike region
+  var thickS  = Math.ceil(thickMs/1000*SR);
+  // Bandpass noise centred ~800Hz — adds broadband transient texture
+  var centreHz=800, Q=0.8;
+  var w0=2*Math.PI*centreHz/SR, sinW=Math.sin(w0), cosW=Math.cos(w0);
+  var alpha=sinW/(2*Q), a0=1+alpha;
+  var ib0=alpha/a0, ib2=-alpha/a0, ia1=(-2*cosW)/a0, ia2=(1-alpha)/a0;
+  var x1=0,x2=0,y1=0,y2=0;
+  var noise = new Float32Array(thickS);
+  for(var i=0;i<thickS;i++){
+    var wh=Math.random()*2-1;
+    var y=ib0*wh+ib2*x2-ia1*y1-ia2*y2; x2=x1;x1=wh;y2=y1;y1=y;
+    noise[i]=y;
+  }
+  // Normalise noise to ±1
+  var mx=0; for(var i=0;i<thickS;i++) mx=Math.max(mx,Math.abs(noise[i]));
+  if(mx>1e-9) for(var i=0;i<thickS;i++) noise[i]/=mx;
+
+  // Add (not multiply) a fraction of the noise to the spike region
+  // Multiply by blast envelope so it follows the attack shape
+  for(var i=0;i<Math.min(thickS,blast.length);i++){
+    var env=Math.exp(-i/(thickS*0.4));
+    blast[i]+=noise[i]*0.15*env*Math.abs(blast[i]+0.1);
+  }
+  return blast;
+}
+
+// ── TAIL: distant acoustic decay (shot-forge v6 makeTail) ─────────────────
+// Feeds the dry direct mix through a darkening lowpass sweep + noise fill.
+// The dry transient excites the filtered response — sounds like air absorption
+// at distance + residual acoustic energy. Correct behaviour for game audio tails.
+function genTail(directBuf, p){
+  var lenMs     = p.tailLen   || 300;
+  var tone      = p.tailTone  || 40;
+  var delaySamp = Math.round((p.tailDelay||2)/1000*SR);
+  var tailLen   = Math.round(lenMs/1000*SR);
+  var out       = new Float32Array(delaySamp + tailLen);
+  var t01       = tone/100;
+  var lpFreqStart = 500 + t01*6000;
+  var lpFreqEnd   = 200 + t01*1500;
+  var hpFreq      = 60  + t01*150;
+  var lp=0, lp2=0, hp=0;
+  var hpA = 1/(1+SR/(6.28318*hpFreq));
+  var dryLen = directBuf.length;
+  for(var i=0;i<tailLen;i++){
+    var s;
+    if(i < dryLen){
+      s = directBuf[i];
+    } else {
+      s = (Math.random()*2-1)*0.06*Math.exp(-(i-dryLen)/(tailLen*0.3));
+    }
+    var t = i/tailLen;
+    var lpF = lpFreqStart+(lpFreqEnd-lpFreqStart)*t;
+    var lpA = 1/(1+SR/(6.28318*lpF));
+    hp  += hpA*(s-hp);
+    lp  += lpA*((s-hp)-lp);
+    lp2 += lpA*(lp-lp2);
+    var env = (1-Math.exp(-i/(SR*0.003)))*Math.exp(-t*(2+(1-t01)*2));
+    out[delaySamp+i] = lp2*env;
+  }
+  return out;
+}
+
+// ── V2 generators (shot-forge v6 model) ────────────────────────────────────
+
+function genV2Pop(p, outBuf, N){
+  var pow = (p.pop2Pow||80)/100;
+  var freq = p.pop2Freq||90;
+  var lenMs = p.pop2Len||4;
+  var delayMs = p.pop2Delay||0;
+  var lvl = (p.pop2Lvl||0)/100;
+  if(lvl<0.01) return;
+  var start = Math.round(delayMs/1000*SR);
+  var samp  = Math.round(lenMs/1000*SR);
+
+  // Projectile release pop: the moment the bullet uncorks from the barrel.
+  // Sharp bipolar pressure transient (positive → negative) followed by
+  // a very short burst of turbulent noise as gas escapes around the bullet.
+  // NOT a Friedlander — it's faster, punchier, more "pop" than "boom".
+
+  var riseS = Math.max(1, Math.round(SR*0.00002)); // 20μs — faster than blast
+
+  for(var i=0;i<samp&&(start+i)<N;i++){
+    var t = i/samp;
+    var s = 0;
+
+    // Bipolar pop: sharp positive spike then immediate negative undershoot
+    if(i < riseS){
+      s = pow*(i/riseS); // rising edge
+    } else if(i < riseS*3){
+      // Quick positive→negative transition
+      var phase = (i-riseS)/(riseS*2);
+      s = pow*(1 - phase*3); // crosses zero at phase=0.33, goes negative
+    } else {
+      // Negative phase settling back to zero
+      var phase = (i-riseS*3)/(samp-riseS*3);
+      s = -pow*0.6*Math.exp(-phase*6);
+    }
+
+    // Add turbulent gas burst noise (HP filtered for "hiss" character)
+    var noise = (Math.random()*2-1);
+    var noiseEnv = Math.exp(-t*8) * (1-Math.exp(-t*60)); // fast onset, fast decay
+    s += noise * noiseEnv * pow * 0.25;
+
+    // Light saturation for edge
+    var drive = 1 + pow*3;
+    s = Math.tanh(s*drive)/Math.tanh(drive*0.8);
+
+    outBuf[start+i] += s*lvl;
+  }
+}
+
+function genV2Crack(p, outBuf, N){
+  var pow   = Math.min(p.crack2Pow||75,150)/100;
+  var tone  = Math.min(p.crack2Tone||60,150)/100;
+  var lenMs = p.crack2Len||5;  // was capped implicitly, now slider goes to 40
+  var delayMs = p.crack2Delay||0;
+  var lvl = (p.crack2Lvl||0)/100;
+  if(lvl<0.01) return;
+  var start = Math.round(delayMs/1000*SR);
+  var samp  = Math.round(lenMs/1000*SR);
+  var spike = Math.max(2,Math.round(SR*0.00006));
+  for(var i=0;i<spike*2&&(start+i)<N;i++){
+    var t=i/spike;
+    var s=0;
+    if(t<1) s=pow*0.8; else if(t<2) s=-pow*0.5;
+    outBuf[start+i]+=s*lvl;
+  }
+  var fStart=1500+tone*18000, fEnd=200+tone*1200;
+  var cLP=0,cHP=0,cHPa=1/(1+SR/(6.28318*150));
+  for(var i=0;i<samp&&(start+i)<N;i++){
+    var t=i/samp;
+    var freq=fStart*Math.pow(fEnd/fStart,Math.pow(t,0.4+tone*0.3));
+    var alpha=Math.min(0.95,6.28318*freq/SR);
+    var n=Math.random()*2-1;
+    cLP+=alpha*(n-cLP); cHP+=cHPa*(cLP-cHP);
+    var filtered=cLP-cHP;
+    var driven=Math.tanh(filtered*(4+pow*14)*0.8);
+    var env=(1-Math.pow(t,0.3+tone*0.4))*Math.exp(-t*(2+tone*5));
+    outBuf[start+i]+=driven*env*pow*lvl;
+  }
+}
+
+function genV2Woosh(p, outBuf, N){
+  var lvl  = Math.min(p.woosh2Lvl||50,150)/100;
+  var mix  = (p.woosh2Mix||0)/100;
+  if(mix<0.01) return;
+  var lenMs = p.woosh2Len||25;
+  var tone  = (p.woosh2Tone||50)/100;
+  var delayMs = p.woosh2Delay||0;
+  var start = Math.round(delayMs/1000*SR);
+  var samp  = Math.round(lenMs/1000*SR);
+
+  // Air displacement whoosh: the bullet pushing air out of its path.
+  // Smooth broadband noise shaped like a "shhh" — starts bright, darkens.
+  // Key difference from WHOOSH: this is the projectile's turbulence,
+  // not the muzzle gas. Smoother, more "wind-like", less hissy.
+
+  var lpFreqStart = 3000 + tone*6000;
+  var lpFreqEnd = 600 + tone*1500;
+  var hpFreq = 150 + (1-tone)*300;
+
+  var lpS1=0, lpS2=0, hpS=0;
+  var hpA = 1/(1+SR/(6.28318*hpFreq));
+
+  for(var i=0;i<samp&&(start+i)<N;i++){
+    var t = i/samp;
+    var n = Math.random()*2-1;
+
+    // HP to keep it airy
+    hpS += hpA*(n-hpS);
+    var hp = n - hpS;
+
+    // Swept LP: darkens over time as bullet moves away
+    var lpF = lpFreqStart + (lpFreqEnd-lpFreqStart)*Math.pow(t, 0.6);
+    var lpA = Math.min(0.99, 6.28318*lpF/SR);
+    lpS1 += lpA*(hp-lpS1);
+    lpS2 += lpA*(lpS1-lpS2);
+
+    // Smooth bell-shaped envelope — rises to peak then fades
+    // (bullet approaches → passes → recedes)
+    var env = Math.sin(Math.PI*t) * Math.pow(Math.sin(Math.PI*t), 0.3);
+    // Slight asymmetry: faster attack, slower decay (doppler-like)
+    if(t < 0.35) env *= (t/0.35);
+
+    outBuf[start+i] += lpS2 * env * lvl * 0.8 * mix;
+  }
+}
+
+function genV2Sub(p, outBuf, N){
+  var lvl = (p.sub2Lvl||0)/100;
+  if(lvl<0.02) return;
+  var freq   = (p.sub2Freq||55);
+  var lenMs  = p.sub2Len||30;
+  var delayMs= p.sub2Delay||0;
+  var start  = Math.round(delayMs/1000*SR);
+  var samp   = Math.round(lenMs/1000*SR);
+  var punch  = 0.6;
+  var startF = freq+punch*800+250;
+  var sph=0;
+  for(var i=0;i<samp&&(start+i)<N;i++){
+    var t=i/samp;
+    var f=freq+(startF-freq)*Math.exp(-t*(3+punch*8));
+    sph+=6.28318*f/SR;
+    var at=Math.min(1,i/Math.max(1,Math.round(SR*0.0003)));
+    var env=at*Math.exp(-t*(2+punch*6))*(1-t*t*t);
+    var sig=Math.sin(sph)*0.8+Math.sin(sph*0.5)*0.25;
+    var sat=punch*0.6;
+    var driven=sig*(1+sat*4);
+    sig=sig*(1-sat)+Math.tanh(driven)*sat;
+    outBuf[start+i]+=sig*env*lvl;
+  }
+}
+
+function genV2Mech(p, outBuf, N){
+  var lvl = (p.mech2Lvl||0)/100;
+  if(lvl<0.02) return;
+  var delayMs = p.mech2Delay||8;
+  var start   = Math.round(delayMs/1000*SR);
+  var freqHz  = p.mech2Freq||3500;
+  var tone    = (p.mech2Tone||50)/100;
+
+  // Bolt carrier recoil: heavy metal mass slamming backwards.
+  // Three components:
+  // 1. Initial impact thud (the gas key hitting the bolt carrier)
+  // 2. Metallic scrape as BCG travels rearward in receiver
+  // 3. Buffer spring compression ring
+
+  // Total duration: 8-20ms depending on tone
+  var totalMs = 8 + tone*12;
+  var totalS = Math.round(totalMs/1000*SR);
+
+  // Component 1: Impact thud — short, beefy, bipolar
+  var thudS = Math.round(SR*0.0015);
+  for(var i=0;i<thudS&&(start+i)<N;i++){
+    var t = i/thudS;
+    // Bipolar thud with low-mid content
+    var thudF = 400 + tone*600; // 400-1000Hz
+    var s = Math.sin(2*Math.PI*thudF*i/SR) * (1-t) * Math.exp(-t*4);
+    // Add broadband impact click
+    s += (Math.random()*2-1) * Math.exp(-t*8) * 0.5;
+    outBuf[start+i] += s*lvl*0.8;
+  }
+
+  // Component 2: Metallic scrape (BCG sliding in receiver)
+  // HP noise with resonant modes — like SHHK but heavier, longer
+  var scrapeStart = start + Math.round(thudS*0.5);
+  var scrapeLen = Math.round(totalS * 0.7);
+  var hpS=0, lpS=0;
+  var scrapeHP = 1/(1+SR/(6.28318*800)); // HP at 800Hz
+  var scrapeModeW = 2*Math.PI*Math.min(freqHz*0.8, SR*0.4)/SR;
+  var scrapeModeW2 = 2*Math.PI*Math.min(freqHz*1.4, SR*0.4)/SR;
+
+  for(var i=0;i<scrapeLen&&(scrapeStart+i)<N;i++){
+    var t = i/scrapeLen;
+    var n = Math.random()*2-1;
+    hpS += scrapeHP*(n-hpS);
+    var hp = n - hpS;
+
+    // Resonant modes excited by the scrape
+    var mode1 = Math.sin(scrapeModeW*i) * Math.exp(-300*i/SR) * 0.2;
+    var mode2 = Math.sin(scrapeModeW2*i) * Math.exp(-500*i/SR) * 0.12;
+
+    var sig = hp*0.4 + mode1 + mode2;
+
+    // Envelope: ramp up quickly, sustain, then fade
+    var env;
+    if(t < 0.1) env = t/0.1;
+    else if(t < 0.6) env = 1.0 - (t-0.1)*0.4;
+    else env = Math.exp(-(t-0.6)*5);
+
+    outBuf[scrapeStart+i] += sig*env*lvl*0.6;
+  }
+
+  // Component 3: Buffer spring compression — short tonal ring
+  var springStart = start + totalS - Math.round(SR*0.004);
+  var springLen = Math.round(SR*0.006);
+  var springF = 2*Math.PI*Math.min(freqHz*0.5, SR*0.4)/SR; // lower than main freq
+  for(var i=0;i<springLen&&(springStart+i)<N;i++){
+    var t = i/springLen;
+    var env = Math.exp(-t*6);
+    outBuf[springStart+i] += Math.sin(springF*i)*env*lvl*0.2;
+  }
+}
+
+function genV2Sizzle(p, outBuf, N){
+  var lvl = (p.sizzle2Lvl||0)/100;
+  if(lvl<0.02) return;
+  var delayMs = p.sizzle2Delay||1;
+  var start   = Math.round(delayMs/1000*SR);
+  var freqHz  = p.sizzle2Freq||10000;
+  var lenMs   = p.sizzle2Len||15;
+  var samp    = Math.round(lenMs/1000*SR);
+  var sHP=0, sHPa=1/(1+SR/(6.28318*freqHz));
+  for(var i=0;i<samp&&(start+i)<N;i++){
+    var t=i/samp, n=Math.random()*2-1;
+    sHP+=sHPa*(n-sHP);
+    var hp=n-sHP;
+    var env=(1-Math.exp(-t*80))*Math.exp(-t*(2+(1-lvl)*4));
+    outBuf[start+i]+=hp*env*lvl*0.6;
+  }
+}
+
+// ── RECV: Receiver Body Resonance ─────────────────────────────────────────
+// When the bolt slams, the entire receiver housing vibrates.
+// This is the mid-frequency "CHUNK" that communicates weapon mass/size.
+// A small pistol slide rings at 400-800Hz, short decay.
+// A heavy rifle receiver rings at 150-350Hz, longer decay.
+// A .50 cal receiver booms at 100-200Hz with sustained resonance.
+// Model: impulse → 4 inharmonic steel box modes with mass-dependent decay.
+function genV2Recv(p, outBuf, N){
+  var lvl = (p.recvLvl||0)/100;
+  if(lvl<0.02) return;
+  var freq    = p.recvFreq   || 350;  // fundamental: 150=massive, 800=tiny
+  var mass    = (p.recvMass  || 60)/100; // 0=light/fast decay, 1=heavy/slow
+  var lenMs   = p.recvLen    || 25;
+  var delayMs = p.recvDelay  || 3;
+  var damp    = (p.recvDamp  || 40)/100;
+
+  var start = Math.round(delayMs/1000*SR);
+  var samp  = Math.round(lenMs/1000*SR);
+
+  // Steel box/tube modes — inharmonic ratios for rectangular cross-section
+  // Lower mass = faster decay, tighter, more "ping"
+  // Higher mass = slower decay, sustained, more "CHUNK"
+  var baseDecay = 150 + (1-mass)*600; // heavy = 150 (slow), light = 750 (fast)
+
+  var modes = [
+    {r: 1.0,   a: 0.50, dMult: 1.0},    // fundamental — the main thunk
+    {r: 1.59,  a: 0.30, dMult: 1.3},    // mode 2 — inharmonic box mode
+    {r: 2.83,  a: 0.18, dMult: 1.8},    // mode 3
+    {r: 4.2,   a: 0.08*(1-damp), dMult: 2.5}  // mode 4 — high ring, damped
+  ];
+
+  // Initial impact exciter: short bipolar pulse (bolt hitting receiver wall)
+  var impLen = Math.round(SR*0.001);
+  for(var i=0;i<impLen&&(start+i)<N;i++){
+    var t = i/impLen;
+    // Bipolar thud
+    var s = (1-3*t)*Math.exp(-t*5) * (0.5 + mass*0.5);
+    outBuf[start+i] += s*lvl*0.4;
+  }
+
+  // Modal resonance
+  for(var m=0;m<modes.length;m++){
+    var mFreq = Math.min(freq * modes[m].r, SR*0.4);
+    var w = 2*Math.PI*mFreq/SR;
+    var amp = modes[m].a;
+    var decay = baseDecay * modes[m].dMult;
+    // Damping reduces higher mode amplitudes and increases their decay rate
+    var actualDecay = decay * (1 + damp*2);
+
+    for(var i=0;i<samp&&(start+i)<N;i++){
+      var t = i/samp;
+      var env = Math.exp(-actualDecay*i/SR);
+      // Slight pitch drop over time (metal cooling/settling)
+      var pitchDrop = 1.0 - t*0.02*mass;
+      outBuf[start+i] += amp * Math.sin(w*pitchDrop*i) * env * lvl;
+    }
+  }
+
+  // Noise floor from the impact — short broadband burst that carries the "steel" feel
+  var noiseLen = Math.round(SR*0.003); // 3ms
+  for(var i=0;i<noiseLen&&(start+i)<N;i++){
+    var t = i/noiseLen;
+    var n = (Math.random()*2-1);
+    var env = Math.exp(-t*6);
+    outBuf[start+i] += n*env*lvl*0.15*(0.3+mass*0.7);
+  }
+}
+
+// ── BSLAP: Buffer Tube Slam ───────────────────────────────────────────────
+// The bolt carrier hits the buffer/spring assembly at the rear of its travel.
+// On a pistol: barely noticeable.
+// On a rifle: solid low thud.
+// On a heavy MG: massive bipolar pressure thump you feel in your chest.
+// Model: bipolar Friedlander-shaped sub pulse + LP-filtered impact noise.
+// This is the "weight" layer — pure low-end mechanical authority.
+function genV2Bslap(p, outBuf, N){
+  var lvl    = (p.bslapLvl||0)/100;
+  if(lvl<0.02) return;
+  var freq    = p.bslapFreq   || 120;   // 60=.50cal, 250=pistol
+  var weight  = (p.bslapWeight|| 70)/100;
+  var delayMs = p.bslapDelay  || 12;
+
+  var start = Math.round(delayMs/1000*SR);
+
+  // Duration scales with weight: heavier = longer thud
+  var thudMs = 4 + weight*10; // 4-14ms
+  var thudS  = Math.round(thudMs/1000*SR);
+
+  // Bipolar pressure thump — Friedlander-like at the buffer freq
+  var riseS = Math.max(2, Math.round(SR*0.00015));
+  for(var i=0;i<thudS&&(start+i)<N;i++){
+    var s;
+    if(i < riseS){
+      s = i/riseS;
+    } else {
+      var t = (i-riseS)/(thudS*0.3);
+      s = (1-t)*Math.exp(-t);
+      // Boost negative phase for weight
+      if(s < 0) s *= (1 + weight*0.8);
+    }
+
+    // Shape with the target frequency — gives tonal character to the thud
+    var tN = i/thudS;
+    var tonalComponent = Math.sin(2*Math.PI*freq*i/SR) * Math.exp(-tN*4);
+    s = s*0.6 + tonalComponent*0.4*(0.5+weight*0.5);
+
+    outBuf[start+i] += s*lvl;
+  }
+
+  // LP-filtered impact noise — adds "thock" texture
+  var noiseLen = Math.round(SR*0.004);
+  var lpS = 0;
+  for(var i=0;i<noiseLen&&(start+i)<N;i++){
+    var t = i/noiseLen;
+    var n = Math.random()*2-1;
+    var lpA = Math.min(0.99, 2*Math.PI*(freq*2)/SR);
+    lpS += lpA*(n-lpS);
+    var env = Math.exp(-t*6);
+    outBuf[start+i] += lpS*env*lvl*0.3*weight;
+  }
+}
+
+// ── RATTLE: Action Rattle ─────────────────────────────────────────────────
+// On heavier weapons, the bolt travel shakes loose parts:
+// dust cover, pins, handguard, optic mount, sling swivel.
+// This is a burst of random metallic micro-impacts spread over 10-60ms.
+// Each micro-impact is a tiny modal ping at randomised frequencies.
+// Density and spread parameters control "how much stuff is rattling."
+// This layer sells "this is a big assembled piece of steel, not a toy."
+function genV2Rattle(p, outBuf, N){
+  var lvl     = (p.rattleLvl||0)/100;
+  if(lvl<0.02) return;
+  var freq     = p.rattleFreq    || 2000;  // centre of rattle band
+  var density  = (p.rattleDens   || 50)/100;
+  var lenMs    = p.rattleLen     || 20;
+  var delayMs  = p.rattleDelay   || 5;
+  var spread   = (p.rattleSpread || 60)/100;
+
+  var start = Math.round(delayMs/1000*SR);
+  var samp  = Math.round(lenMs/1000*SR);
+
+  // Number of micro-impacts: 3 (light) to 15 (dense)
+  var numImpacts = 3 + Math.round(density*12);
+
+  for(var imp=0;imp<numImpacts;imp++){
+    // Each impact at a random time within the window
+    // Spread controls how evenly distributed vs clustered at the start
+    var impTime;
+    if(spread > 0.5){
+      // High spread: impacts distributed across full window
+      impTime = Math.round(rnd() * samp);
+    } else {
+      // Low spread: impacts clustered near the start (one big rattle)
+      impTime = Math.round(Math.pow(rnd(), 1+spread*3) * samp);
+    }
+
+    // Each impact: tiny modal ping at randomised frequency
+    // Frequency varies ±40% around centre — different parts have different resonances
+    var impFreq = freq * (0.6 + rnd()*0.8);
+    impFreq = Math.min(impFreq, SR*0.4);
+
+    // Second mode: inharmonic overtone
+    var impFreq2 = impFreq * (1.5 + rnd()*1.5);
+    impFreq2 = Math.min(impFreq2, SR*0.4);
+
+    // Duration: 0.5-3ms per impact
+    var impLen = Math.round(SR*(0.0005 + rnd()*0.0025));
+    var impAmp = 0.15 + rnd()*0.35; // random loudness per impact
+
+    var w1 = 2*Math.PI*impFreq/SR;
+    var w2 = 2*Math.PI*impFreq2/SR;
+
+    for(var i=0;i<impLen;i++){
+      var pos = start + impTime + i;
+      if(pos >= N) break;
+      var t = i/impLen;
+      var env = Math.exp(-t*6);
+
+      // Click + two modes
+      var click = (i<3) ? (Math.random()*2-1)*0.5 : 0;
+      var mode1 = Math.sin(w1*i)*0.6;
+      var mode2 = Math.sin(w2*i)*0.25;
+
+      outBuf[pos] += (click + mode1 + mode2) * env * impAmp * lvl;
+    }
+  }
+}
+
+
+// Clip slider scales from 0 (no clip) down to 0 (full -0.5/+0.6 clip)
+// Pos ceiling asymmetric to neg floor — real mic behaviour
+function applyMic(buf, p){
+  if(layerOff.mic) return buf;
+  var amt = (p.micClip||40)/100;
+  if(amt < 0.01) return buf;
+  // At amt=1.0: pos clips at 0.6, neg clips at -0.7 (Hacihabiboglu defaults)
+  // At amt=0: no clipping (pass through)
+  var posRef = (p.micPos||80)/100;  // slider: 50-100% = how far pos clips
+  var negRef = (p.micNeg||80)/100;
+  var pCeil =  posRef * (1.0 - amt*0.4); // full amt → 60% of posRef
+  var nFloor = -negRef * (1.0 - amt*0.3);
+  for(var i=0;i<buf.length;i++){
+    if(buf[i] >  pCeil) buf[i] =  pCeil;
+    if(buf[i] <  nFloor) buf[i] = nFloor;
+  }
+  return buf;
+}
+
+// ── Normalise buffer to peak 1.0 ───────────────────
+function normTo1(buf){
+  var mx=0;
+  for(var i=0;i<buf.length;i++) mx=Math.max(mx,Math.abs(buf[i]));
+  if(mx>1e-9) for(var i=0;i<buf.length;i++) buf[i]/=mx;
+  return buf;
+}
+
+// ── PFFF: pressure front wall ──────────────────────────────
+// NOT noise. NOT a filtered burst. This is a PRESSURE STEP.
+//
+// What makes a real gunshot go PFFF: the air compresses into a wall —
+// a near-instantaneous pressure discontinuity. In the waveform this
+// looks like a hard square pulse: positive block → hard zero crossing
+// → negative block → cut. Every frequency present simultaneously
+// because it's a step function. That's why it sounds massive.
+//
+// The MIC clipper achieves this by squaring off the Friedlander peak.
+// This layer generates that squared shape directly so it works
+// independent of the mic.
+//
+// Width: how long the positive+negative blocks last (1-8ms total)
+// Neg: how deep the negative (rarefaction) phase goes (0-100%)
+// Edge: noise modulation on the transitions (0=perfectly square, 100=rough)
+// Clip: how hard the top is flattened (higher = more PFFF)
+function genSlam(p){
+  var widthMs = p.slamLen     || 3;
+  var neg     = (p.slamWeight || 70)/100;
+  var edge    = (p.slamColour || 30)/100;
+  var clipAmt = (p.slamClip   || 80)/100;
+
+  var totalS = Math.round(widthMs/1000*SR);
+  // Positive phase = 40% of width, negative = 60% (real blast shape)
+  var posS = Math.round(totalS*0.4);
+  var negS = totalS - posS;
+  // Short tail for the cutoff to not click
+  var tailS = Math.round(SR*0.0008);
+  var N = totalS + tailS;
+  var out = new Float32Array(N);
+
+  // Build the raw pressure step shape
+  var riseS = Math.max(1, Math.round(SR*0.00002)); // 20μs rise — near instant
+
+  for(var i=0;i<N;i++){
+    var s;
+    if(i < riseS){
+      // Near-instant rise to +1
+      s = i/riseS;
+    } else if(i < posS){
+      // Positive pressure wall — held at +1
+      s = 1.0;
+    } else if(i < posS + riseS){
+      // Fast transition through zero to negative
+      var t = (i-posS)/riseS;
+      s = 1.0 - t*(1.0 + neg);
+    } else if(i < totalS){
+      // Negative rarefaction phase — held at -neg
+      s = -neg;
+    } else {
+      // Short exponential tail so it doesn't hard-click at the end
+      var dt = i - totalS;
+      s = -neg * Math.exp(-dt/(tailS*0.3));
+    }
+    out[i] = s;
+  }
+
+  // Edge: modulate the flat regions with micro-noise
+  // At 0% the pulse is perfectly square (synthetic but punchy)
+  // At 100% the edges are rough (more organic, pressure turbulence)
+  if(edge > 0.01){
+    for(var i=0;i<totalS;i++){
+      var noise = (Math.random()*2-1) * edge * 0.15;
+      out[i] += noise * Math.abs(out[i]); // only modulates where signal exists
+    }
+  }
+
+  // Clip: flatten the top harder
+  // At high clip, the positive phase becomes an even denser block
+  // by squashing any remaining shape into a hard ceiling
+  if(clipAmt > 0.01){
+    var ceil = 1.0 - clipAmt*0.3; // at 100% → ceiling at 0.7
+    for(var i=0;i<N;i++){
+      if(out[i] > ceil)  out[i] = ceil;
+      if(out[i] < -ceil*neg) out[i] = -ceil*neg;
+    }
+  }
+
+  return out;
+}
+
+// ── FFFF: gated gas blowout noise ─────────────────────────
+// The PFFF kicks the door open. The FFFF is everything blasting through.
+// Same squared envelope as PFFF — hard on, sustained, HARD OFF.
+// Not a fadeout. Not exponential decay. A gate that slams shut.
+//
+// This is gated broadband noise shaped to match the PFFF's timing.
+// Chain parameter links the FFFF's onset to the PFFF's end —
+// so the pressure wall seamlessly becomes the gas rush.
+//
+// Length: how long the gas blowout lasts
+// Tone: spectral shape (0=dark rumble, 100=bright hiss)
+// Gate: how hard the cutoff is (0=soft fade, 100=brick wall)
+// Chain: timing link to PFFF (0=independent, 100=starts right where PFFF ends)
+function genFfff(p){
+  var lenMs   = p.ffffLen   || 4;
+  var tone    = (p.ffffTone || 40)/100;
+  var gate    = (p.ffffGate || 80)/100;
+  var chain   = (p.ffffChain|| 70)/100;
+
+  // If chained, add the PFFF width as onset delay
+  var pfffWidth = p.slamLen || 3;
+  var chainDelay = Math.round(chain * pfffWidth/1000*SR * 0.4); // chains to end of PFFF positive phase
+
+  var lenS = Math.round(lenMs/1000*SR);
+  var gateS = Math.max(1, Math.round(SR * 0.00005 * (1 + (1-gate)*20))); // 0.05ms at gate=100%, 1ms at gate=0%
+  var N = chainDelay + lenS + gateS;
+  var out = new Float32Array(N);
+
+  // Generate noise with spectral shaping
+  // Two-pole LP + one-pole HP for band control
+  var lpFreq = 1000 + tone*14000;  // 1kHz–15kHz
+  var hpFreq = 100 + tone*800;     // 100Hz–900Hz
+  var lpS1=0, lpS2=0, hpS=0;
+  var hpA = 1/(1+SR/(6.28318*hpFreq));
+
+  // Onset: near-instant (matching PFFF's rise)
+  var onsetS = Math.max(1, Math.round(SR*0.00005)); // 50μs
+
+  for(var i=0;i<lenS+gateS;i++){
+    var n = Math.random()*2-1;
+
+    // HP
+    hpS += hpA*(n-hpS);
+    var hp = n - hpS;
+
+    // LP (fixed freq — no sweep, this is sustained not decaying)
+    var lpA = Math.min(0.99, 6.28318*lpFreq/SR);
+    lpS1 += lpA*(hp-lpS1);
+    lpS2 += lpA*(lpS1-lpS2);
+
+    // Envelope: hard on → sustained → gate off
+    var env;
+    if(i < onsetS){
+      env = i/onsetS; // near-instant onset
+    } else if(i < lenS){
+      env = 1.0; // SUSTAINED — flat, no decay, this is the key difference
+    } else {
+      // Gate shutdown
+      var dt = i - lenS;
+      if(gate > 0.9){
+        // Near brick-wall: linear ramp over gateS samples
+        env = Math.max(0, 1.0 - dt/gateS);
+      } else {
+        // Softer gate: exponential
+        env = Math.exp(-dt/(gateS*0.4));
+      }
+    }
+
+    var pos = chainDelay + i;
+    if(pos < N) out[pos] = lpS2 * env;
+  }
+
+  return out;
+}
+// Section volumes: TRANSIENT, SUBS, MECHS, VERB each have a master fader.
+// Transient FX chain applied to transient group before final mix.
+function genSingle(p){
+  var isSonic=p.crackVel>C&&!layerOff.crack;
+  document.getElementById('sonicBadge').style.opacity=isSonic?'1':'0.25';
+
+  // Section volume faders (0-150%, default 100%)
+  var secTrans = (p.secTransient||100)/100;
+  var secSubs  = (p.secSubs||100)/100;
+  var secMechs = (p.secMechs||100)/100;
+  var secVerb  = (p.secVerb||100)/100;
+
+  var blastLvl = layerOff.blast ? 0 : (p.blastLvlSlider||100)/100;
+  var crackLvl = (layerOff.crack||!isSonic) ? 0 : (p.crackLvl||70)/100;
+  var noiseLvl = layerOff.noise   ? 0 : (p.noiseLvl||30)/100;
+  var airLvl   = layerOff.airrush ? 0 : (p.airLvl||25)/100;
+  var subLvl   = layerOff.sub     ? 0 : (p.subLvl||40)/100;
+  var reflLvl  = layerOff.refl    ? 0 : (p.reflLvl||35)/100;
+  var bodyLvl  = layerOff.body    ? 0 : (p.bodyLvl||45)/100;
+  var shhkLvl = layerOff.shhk   ? 0 : (p.shhkLvl||35)/100;
+  var tinkLvl  = layerOff.tink    ? 0 : (p.tinkLvl||25)/100;
+  var chukLvl  = layerOff.chuk    ? 0 : (p.chukLvl||30)/100;
+  var shingLvl = layerOff.shing   ? 0 : (p.shingLvl||20)/100;
+  var roomLvl  = layerOff.room    ? 0 : (p.roomLvl||40)/100;
+  var lfeLvl   = layerOff.lfe     ? 0 : (p.lfeLvl||35)/100;
+  var tailLvl  = layerOff.tail    ? 0 : (p.tailLvl||30)/100;
+
+  // Blast + crack: normalise to fix unit mismatch, then scale by level
+  var blast = blastLvl>0 ? normTo1(genFriedlander(p)) : new Float32Array(1);
+  // Transient thickener — applied before mixing, adds pressure texture to spike
+  if(blastLvl>0) thickenBlast(blast, p);
+  var nw    = crackLvl>0 ? genNwave(p) : null;
+  if(nw) normTo1(nw);
+
+  // Build direct mix — establishes the reference peak
+  var directN = Math.max(blast.length, nw?nw.length:0);
+  var direct  = new Float32Array(directN);
+  for(var i=0;i<blast.length;i++) direct[i]+=blast[i]*blastLvl;
+  if(nw) for(var i=0;i<nw.length;i++) direct[i]+=nw[i]*crackLvl;
+
+  // Normalise secondary layer to peak 1.0, then level slider scales it
+  // relative to the direct mix via the summing below.
+  // directPeak baked into direct[] already — secondaries just need clean ±1 range.
+  function normToRef(buf){
+    var mx=0;
+    for(var i=0;i<buf.length;i++) mx=Math.max(mx,Math.abs(buf[i]));
+    if(mx>1e-9) for(var i=0;i<buf.length;i++) buf[i]/=mx;
+    return buf;
+  }
+
+  // Ground reflection — inherits direct mix shape, already proportional
+  var refl = reflLvl>0 ? normToRef(genRefl(direct,p)) : null;
+
+  // Whoosh — normalised to blast reference
+  var noise = null;
+  if(noiseLvl>0){
+    var rawNoise = normToRef(genWhoosh(p));
+    var noiseDelSamp = Math.round((p.noiseDelay||0)/1000*SR);
+    if(noiseDelSamp>0){
+      var npad = new Float32Array(rawNoise.length+noiseDelSamp);
+      npad.set(rawNoise, noiseDelSamp); noise=npad;
+    } else { noise=rawNoise; }
+  }
+
+  // Sub — normalised to blast reference
+  var sub=null;
+  if(subLvl>0){
+    var rawSub=normToRef(genSub(p));
+    var delSamp=Math.round((p.subDelay||2)/1000*SR);
+    if(delSamp>0){
+      var padded=new Float32Array(rawSub.length+delSamp);
+      padded.set(rawSub,delSamp); sub=padded;
+    } else { sub=rawSub; }
+  }
+
+  // Body — normalised to blast reference
+  var body = null;
+  if(bodyLvl>0){
+    var rawBody = normToRef(genBody(p));
+    var bodyDelSamp = Math.round((p.bodyDelay||0)/1000*SR);
+    if(bodyDelSamp>0){
+      var padded = new Float32Array(rawBody.length+bodyDelSamp);
+      padded.set(rawBody, bodyDelSamp); body=padded;
+    } else { body=rawBody; }
+  }
+
+  // Air rush — delayed bandpass noise, onset at Friedlander negative phase
+  var air = airLvl>0 ? normToRef(genAirRush(p)) : null;
+
+  // ROOM — early reflections of direct mix, no tail
+  var room = null;
+  if(roomLvl>0){
+    var rawRoom = normToRef(genRoom(direct, p));
+    var roomDelSamp = Math.round((p.roomDelay||0)/1000*SR);
+    if(roomDelSamp>0){ var rpad=new Float32Array(rawRoom.length+roomDelSamp); rpad.set(rawRoom,roomDelSamp); room=rpad; }
+    else { room=rawRoom; }
+  }
+
+  // LFE — gut punch at t=0, no delay
+  var lfe = lfeLvl>0 ? normToRef(genLfe(p)) : null;
+
+  // TAIL — v6 makeTail: dry direct mix excites darkening LP decay
+  var tail = tailLvl>0 ? normToRef(genTail(direct, p)) : null;
+
+  // Mechanical layers — modal synthesis, each delayed by their action timing
+  function mechBuf(genFn, delayP, defaultDelay){
+    var raw = normToRef(genFn(p));
+    var ds = Math.round(((p[delayP]||defaultDelay))/1000*SR);
+    if(ds>0){ var pad=new Float32Array(raw.length+ds); pad.set(raw,ds); return pad; }
+    return raw;
+  }
+  var shhk = shhkLvl>0 ? mechBuf(genShhk,'shhkDelay',5)  : null;
+  var tink  = tinkLvl >0 ? mechBuf(genTink, 'tinkDelay', 2)  : null;
+  var chuk  = chukLvl >0 ? mechBuf(genChuk, 'chukDelay', 8)  : null;
+  var shing = shingLvl>0 ? mechBuf(genShing,'shingDelay',15) : null;
+
+  // V2 layers — written directly into a shared buffer, then normToRef + mix
+  var v2Len = Math.round(0.5*SR); // 500ms budget for v2 layers
+  var v2Buf = new Float32Array(v2Len);
+  if(!layerOff.pop2)    genV2Pop(p,    v2Buf, v2Len);
+  if(!layerOff.crack2)  genV2Crack(p,  v2Buf, v2Len);
+  if(!layerOff.woosh2)  genV2Woosh(p,  v2Buf, v2Len);
+  if(!layerOff.sub2)    genV2Sub(p,    v2Buf, v2Len);
+  if(!layerOff.mech2)   genV2Mech(p,   v2Buf, v2Len);
+  if(!layerOff.sizzle2) genV2Sizzle(p, v2Buf, v2Len);
+  if(!layerOff.recv)    genV2Recv(p,   v2Buf, v2Len);
+  if(!layerOff.bslap)   genV2Bslap(p,  v2Buf, v2Len);
+  if(!layerOff.rattle)  genV2Rattle(p, v2Buf, v2Len);
+  // Check if any V2 content was generated (not all-zero)
+  var v2HasContent = false;
+  for(var i=0;i<v2Len;i++){ if(Math.abs(v2Buf[i])>1e-9){v2HasContent=true;break;} }
+  var v2 = v2HasContent ? normToRef(v2Buf) : null;
+
+  // ── SLAM layer: transient density bed ──
+  var slamLvl = layerOff.slam ? 0 : (p.slamLvl||40)/100;
+  var slam = null;
+  if(slamLvl > 0){
+    var rawSlam = normToRef(genSlam(p));
+    var slamDelSamp = Math.round((p.slamDelay||0)/1000*SR);
+    if(slamDelSamp>0){
+      var spad = new Float32Array(rawSlam.length+slamDelSamp);
+      spad.set(rawSlam, slamDelSamp); slam=spad;
+    } else { slam=rawSlam; }
+  }
+
+  // ── FFFF layer: gated gas blowout chained to PFFF ──
+  var ffffLvl = layerOff.ffff ? 0 : (p.ffffLvl||40)/100;
+  var ffff = null;
+  if(ffffLvl > 0){
+    var rawFfff = normToRef(genFfff(p));
+    var ffffDelSamp = Math.round((p.ffffDelay||0)/1000*SR);
+    // Add the slam delay too so FFFF follows PFFF when both are delayed
+    var slamDel2 = Math.round((p.slamDelay||0)/1000*SR);
+    var totalFfffDel = ffffDelSamp + slamDel2;
+    if(totalFfffDel>0){
+      var fpad = new Float32Array(rawFfff.length+totalFfffDel);
+      fpad.set(rawFfff, totalFfffDel); ffff=fpad;
+    } else { ffff=rawFfff; }
+  }
+
+  var N=Math.max(
+    direct.length,
+    refl?refl.length:0, noise?noise.length:0, air?air.length:0,
+    room?room.length:0, lfe?lfe.length:0, tail?tail.length:0,
+    sub?sub.length:0, body?body.length:0,
+    shhk?shhk.length:0, tink?tink.length:0,
+    chuk?chuk.length:0,  shing?shing.length:0,
+    slam?slam.length:0, ffff?ffff.length:0, v2?v2.length:0
+  );
+
+  // ── Final mix with section volumes ──
+  var out = new Float32Array(N);
+
+  // Transient section
+  for(var i=0;i<direct.length;i++) out[i] += direct[i] * secTrans;
+  if(noise) for(var i=0;i<noise.length;i++)  out[i] += noise[i]*noiseLvl*secTrans;
+  if(air)   for(var i=0;i<air.length;i++)    out[i] += air[i]*airLvl*secTrans;
+  if(slam)  for(var i=0;i<slam.length;i++)   out[i] += slam[i]*slamLvl*secTrans;
+  if(ffff)  for(var i=0;i<ffff.length;i++)   out[i] += ffff[i]*ffffLvl*secTrans;
+
+  // Subs section (LFE, SUB, BODY, sub2)
+  if(lfe)  for(var i=0;i<lfe.length;i++)   out[i] += lfe[i]*lfeLvl*secSubs;
+  if(sub)  for(var i=0;i<sub.length;i++)   out[i] += sub[i]*subLvl*secSubs;
+  if(body) for(var i=0;i<body.length;i++)  out[i] += body[i]*bodyLvl*secSubs;
+
+  // Mechs section (tink, shhk, chuk, shing)
+  if(shhk)  for(var i=0;i<shhk.length;i++)  out[i] += shhk[i]*shhkLvl*secMechs;
+  if(tink)  for(var i=0;i<tink.length;i++)   out[i] += tink[i]*tinkLvl*secMechs;
+  if(chuk)  for(var i=0;i<chuk.length;i++)   out[i] += chuk[i]*chukLvl*secMechs;
+  if(shing) for(var i=0;i<shing.length;i++)  out[i] += shing[i]*shingLvl*secMechs;
+
+  // Verb section (refl, room, tail)
+  if(refl) for(var i=0;i<refl.length;i++)  out[i] += refl[i]*reflLvl*secVerb;
+  if(room) for(var i=0;i<room.length;i++)  out[i] += room[i]*roomLvl*secVerb;
+  if(tail) for(var i=0;i<tail.length;i++)  out[i] += tail[i]*tailLvl*secVerb;
+
+  // V2 layers (these span sections — apply a blend of relevant section volumes)
+  if(v2) for(var i=0;i<v2.length;i++) out[i] += v2[i];
+
+  // ── Spectral tilt: gentle high-shelf to counter low-end dominance ──
+  // Every layer normalised to ±1 means low-freq layers (more energy/Hz)
+  // dominate the mix. +4dB shelf above 2kHz rebalances toward realistic
+  // gunshot spectrum where the transient crack carries real energy.
+  {
+    var tiltFreq = 2000;
+    var tiltGain = 1.6; // ~4dB boost
+    var tiltW = 2*Math.PI*tiltFreq/SR;
+    var tiltA = Math.sqrt(tiltGain);
+    var tiltAlpha = Math.sin(tiltW)/2 * Math.sqrt((tiltA+1/tiltA)*(1/0.7-1)+2);
+    var sqA = Math.sqrt(tiltA);
+    var tb0 = tiltA*((tiltA+1)+(tiltA-1)*Math.cos(tiltW)+2*sqA*tiltAlpha);
+    var tb1 = -2*tiltA*((tiltA-1)+(tiltA+1)*Math.cos(tiltW));
+    var tb2 = tiltA*((tiltA+1)+(tiltA-1)*Math.cos(tiltW)-2*sqA*tiltAlpha);
+    var ta0 = (tiltA+1)-(tiltA-1)*Math.cos(tiltW)+2*sqA*tiltAlpha;
+    var ta1 = 2*((tiltA-1)-(tiltA+1)*Math.cos(tiltW));
+    var ta2 = (tiltA+1)-(tiltA-1)*Math.cos(tiltW)-2*sqA*tiltAlpha;
+    tb0/=ta0; tb1/=ta0; tb2/=ta0; ta1/=ta0; ta2/=ta0;
+    var tx1=0,tx2=0,ty1=0,ty2=0;
+    for(var i=0;i<N;i++){
+      var x=out[i], y=tb0*x+tb1*tx1+tb2*tx2-ta1*ty1-ta2*ty2;
+      out[i]=y; tx2=tx1;tx1=x;ty2=ty1;ty1=y;
+    }
+  }
+
+  applyMic(out, p);
+  return out;
+}
+
+function genShot(p){
+  var vol=p.outLevel/100;
+  if(fireMode==='single') return norm(genSingle(p),vol);
+
+  var cnt=fireMode==='burst'?+document.getElementById('pBurst').value
+                            :Math.round(+document.getElementById('pRPM').value/60*2);
+  var iS=Math.round(60/+document.getElementById('pRPM').value*SR);
+  var vari=+document.getElementById('pVariation').value/100;
+
+  var track1=[],track2=[];
+  for(var s=0;s<cnt;s++){
+    var vp={};for(var k in p) vp[k]=p[k];
+    vp.caliber   =Math.max(0,  Math.min(100, p.caliber   +(rnd()-0.5)*vari*12));
+    vp.propellant=Math.max(0,  Math.min(100, p.propellant+(rnd()-0.5)*vari*10));
+    vp.crackVel  =Math.max(200,Math.min(1000,p.crackVel  +(rnd()-0.5)*vari*40));
+    vp.crackMiss =Math.max(0.3,Math.min(30,  p.crackMiss +(rnd()-0.5)*vari*3));
+    var shot=genSingle(vp);
+    var off=Math.max(0,Math.round(s*iS*(1+(rnd()-0.5)*vari*0.04)));
+    if(s%2===0) track1.push({shot:shot,off:off});
+    else        track2.push({shot:shot,off:off});
+  }
+  var maxLen=0;
+  for(var i=0;i<track1.length;i++) maxLen=Math.max(maxLen,track1[i].off+track1[i].shot.length);
+  for(var i=0;i<track2.length;i++) maxLen=Math.max(maxLen,track2[i].off+track2[i].shot.length);
+  var out=new Float32Array(maxLen);
+  for(var i=0;i<track1.length;i++){var s=track1[i];for(var j=0;j<s.shot.length&&(s.off+j)<maxLen;j++)out[s.off+j]+=s.shot[j];}
+  for(var i=0;i<track2.length;i++){var s=track2[i];for(var j=0;j<s.shot.length&&(s.off+j)<maxLen;j++)out[s.off+j]+=s.shot[j];}
+  return norm(out,vol);
+}
+
+// ── WAV encoder ────────────────────────────────────
+function encWAV(smp){
+  var N=smp.length,ds=N*2,buf=new ArrayBuffer(44+ds),v=new DataView(buf);
+  function ws(o,s){for(var i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))}
+  ws(0,'RIFF');v.setUint32(4,36+ds,true);ws(8,'WAVE');ws(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,SR,true);v.setUint32(28,SR*2,true);v.setUint16(32,2,true);
+  v.setUint16(34,16,true);ws(36,'data');v.setUint32(40,ds,true);
+  for(var i=0;i<N;i++)v.setInt16(44+i*2,Math.round(Math.max(-1,Math.min(1,smp[i]))*32767),true);
+  return buf;
+}
+
+// ── Waveform ───────────────────────────────────────
+function drawWF(cv,smp){
+  var ctx=cv.getContext('2d'),dpr=window.devicePixelRatio||1,r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr;cv.height=120*dpr;ctx.scale(dpr,dpr);
+  var W=r.width,H=120,P={t:14,b:18,l:34,r:10},pW=W-P.l-P.r,pH=H-P.t-P.b,zY=P.t+pH/2;
+  ctx.fillStyle='#050210';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#2a1050';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(P.l,zY);ctx.lineTo(W-P.r,zY);ctx.stroke();
+  ctx.fillStyle='#991b1b';ctx.font='11px VT323,monospace';
+  ctx.textAlign='right';ctx.fillText('+1',P.l-4,P.t+8);ctx.fillText('-1',P.l-4,P.t+pH+3);
+  var ms=(smp.length/SR*1000).toFixed(1);
+  ctx.textAlign='center';ctx.fillText('0',P.l,H-3);ctx.fillText(ms+'ms',W-P.r,H-3);
+  var N=smp.length;ctx.beginPath();
+  for(var px=0;px<pW;px++){
+    var idx=Math.floor(px/pW*N),y=zY-smp[idx]*(pH/2-2);
+    if(px===0)ctx.moveTo(P.l,y);else ctx.lineTo(P.l+px,y);
+  }
+  ctx.strokeStyle='#f97316';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.globalAlpha=0.15;ctx.lineWidth=5;ctx.stroke();ctx.globalAlpha=1;
+}
+
+// ── Audio ──────────────────────────────────────────
+var audioCtx=null;
+function playS(smp){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:SR});
+  var buf=audioCtx.createBuffer(1,smp.length,SR);
+  buf.getChannelData(0).set(smp);
+  var src=audioCtx.createBufferSource();
+  src.buffer=buf;src.connect(audioCtx.destination);src.start();
+}
+function setS(t){
+  document.getElementById('statusText').textContent=t;
+  var d=document.getElementById('statusDot');
+  d.classList.add('active');setTimeout(function(){d.classList.remove('active')},600);
+}
+
+// ── UI ─────────────────────────────────────────────
+document.querySelectorAll('.lt[data-toggle]').forEach(function(el){
+  el.addEventListener('click',function(){
+    var layer=el.dataset.toggle;
+    layerOff[layer]=!layerOff[layer];
+    el.classList.toggle('off',layerOff[layer]);
+    el.closest('.layer').classList.toggle('off',layerOff[layer]);
+  });
+});
+document.querySelectorAll('.mode-btn').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.mode-btn').forEach(function(x){x.classList.remove('active')});
+    b.classList.add('active');fireMode=b.dataset.mode;
+    document.getElementById('fireParams').classList.toggle('show',fireMode!=='single');
+    document.getElementById('burstGroup').style.display=fireMode==='burst'?'':'none';
+  });
+});
+document.getElementById('pRPM').addEventListener('input',function(){document.getElementById('vRPM').textContent=this.value+' RPM'});
+document.getElementById('pVariation').addEventListener('input',function(){document.getElementById('vVariation').textContent=this.value+'%'});
+
+document.querySelectorAll('.sp').forEach(function(el){
+  var vd=el.nextElementSibling;
+  el.addEventListener('input',function(){
+    var v=+el.value,pk=el.dataset.p;
+    if(pk==='tauMult')      vd.textContent=(v/100).toFixed(1)+'x';
+    else if(pk==='crackVel'){
+      vd.textContent=v+' m/s';
+      document.getElementById('sonicBadge').style.opacity=(v>341)?'1':'0.25';
+    }
+    else if(pk==='crackMiss')   vd.textContent=(+v).toFixed(1)+'m';
+    else if(pk==='crackOffset')    vd.textContent=v+'ms';
+    else if(pk==='subTau')      vd.textContent=v+'x';
+    else if(pk==='subCutoff')   vd.textContent=v+'Hz';
+    else if(pk==='subDelay')    vd.textContent=v+'ms';
+    else if(pk==='reflDelay')   vd.textContent=v+'ms';
+    else if(pk==='reflDecay')   vd.textContent=v+'%';
+    else if(pk==='reflCutoff')  vd.textContent=v+'Hz';
+    else if(pk==='bodyFreq')    vd.textContent=v+'Hz';
+    else if(pk==='bodyLen')     vd.textContent=v+'ms';
+    else if(pk==='bodyDelay')   vd.textContent=v+'ms';
+    else if(pk==='noiseDecay')  vd.textContent=v+'ms';
+    else if(pk==='noiseHP')     vd.textContent=v+'Hz';
+    else if(pk==='noiseDelay')  vd.textContent=v+'ms';
+    else if(pk==='whooshBuild') vd.textContent=v+'ms';
+    else if(pk==='whooshTail')  vd.textContent=v+'ms';
+    else if(pk==='airOnset')    vd.textContent=v+'ms';
+    else if(pk==='airLen')      vd.textContent=v+'ms';
+    else if(pk==='bodyEQFreq')  vd.textContent=v+'Hz';
+    else if(pk==='shhkFreq')   vd.textContent=v+'Hz';
+    else if(pk==='shhkDecay')  vd.textContent=v+'ms';
+    else if(pk==='shhkDelay')  vd.textContent=v+'ms';
+    else if(pk==='tinkFreq')    vd.textContent=v+'Hz';
+    else if(pk==='tinkDecay')   vd.textContent=v+'ms';
+    else if(pk==='tinkDelay')   vd.textContent=v+'ms';
+    else if(pk==='chukFreq')    vd.textContent=v+'Hz';
+    else if(pk==='chukLen')     vd.textContent=v+'ms';
+    else if(pk==='chukDelay')   vd.textContent=v+'ms';
+    else if(pk==='shingFreq')   vd.textContent=v+'Hz';
+    else if(pk==='shingDecay')  vd.textContent=v+'ms';
+    else if(pk==='shingDelay')  vd.textContent=v+'ms';
+    else if(pk==='roomSize')    vd.textContent=v+'ms';
+    else if(pk==='roomDelay')   vd.textContent=v+'ms';
+    else if(pk==='roomCutoff')  vd.textContent=v+'Hz';
+    else if(pk==='lfeFreq')     vd.textContent=v+'Hz';
+    else if(pk==='lfeLen')      vd.textContent=v+'ms';
+    else if(pk==='tailLen')     vd.textContent=v+'ms';
+    else if(pk==='tailDelay')   vd.textContent=v+'ms';
+    else if(pk==='pop2Freq')    vd.textContent=v+'Hz';
+    else if(pk==='pop2Len')     vd.textContent=v+'ms';
+    else if(pk==='pop2Delay')   vd.textContent=v+'ms';
+    else if(pk==='crack2Len')   vd.textContent=v+'ms';
+    else if(pk==='crack2Delay') vd.textContent=v+'ms';
+    else if(pk==='woosh2Len')   vd.textContent=v+'ms';
+    else if(pk==='woosh2Delay') vd.textContent=v+'ms';
+    else if(pk==='sub2Freq')    vd.textContent=v+'Hz';
+    else if(pk==='sub2Len')     vd.textContent=v+'ms';
+    else if(pk==='sub2Delay')   vd.textContent=v+'ms';
+    else if(pk==='mech2Freq')   vd.textContent=v+'Hz';
+    else if(pk==='mech2Delay')  vd.textContent=v+'ms';
+    else if(pk==='sizzle2Freq') vd.textContent=v+'Hz';
+    else if(pk==='sizzle2Len')  vd.textContent=v+'ms';
+    else if(pk==='sizzle2Delay') vd.textContent=v+'ms';
+    else if(pk==='recvFreq')     vd.textContent=v+'Hz';
+    else if(pk==='recvLen')      vd.textContent=v+'ms';
+    else if(pk==='recvDelay')    vd.textContent=v+'ms';
+    else if(pk==='bslapFreq')    vd.textContent=v+'Hz';
+    else if(pk==='bslapDelay')   vd.textContent=v+'ms';
+    else if(pk==='rattleFreq')   vd.textContent=v+'Hz';
+    else if(pk==='rattleLen')    vd.textContent=v+'ms';
+    else if(pk==='rattleDelay')  vd.textContent=v+'ms';
+    else if(pk==='slamLen')      vd.textContent=v+'ms';
+    else if(pk==='slamDelay')    vd.textContent=v+'ms';
+    else if(pk==='ffffLen')      vd.textContent=v+'ms';
+    else if(pk==='ffffDelay')    vd.textContent=v+'ms';
+    else vd.textContent=v+'%';
+  });
+});
+
+function readP(){
+  var p={};
+  document.querySelectorAll('.sp').forEach(function(el){p[el.dataset.p]=+el.value;});
+  return p;
+}
+
+document.getElementById('generateBtn').addEventListener('click',function(){
+  var p=readP();
+  curBuf=genShot(p);nGen++;
+  document.getElementById('waveformBox').style.display='block';
+  document.getElementById('waveformInfo').textContent=(SR/1000)+'kHz | '+(curBuf.length/SR*1000).toFixed(1)+'ms | '+fireMode;
+  drawWF(document.getElementById('waveformCanvas'),curBuf);
+  document.getElementById('testBtn').disabled=false;
+  document.getElementById('downloadBtn').disabled=false;
+  playS(curBuf);setS('#'+nGen);
+});
+document.getElementById('testBtn').addEventListener('click',function(){if(curBuf)playS(curBuf);});
+document.getElementById('downloadBtn').addEventListener('click',function(){
+  if(!curBuf)return;
+  var wav=encWAV(curBuf);
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([wav],{type:'audio/wav'}));
+  a.download='shotforge_'+Date.now()+'.wav';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);setS('Saved');
+});
+document.getElementById('randomBtn').addEventListener('click',function(){
+  document.querySelectorAll('.sp').forEach(function(el){
+    var pk = el.dataset.p;
+    // Don't randomise: output level, section volume faders
+    if(pk==='outLevel') return;
+    if(pk==='secTransient'||pk==='secSubs'||pk==='secMechs'||pk==='secVerb') return;
+    var mn=+el.min,mx=+el.max;
+    el.value=Math.round(mn+rnd()*(mx-mn));
+    el.dispatchEvent(new Event('input'));
+  });
+  document.getElementById('generateBtn').click();
+});
+window.addEventListener('resize',function(){if(curBuf)drawWF(document.getElementById('waveformCanvas'),curBuf);});
+</script>
+
+<script>
+(function(){var btn=document.getElementById('taRandomBtn');if(btn){btn.addEventListener('click',function(){var p='noise-generator.html,sweep-generator.html,mls-generator.html,click-factory.html,shot-forge.html,babel.html,about.html,games.html,itch.html'.split(',');window.location.href=p[Math.floor(Math.random()*p.length)];});}})();
+</script>
+</body>
+</html>

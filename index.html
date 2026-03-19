@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — ENTER</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Ccircle cx='12' cy='12' r='10' fill='%2300ff00' opacity='0.7'/%3E%3Ccircle cx='12' cy='12' r='4' fill='%23ffffff'/%3E%3C/svg%3E") 12 12, crosshair;
+  }
+
+  /* Tiled starfield background */
+  .starfield {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+      radial-gradient(1px 1px at 40px 70px, #fff, transparent),
+      radial-gradient(1px 1px at 50px 160px, #fff, transparent),
+      radial-gradient(1px 1px at 90px 40px, #aaf, transparent),
+      radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+      radial-gradient(1px 1px at 160px 120px, #ffa, transparent),
+      radial-gradient(1px 1px at 200px 50px, #fff, transparent),
+      radial-gradient(1px 1px at 80px 190px, #aff, transparent);
+    background-size: 220px 200px;
+    z-index: 0;
+  }
+
+  /* Scanlines */
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.15) 2px,
+      rgba(0, 0, 0, 0.15) 4px
+    );
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .container {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    gap: 20px;
+  }
+
+  /* Under construction banner */
+  .construction-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background: repeating-linear-gradient(
+      -45deg,
+      #ffcc00,
+      #ffcc00 10px,
+      #000 10px,
+      #000 20px
+    );
+    z-index: 50;
+  }
+  .construction-bar-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 28px;
+    background: repeating-linear-gradient(
+      45deg,
+      #ffcc00,
+      #ffcc00 10px,
+      #000 10px,
+      #000 20px
+    );
+    z-index: 50;
+  }
+
+  .title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 18px;
+    color: #00ffff;
+    text-shadow:
+      0 0 10px #00ffff,
+      0 0 20px #00ffff,
+      0 0 40px #0088ff;
+    text-align: center;
+    animation: flicker 3s infinite;
+    line-height: 1.8;
+  }
+
+  .subtitle {
+    font-family: 'VT323', monospace;
+    font-size: 28px;
+    color: #ff00ff;
+    text-shadow: 0 0 8px #ff00ff, 2px 2px 0 #880088;
+    text-align: center;
+    animation: rainbow 4s linear infinite;
+  }
+
+  .marquee-wrapper {
+    width: 500px;
+    max-width: 90vw;
+    overflow: hidden;
+    border: 2px solid #333;
+    background: #111;
+    padding: 4px 0;
+  }
+
+  .marquee-text {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    color: #0f0;
+    white-space: nowrap;
+    animation: scroll-left 12s linear infinite;
+  }
+
+  @keyframes scroll-left {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
+
+  .game-area {
+    position: relative;
+    width: 500px;
+    max-width: 90vw;
+    height: 220px;
+    border: 3px dashed #444;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.6);
+    margin-top: 10px;
+  }
+
+  .game-instructions {
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    color: #ffcc00;
+    text-align: center;
+    margin-top: 6px;
+    text-shadow: 1px 1px 0 #664400;
+  }
+
+  .score-display {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: #0f0;
+    text-align: center;
+  }
+
+  /* The enter button that runs away */
+  .enter-btn {
+    position: absolute;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    padding: 12px 28px;
+    background: linear-gradient(180deg, #ff0066, #cc0044);
+    color: #fff;
+    border: 3px outset #ff88aa;
+    cursor: pointer;
+    text-shadow: 1px 1px 0 #660022;
+    box-shadow: 0 0 15px rgba(255, 0, 102, 0.5);
+    transition: none;
+    user-select: none;
+    z-index: 20;
+  }
+
+  .enter-btn:hover {
+    background: linear-gradient(180deg, #ff3388, #ff0066);
+    box-shadow: 0 0 25px rgba(255, 0, 102, 0.8);
+  }
+
+  .enter-btn.caught {
+    animation: caught-flash 0.5s ease;
+    background: linear-gradient(180deg, #00ff66, #00cc44) !important;
+    border-color: #88ffaa !important;
+    box-shadow: 0 0 30px rgba(0, 255, 102, 0.8) !important;
+  }
+
+  @keyframes caught-flash {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+  }
+
+  /* Hit counter */
+  .visitor-counter {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    color: #aaa;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .counter-digits {
+    background: #111;
+    border: 2px inset #444;
+    padding: 2px 8px;
+    color: #0f0;
+    font-size: 20px;
+    letter-spacing: 2px;
+  }
+
+  /* Guestbook link */
+  .links {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    display: flex;
+    gap: 20px;
+  }
+
+  .links a {
+    color: #00ccff;
+    text-decoration: none;
+  }
+  .links a:hover {
+    color: #ff0;
+    text-decoration: underline;
+  }
+
+  /* Webring */
+  .webring {
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    color: #888;
+    border: 1px solid #333;
+    padding: 6px 16px;
+    background: rgba(0,0,0,0.5);
+  }
+  .webring a { color: #ff0; text-decoration: none; }
+  .webring a:hover { text-decoration: underline; }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    92% { opacity: 1; }
+    93% { opacity: 0.7; }
+    94% { opacity: 1; }
+    96% { opacity: 0.8; }
+    97% { opacity: 1; }
+  }
+
+  @keyframes rainbow {
+    0% { color: #ff00ff; }
+    25% { color: #ff0066; }
+    50% { color: #ffcc00; }
+    75% { color: #00ffcc; }
+    100% { color: #ff00ff; }
+  }
+
+  /* Transition overlay */
+  .transition-overlay {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .transition-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .transition-text {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    color: #0f0;
+    animation: blink-text 0.5s step-end infinite;
+  }
+
+  @keyframes blink-text {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .loading-bar-container {
+    width: 300px;
+    height: 20px;
+    border: 2px solid #0f0;
+    margin-top: 20px;
+    background: #000;
+  }
+
+  .loading-bar {
+    height: 100%;
+    width: 0%;
+    background: #0f0;
+    transition: width 0.3s;
+  }
+
+  /* ---- PAGE 2: The actual site ---- */
+  .site-content {
+    display: none;
+    min-height: 100vh;
+    background: #1a0a2e;
+    position: relative;
+    z-index: 10;
+  }
+
+  .site-content.visible {
+    display: block;
+  }
+
+  .landing-page {
+    transition: opacity 0.5s;
+  }
+  .landing-page.hidden {
+    display: none;
+  }
+
+  .site-header {
+    background: linear-gradient(90deg, #0a0020, #1a0a3e, #0a0020);
+    border-bottom: 3px solid #ff00ff;
+    padding: 40px 20px;
+    text-align: center;
+  }
+
+  .site-header h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 24px;
+    color: #00ffff;
+    text-shadow: 0 0 20px #00ffff, 3px 3px 0 #ff00ff;
+    margin-bottom: 10px;
+  }
+
+  .site-header p {
+    font-family: 'VT323', monospace;
+    font-size: 24px;
+    color: #ccc;
+  }
+
+  .site-nav {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px;
+    background: #111;
+    border-bottom: 2px solid #333;
+    flex-wrap: wrap;
+  }
+
+  .site-nav a {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: #0f0;
+    text-decoration: none;
+    padding: 8px 14px;
+    border: 2px outset #444;
+    background: linear-gradient(180deg, #333, #222);
+  }
+  .site-nav a:hover {
+    background: linear-gradient(180deg, #444, #333);
+    color: #ff0;
+  }
+
+  .site-body {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+
+  .site-body h2 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 14px;
+    color: #ff00ff;
+    margin-bottom: 14px;
+    text-shadow: 0 0 6px #ff00ff;
+  }
+
+  .site-body p, .site-body li {
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    color: #ccc;
+    line-height: 1.5;
+    margin-bottom: 12px;
+  }
+
+  .site-body a {
+    color: #00ccff;
+  }
+
+  .site-body hr {
+    border: none;
+    border-top: 1px dashed #444;
+    margin: 24px 0;
+  }
+
+  .guestbook-section {
+    border: 2px inset #444;
+    background: rgba(0,0,0,0.4);
+    padding: 16px;
+    margin-top: 20px;
+  }
+
+  .guestbook-entry {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    color: #aaa;
+    border-bottom: 1px dotted #333;
+    padding: 8px 0;
+  }
+  .guestbook-entry span { color: #ff0; }
+
+  .badge-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  .badge {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 7px;
+    padding: 6px 10px;
+    border: 2px outset;
+    display: inline-block;
+  }
+
+  .badge-1 { background: #0000aa; color: #fff; border-color: #4444ff; }
+  .badge-2 { background: #aa0000; color: #ff0; border-color: #ff4444; }
+  .badge-3 { background: #006600; color: #0f0; border-color: #44ff44; }
+  .badge-4 { background: #660066; color: #ff88ff; border-color: #ff44ff; }
+  .badge-5 { background: #664400; color: #ffcc00; border-color: #ffaa44; }
+
+  .dancing-baby {
+    font-size: 40px;
+    display: inline-block;
+    animation: dance 0.5s ease-in-out infinite alternate;
+  }
+
+  @keyframes dance {
+    0% { transform: rotate(-10deg) translateY(0); }
+    100% { transform: rotate(10deg) translateY(-5px); }
+  }
+
+  .site-footer {
+    text-align: center;
+    padding: 20px;
+    border-top: 2px solid #333;
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    color: #666;
+    background: #0a0020;
+  }
+</style>
+</head>
+<body>
+
+<!-- LANDING / GATE PAGE -->
+<div class="landing-page" id="landingPage">
+  <div class="starfield"></div>
+  <div class="scanlines"></div>
+  <div class="construction-bar"></div>
+  <div class="construction-bar-bottom"></div>
+
+  <div class="container">
+    <div class="title">
+      T O M M Y &nbsp; A L L E N<br>
+      A C O U S T I C S
+    </div>
+
+    <div class="subtitle">You Must Prove Yourself Worthy</div>
+
+    <div class="marquee-wrapper">
+      <div class="marquee-text">
+        *** CLICK THE ENTER BUTTON 3 TIMES TO GAIN ACCESS *** IT DOESN'T WANT TO BE CLICKED *** GOOD LUCK ***
+      </div>
+    </div>
+
+    <div class="game-instructions">
+      Catch the button! <span id="clickCount">0</span> / 3
+    </div>
+
+    <div class="game-area" id="gameArea">
+      <button class="enter-btn" id="enterBtn">E N T E R</button>
+    </div>
+
+    <div class="score-display">
+      ATTEMPTS: <span id="attempts">0</span> &nbsp; | &nbsp; MISSES: <span id="misses">0</span>
+    </div>
+
+    <div class="visitor-counter">
+      You are visitor #<span class="counter-digits" id="visitorNum">004,721</span>
+    </div>
+
+    <div class="webring">
+      &lt;&lt; <a href="#">prev</a> |
+      <a href="#">~ CoolSites WebRing ~</a>
+      | <a href="#">next</a> &gt;&gt;
+    </div>
+  </div>
+</div>
+
+<!-- TRANSITION -->
+<div class="transition-overlay" id="transitionOverlay">
+  <div class="transition-text">ENTERING SITE...</div>
+  <div class="loading-bar-container">
+    <div class="loading-bar" id="loadingBar"></div>
+  </div>
+</div>
+
+
+<script>
+  const btn = document.getElementById('enterBtn');
+  const gameArea = document.getElementById('gameArea');
+  const clickCountEl = document.getElementById('clickCount');
+  const attemptsEl = document.getElementById('attempts');
+  const missesEl = document.getElementById('misses');
+
+  let clickCount = 0;
+  let attempts = 0;
+  let misses = 0;
+  let dodgeCooldown = false;
+  let difficulty = 1; // increases as you get clicks
+
+  // Random visitor number
+  document.getElementById('visitorNum').textContent =
+    String(Math.floor(Math.random() * 90000) + 1000).padStart(6, '0').replace(/(\d)(?=(\d{3})+$)/g, '$1,');
+
+  // Position button randomly
+  function positionBtn() {
+    const areaRect = gameArea.getBoundingClientRect();
+    const btnW = btn.offsetWidth;
+    const btnH = btn.offsetHeight;
+    const maxX = areaRect.width - btnW - 6;
+    const maxY = areaRect.height - btnH - 6;
+    const x = Math.random() * maxX;
+    const y = Math.random() * maxY;
+    btn.style.left = x + 'px';
+    btn.style.top = y + 'px';
+  }
+
+  positionBtn();
+
+  // Dodge logic: button runs from cursor
+  gameArea.addEventListener('mousemove', (e) => {
+    if (dodgeCooldown) return;
+
+    const areaRect = gameArea.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+
+    const btnCenterX = btnRect.left + btnRect.width / 2 - areaRect.left;
+    const btnCenterY = btnRect.top + btnRect.height / 2 - areaRect.top;
+    const mouseX = e.clientX - areaRect.left;
+    const mouseY = e.clientY - areaRect.top;
+
+    const dx = btnCenterX - mouseX;
+    const dy = btnCenterY - mouseY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // Dodge threshold scales with difficulty
+    const threshold = 120 - (difficulty * 15);
+    if (dist < Math.max(threshold, 50)) {
+      dodgeCooldown = true;
+
+      // Calculate dodge direction (away from cursor)
+      const angle = Math.atan2(dy, dx);
+      const dodgeDist = 80 + Math.random() * 80;
+      let newX = btnCenterX + Math.cos(angle) * dodgeDist - btn.offsetWidth / 2;
+      let newY = btnCenterY + Math.sin(angle) * dodgeDist - btn.offsetHeight / 2;
+
+      // Add some randomness
+      newX += (Math.random() - 0.5) * 60;
+      newY += (Math.random() - 0.5) * 40;
+
+      // Clamp to game area
+      const maxX = areaRect.width - btn.offsetWidth - 6;
+      const maxY = areaRect.height - btn.offsetHeight - 6;
+      newX = Math.max(4, Math.min(newX, maxX));
+      newY = Math.max(4, Math.min(newY, maxY));
+
+      btn.style.left = newX + 'px';
+      btn.style.top = newY + 'px';
+
+      setTimeout(() => { dodgeCooldown = false; }, 100 + difficulty * 30);
+    }
+  });
+
+  // Clicking empty game area = miss
+  gameArea.addEventListener('click', (e) => {
+    if (e.target !== btn) {
+      misses++;
+      missesEl.textContent = misses;
+      attempts++;
+      attemptsEl.textContent = attempts;
+
+      // After many misses, button gets slightly less dodgy
+      if (misses > 8 && difficulty > 0) {
+        difficulty = Math.max(0, difficulty - 0.3);
+      }
+    }
+  });
+
+  // Successful click
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clickCount++;
+    attempts++;
+    attemptsEl.textContent = attempts;
+    clickCountEl.textContent = clickCount;
+
+    btn.classList.add('caught');
+    setTimeout(() => btn.classList.remove('caught'), 500);
+
+    if (clickCount >= 3) {
+      enterSite();
+    } else {
+      // Increase difficulty, reposition
+      difficulty = Math.min(3, difficulty + 0.5);
+      setTimeout(positionBtn, 300);
+    }
+  });
+
+  // Touch support for mobile
+  btn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    btn.click();
+  });
+
+  function enterSite() {
+    btn.textContent = 'W E L C O M E !';
+    btn.style.pointerEvents = 'none';
+
+    setTimeout(() => {
+      const overlay = document.getElementById('transitionOverlay');
+      const bar = document.getElementById('loadingBar');
+      overlay.classList.add('active');
+
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 15 + 5;
+        if (progress >= 100) {
+          progress = 100;
+          bar.style.width = '100%';
+          clearInterval(interval);
+
+          setTimeout(() => {
+            window.location.href = 'home.html';
+          }, 600);
+        }
+        bar.style.width = progress + '%';
+      }, 200);
+    }, 800);
+  }
+</script>
+</body>
+</html>

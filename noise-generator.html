@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — NOISE GENERATOR</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; color: #ccc; font-family: 'VT323', monospace; font-size: 20px; min-height: 100vh; overflow-x: hidden; }
+
+  .starfield {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+      radial-gradient(1px 1px at 40px 70px, #fff, transparent),
+      radial-gradient(1px 1px at 50px 160px, #fff, transparent),
+      radial-gradient(1px 1px at 90px 40px, #aaf, transparent),
+      radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+      radial-gradient(1px 1px at 160px 120px, #ffa, transparent),
+      radial-gradient(1px 1px at 200px 50px, #fff, transparent),
+      radial-gradient(1px 1px at 80px 190px, #aff, transparent);
+    background-size: 220px 200px;
+  }
+  .scanlines { position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px); z-index: 100; pointer-events: none; }
+  .bar-top { position: fixed; top: 0; left: 0; right: 0; height: 24px; z-index: 50; background: repeating-linear-gradient(-45deg, #ffcc00, #ffcc00 10px, #000 10px, #000 20px); }
+  .bar-bottom { position: fixed; bottom: 0; left: 0; right: 0; height: 24px; z-index: 50; background: repeating-linear-gradient(45deg, #ffcc00, #ffcc00 10px, #000 10px, #000 20px); }
+
+  .app { position: relative; z-index: 10; max-width: 760px; margin: 0 auto; padding: 44px 16px 60px; }
+
+  .header { text-align: center; margin-bottom: 10px; padding-bottom: 12px; border-bottom: 2px dashed #444; }
+  .header h1 { font-family: 'Press Start 2P', monospace; font-size: 20px; color: #00ffff; text-shadow: 0 0 10px #00ffff, 0 0 20px #0088ff, 3px 3px 0 #005588; line-height: 1.6; animation: flicker 3s infinite; }
+  .header .subtitle { font-size: 22px; color: #ff00ff; text-shadow: 0 0 6px #ff00ff; margin-top: 6px; animation: rainbow 4s linear infinite; }
+  @keyframes flicker { 0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:.7} 94%{opacity:1} 96%{opacity:.8} 97%{opacity:1} }
+  @keyframes rainbow { 0%{color:#ff00ff} 25%{color:#ff0066} 50%{color:#ffcc00} 75%{color:#00ffcc} 100%{color:#ff00ff} }
+
+  .marquee-wrapper { width: 100%; overflow: hidden; border: 2px solid #333; background: #111; padding: 4px 0; margin: 12px 0; }
+  .marquee-text { font-size: 18px; color: #0f0; white-space: nowrap; animation: scroll-left 16s linear infinite; }
+  @keyframes scroll-left { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+
+  .desc { color: #aaa; font-size: 20px; line-height: 1.5; margin-bottom: 16px; text-align: center; }
+
+  .panel { background: #0a0a0a; border: 3px inset #555; padding: 16px; margin-bottom: 14px; }
+  .panel-title { font-family: 'Press Start 2P', monospace; font-size: 11px; color: #ffcc00; text-shadow: 0 0 4px #ffcc00; margin-bottom: 12px; letter-spacing: 1px; }
+  .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px; }
+  .control-group { display: flex; flex-direction: column; gap: 4px; }
+  .control-group label { font-size: 16px; color: #888; }
+  .control-group select, .control-group input[type="number"] { font-family: 'VT323', monospace; font-size: 20px; padding: 6px 8px; background: #000; border: 2px inset #666; color: #0f0; outline: none; width: 100%; }
+  .control-group select:focus, .control-group input:focus { border-color: #00ffff; }
+  .control-group select option { background: #000; color: #0f0; }
+
+  .info-strip { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px dashed #333; font-size: 18px; color: #888; }
+  .info-strip span { color: #0f0; }
+
+  .btn-row { display: flex; gap: 10px; flex-wrap: wrap; padding: 14px 16px; background: #0a0a0a; border: 3px inset #555; margin-bottom: 14px; }
+  .btn { font-family: 'Press Start 2P', monospace; font-size: 10px; padding: 10px 18px; cursor: pointer; border: 3px outset; text-shadow: 1px 1px 0 rgba(0,0,0,0.5); transition: filter 0.1s; }
+  .btn:hover { filter: brightness(1.2); }
+  .btn:active { border-style: inset; }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-generate { background: linear-gradient(180deg, #0c0, #090); color: #fff; border-color: #4f4; box-shadow: 0 0 10px rgba(0,255,0,0.2); }
+  .btn-play { background: linear-gradient(180deg, #0088ff, #0066cc); color: #fff; border-color: #44aaff; }
+  .btn-stop { background: linear-gradient(180deg, #cc0000, #990000); color: #fff; border-color: #ff4444; }
+  .btn-download { background: linear-gradient(180deg, #cc6600, #994400); color: #fff; border-color: #ff8844; }
+
+  .info-box { background: #060606; border: 2px inset #444; padding: 10px 14px; margin-bottom: 14px; display: none; }
+  .info-label { font-size: 14px; color: #888; margin-bottom: 4px; }
+  .info-text { font-size: 22px; color: #00ccff; text-shadow: 0 0 4px #00ccff; }
+  .info-detail { font-size: 16px; color: #0f0; margin-top: 6px; }
+
+  .viz-box { background: #060606; border: 2px inset #444; margin-bottom: 14px; overflow: hidden; display: none; }
+  .viz-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #222; background: #0a0a0a; }
+  .viz-title { font-family: 'Press Start 2P', monospace; font-size: 9px; color: #ffcc00; }
+  .viz-info { font-size: 16px; color: #666; }
+  .viz-canvas-wrap { padding: 6px; background: #030308; }
+  .viz-canvas-wrap canvas { display: block; width: 100%; }
+
+  .status-bar { position: fixed; bottom: 24px; left: 0; right: 0; background: #0a0a0a; border-top: 2px solid #333; padding: 5px 16px; display: flex; align-items: center; gap: 10px; font-size: 16px; color: #666; z-index: 50; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #333; transition: all 0.3s; }
+  .status-dot.active { background: #0f0; box-shadow: 0 0 6px #0f0; }
+  .status-bar .right { margin-left: auto; font-size: 14px; }
+
+  .visitor-counter { text-align: center; color: #666; font-size: 16px; margin: 10px 0; }
+  .counter-digits { background: #111; border: 2px inset #444; padding: 2px 8px; color: #0f0; font-size: 18px; letter-spacing: 2px; }
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .badge { font-family: 'Press Start 2P', monospace; font-size: 6px; padding: 5px 8px; border: 2px outset; display: inline-block; line-height: 1.5; }
+  .badge-1 { background: #0000aa; color: #fff; border-color: #4444ff; }
+  .badge-2 { background: #006600; color: #0f0; border-color: #44ff44; }
+  .badge-3 { background: #660066; color: #ff88ff; border-color: #ff44ff; }
+  .links-row { display: flex; gap: 16px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+  .links-row a { color: #00ccff; text-decoration: none; font-size: 18px; }
+  .links-row a:hover { color: #ff0; text-decoration: underline; }
+  .back-link { display: block; text-align: center; margin-top: 14px; }
+  .back-link a { color: #00ccff; text-decoration: none; font-size: 20px; }
+  .back-link a:hover { color: #ff0; text-decoration: underline; }
+  .webring { text-align: center; font-size: 16px; color: #555; border: 1px solid #222; padding: 6px 14px; background: rgba(0,0,0,0.5); margin-top: 14px; }
+  .webring a { color: #ff0; text-decoration: none; }
+  .webring a:hover { text-decoration: underline; }
+
+  @media (max-width: 500px) { .header h1 { font-size: 16px; } .controls-grid { grid-template-columns: 1fr 1fr; } }
+
+  .ta-topbar{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(0,0,0,0.9);border-bottom:2px solid #0f0;padding:8px 16px;display:flex;align-items:center;justify-content:space-between}
+  .ta-topbar a{color:#0f0;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:1px;padding:4px 8px;border:1px solid #0f0;background:rgba(0,255,0,0.05);transition:all 0.15s}
+  .ta-topbar a:hover{color:#000;border-color:#0f0;background:#0f0;box-shadow:0 0 10px rgba(0,255,0,0.3)}
+  .ta-topbar .ta-sitename{color:#00ffff;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:2px;text-shadow:0 0 6px #00ffff;font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px}
+
+  .ta-navfooter{margin-top:30px;padding-top:16px;border-top:2px solid #0f0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .ta-navfooter a{color:#0f0;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1px;padding:8px 14px;border:1px solid #0f0;background:rgba(0,255,0,0.05);transition:all 0.15s}
+  .ta-navfooter a:hover{color:#000;border-color:#0f0;background:#0f0;box-shadow:0 0 12px rgba(0,255,0,0.3)}
+  .ta-navfooter .ta-btn-random{font-family:'Press Start 2P',monospace;font-size:9px;padding:8px 14px;cursor:pointer;background:rgba(0,255,0,0.05);color:#ffcc00;border:1px solid #ffcc00;text-shadow:0 0 4px #ffcc00;letter-spacing:1px;transition:all 0.15s}
+  .ta-navfooter .ta-btn-random:hover{background:#ffcc00;color:#000;border-color:#ffcc00;box-shadow:0 0 12px rgba(255,204,0,0.3);text-shadow:none}
+
+</style>
+</head>
+<body>
+<div class="starfield"></div>
+<div class="scanlines"></div>
+<div class="ta-topbar"><span class="ta-sitename">TOMMY ALLEN ACOUSTICS</span><a href="home.html">&#9751; HOME</a></div>
+<div class="bar-top"></div>
+<div class="bar-bottom"></div>
+
+<div class="app">
+  <div class="header">
+    <h1>~ * NOISE GEN * ~</h1>
+    <div class="subtitle">Noise Signal Generator</div>
+  </div>
+
+  <div class="marquee-wrapper">
+    <div class="marquee-text">*** WHITE NOISE *** PINK NOISE *** BROWN NOISE *** VIOLET NOISE *** BLUE NOISE *** GREY NOISE *** ROOM TUNING *** SPEAKER CALIBRATION *** RT60 MEASUREMENT *** FREE .WAV ***</div>
+  </div>
+
+  <div class="desc">Generate calibrated noise signals for acoustic measurement, room tuning, speaker testing, and sound masking. Six spectral profiles from -6dB/oct to +6dB/oct.</div>
+
+  <div class="panel">
+    <div class="panel-title">&gt;&gt; PARAMETERS</div>
+    <div class="controls-grid">
+      <div class="control-group">
+        <label>Noise Type</label>
+        <select id="noiseType">
+          <option value="white" selected>White (flat)</option>
+          <option value="pink">Pink (-3 dB/oct)</option>
+          <option value="brown">Brown (-6 dB/oct)</option>
+          <option value="blue">Blue (+3 dB/oct)</option>
+          <option value="violet">Violet (+6 dB/oct)</option>
+          <option value="grey">Grey (A-weighted)</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Duration (s)</label>
+        <input type="number" id="duration" value="10" min="0.1" max="120" step="0.1">
+      </div>
+      <div class="control-group">
+        <label>Sample Rate</label>
+        <select id="sampleRate">
+          <option value="22050">22,050 Hz</option>
+          <option value="44100" selected>44,100 Hz</option>
+          <option value="48000">48,000 Hz</option>
+          <option value="96000">96,000 Hz</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Amplitude</label>
+        <select id="amplitude">
+          <option value="0">0 dBFS</option>
+          <option value="-3" selected>-3 dBFS</option>
+          <option value="-6">-6 dBFS</option>
+          <option value="-12">-12 dBFS</option>
+          <option value="-20">-20 dBFS</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Bit Depth</label>
+        <select id="bitDepth">
+          <option value="16" selected>16-bit</option>
+          <option value="24">24-bit</option>
+        </select>
+      </div>
+    </div>
+    <div class="info-strip">
+      <div>Samples: <span id="infoSamples">441,000</span></div>
+      <div>File: <span id="infoSize">~860 KB</span></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-generate" id="generateBtn">GENERATE</button>
+    <button class="btn btn-play" id="playBtn" disabled>&#9654; PLAY</button>
+    <button class="btn btn-stop" id="stopBtn" disabled>&#9632; STOP</button>
+    <button class="btn btn-download" id="downloadBtn" disabled>DOWNLOAD .WAV</button>
+  </div>
+
+  <div class="info-box" id="infoBox">
+    <div class="info-label">Signal:</div>
+    <div class="info-text" id="sigText"></div>
+    <div class="info-detail" id="sigDetail"></div>
+  </div>
+
+  <div class="viz-box" id="waveformBox">
+    <div class="viz-header"><span class="viz-title">WAVEFORM</span><span class="viz-info" id="waveformInfo"></span></div>
+    <div class="viz-canvas-wrap"><canvas id="waveformCanvas" height="160"></canvas></div>
+  </div>
+
+  <div class="viz-box" id="fftBox">
+    <div class="viz-header"><span class="viz-title">SPECTRUM</span><span class="viz-info" id="fftInfo"></span></div>
+    <div class="viz-canvas-wrap"><canvas id="fftCanvas" height="160"></canvas></div>
+  </div>
+
+  <div class="visitor-counter">Signals generated: <span class="counter-digits" id="genCount">000,000</span></div>
+
+  <div class="badge-row">
+    <div class="badge badge-1">WORKS IN<br>NETSCAPE</div>
+    <div class="badge badge-2">NO SERVER<br>REQUIRED</div>
+    <div class="badge badge-3">PINK NOISE<br>IS LOVE</div>
+  </div>
+
+  
+  <div class="ta-navfooter">
+    <a href="babel.html">&lt;&lt; BABEL</a>
+    <button class="ta-btn-random" id="taRandomBtn">&#127922; RANDOM</button>
+    <a href="sweep-generator.html">SWEEP GEN &gt;&gt;</a>
+  </div>
+  <div style="text-align:center;font-size:14px;color:#ff00ff;border:2px ridge #0f0;padding:6px 14px;background:rgba(0,0,0,0.5);margin-top:14px">&lt;&lt; <a href="#" style="color:#0f0;text-decoration:none">prev</a> | <a href="#" style="color:#0f0;text-decoration:none">~ Acoustics WebRing ~</a> | <a href="#" style="color:#0f0;text-decoration:none">next</a> &gt;&gt;</div>
+  <div style="text-align:center;margin-top:14px"><a href="home.html" style="display:inline-block;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:3px;padding:12px 30px;border:2px solid #fff;color:#fff;text-decoration:none;background:rgba(255,255,255,0.05);transition:all 0.15s" onmouseover="this.style.background='#fff';this.style.color='#000';this.style.boxShadow='0 0 20px rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='#fff';this.style.boxShadow='none'">&#9751; BACK TO HOME</a></div>
+</div>
+
+<div class="status-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span id="statusText">Ready</span>
+  <span class="right">NOISE GEN v1.0</span>
+</div>
+
+<script>
+// ============================
+// NOISE GENERATION
+// ============================
+function generateWhite(N) {
+  const out = new Float32Array(N);
+  for (let i = 0; i < N; i++) out[i] = Math.random() * 2 - 1;
+  return out;
+}
+
+function generatePink(N) {
+  const out = new Float32Array(N);
+  const g = new Float32Array(16);
+  for (let i = 0; i < 16; i++) g[i] = Math.random() * 2 - 1;
+  let sum = 0;
+  for (let i = 0; i < 16; i++) sum += g[i];
+  for (let i = 0; i < N; i++) {
+    let k = i, tz = 0;
+    if (k > 0) { while ((k & 1) === 0) { tz++; k >>= 1; } }
+    const idx = tz % 16;
+    sum -= g[idx];
+    g[idx] = Math.random() * 2 - 1;
+    sum += g[idx];
+    out[i] = (sum / 16 + (Math.random() * 2 - 1)) * 0.5;
+  }
+  let mx = 0; for (let i = 0; i < N; i++) mx = Math.max(mx, Math.abs(out[i]));
+  if (mx > 0) for (let i = 0; i < N; i++) out[i] /= mx;
+  return out;
+}
+
+function generateBrown(N) {
+  const out = new Float32Array(N);
+  let v = 0;
+  for (let i = 0; i < N; i++) { v += (Math.random() * 2 - 1) * 0.1; v = Math.max(-1, Math.min(1, v)); out[i] = v; }
+  let s = 0; for (let i = 0; i < N; i++) s += out[i]; const dc = s / N;
+  let mx = 0; for (let i = 0; i < N; i++) { out[i] -= dc; mx = Math.max(mx, Math.abs(out[i])); }
+  if (mx > 0) for (let i = 0; i < N; i++) out[i] /= mx;
+  return out;
+}
+
+function generateViolet(N) {
+  const out = new Float32Array(N);
+  let prev = 0;
+  for (let i = 0; i < N; i++) { const w = Math.random() * 2 - 1; out[i] = w - prev; prev = w; }
+  let mx = 0; for (let i = 0; i < N; i++) mx = Math.max(mx, Math.abs(out[i]));
+  if (mx > 0) for (let i = 0; i < N; i++) out[i] /= mx;
+  return out;
+}
+
+function generateBlue(N) {
+  const pink = generatePink(N);
+  const out = new Float32Array(N);
+  for (let i = 1; i < N; i++) out[i] = pink[i] - pink[i-1]; out[0] = 0;
+  let mx = 0; for (let i = 0; i < N; i++) mx = Math.max(mx, Math.abs(out[i]));
+  if (mx > 0) for (let i = 0; i < N; i++) out[i] /= mx;
+  return out;
+}
+
+function generateGrey(N) {
+  const white = generateWhite(N);
+  const out = new Float32Array(N);
+  let lp = 0;
+  for (let i = 0; i < N; i++) { lp = lp * 0.999 + white[i] * 0.001; out[i] = white[i] + lp * 2.0 + (white[i] - lp) * 0.5; }
+  let mx = 0; for (let i = 0; i < N; i++) mx = Math.max(mx, Math.abs(out[i]));
+  if (mx > 0) for (let i = 0; i < N; i++) out[i] /= mx;
+  return out;
+}
+
+// ============================
+// FFT
+// ============================
+function fftRadix2(re, im) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit;
+    if (i < j) { [re[i],re[j]]=[re[j],re[i]]; [im[i],im[j]]=[im[j],im[i]]; }
+  }
+  for (let len = 2; len <= n; len <<= 1) {
+    const half = len >> 1, a = -2*Math.PI/len, wR = Math.cos(a), wI = Math.sin(a);
+    for (let i = 0; i < n; i += len) {
+      let cR = 1, cI = 0;
+      for (let j = 0; j < half; j++) {
+        const tR = cR*re[i+j+half]-cI*im[i+j+half], tI = cR*im[i+j+half]+cI*re[i+j+half];
+        re[i+j+half]=re[i+j]-tR; im[i+j+half]=im[i+j]-tI; re[i+j]+=tR; im[i+j]+=tI;
+        const nR=cR*wR-cI*wI; cI=cR*wI+cI*wR; cR=nR;
+      }
+    }
+  }
+}
+
+function computeSpectrum(samples, sampleRate) {
+  const N = samples.length;
+  const fftSize = Math.min(8192, 1 << Math.floor(Math.log2(N)));
+  const segs = Math.min(8, Math.floor(N / fftSize));
+  const bins = fftSize / 2;
+  const avg = new Float32Array(bins);
+  for (let s = 0; s < segs; s++) {
+    const start = Math.floor(s * (N - fftSize) / Math.max(1, segs - 1));
+    const re = new Float32Array(fftSize), im = new Float32Array(fftSize);
+    for (let i = 0; i < fftSize; i++) re[i] = samples[start+i] * (0.5-0.5*Math.cos(2*Math.PI*i/(fftSize-1)));
+    fftRadix2(re, im);
+    for (let k = 0; k < bins; k++) avg[k] += (re[k]*re[k]+im[k]*im[k]) / segs;
+  }
+  let mx = 0; for (let i = 0; i < bins; i++) mx = Math.max(mx, avg[i]);
+  const dB = new Float32Array(bins);
+  for (let i = 0; i < bins; i++) dB[i] = avg[i] > 0 ? 10*Math.log10(avg[i]/mx) : -100;
+  return { dB, numBins: bins, nyquist: sampleRate / 2 };
+}
+
+// ============================
+// DRAWING
+// ============================
+function drawWaveform(canvas, samples, sampleRate) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr; canvas.height = 160 * dpr; ctx.scale(dpr, dpr);
+  const W = rect.width, H = 160;
+  const pad = { top: 16, bottom: 22, left: 44, right: 12 };
+  const pW = W-pad.left-pad.right, pH = H-pad.top-pad.bottom;
+
+  ctx.fillStyle = '#010108'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = '#0a1a0a'; ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) { const y = pad.top+(pH/4)*i; ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke(); }
+  ctx.fillStyle = '#335533'; ctx.font = '12px VT323, monospace';
+  ctx.textAlign = 'right'; ctx.fillText('+1', pad.left-4, pad.top+5); ctx.fillText('-1', pad.left-4, pad.top+pH+5);
+  ctx.textAlign = 'center';
+  const dur = samples.length / sampleRate;
+  for (let i = 0; i <= 4; i++) ctx.fillText(((dur/4)*i).toFixed(1)+'s', pad.left+(pW/4)*i, H-4);
+  const zY = pad.top + pH/2;
+
+  ctx.fillStyle = '#00ff44';
+  const N = samples.length;
+  for (let px = 0; px < pW; px++) {
+    const s = Math.floor((px/pW)*N), e = Math.min(Math.floor(((px+1)/pW)*N), N);
+    let mn = 1, mx = -1;
+    for (let j = s; j < e; j++) { if (samples[j]<mn) mn=samples[j]; if (samples[j]>mx) mx=samples[j]; }
+    ctx.fillRect(pad.left+px, zY-mx*(pH/2-3), 1, Math.max(1, (mx-mn)*(pH/2-3)));
+  }
+  ctx.globalAlpha = 0.15; ctx.shadowColor = '#00ff44'; ctx.shadowBlur = 4;
+  for (let px = 0; px < pW; px += 2) {
+    const s = Math.floor((px/pW)*N), e = Math.min(Math.floor(((px+1)/pW)*N), N);
+    let mn = 1, mx = -1;
+    for (let j = s; j < e; j++) { if (samples[j]<mn) mn=samples[j]; if (samples[j]>mx) mx=samples[j]; }
+    ctx.fillRect(pad.left+px, zY-mx*(pH/2-3), 2, Math.max(1, (mx-mn)*(pH/2-3)));
+  }
+  ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+}
+
+function drawFFT(canvas, spectrum, sampleRate) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr; canvas.height = 160 * dpr; ctx.scale(dpr, dpr);
+  const W = rect.width, H = 160;
+  const pad = { top: 14, bottom: 22, left: 50, right: 10 };
+  const pW = W-pad.left-pad.right, pH = H-pad.top-pad.bottom;
+
+  ctx.fillStyle = '#010108'; ctx.fillRect(0, 0, W, H);
+
+  const { dB, numBins, nyquist } = spectrum;
+  const dbMin = -80, dbMax = 0, dbR = dbMax - dbMin;
+  const logMin = Math.log10(20), logMax = Math.log10(nyquist), logR = logMax - logMin;
+
+  ctx.strokeStyle = '#0a1a0a'; ctx.lineWidth = 0.5;
+  for (let db = 0; db >= dbMin; db -= 20) {
+    const y = pad.top + ((dbMax-db)/dbR)*pH;
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
+    ctx.fillStyle = '#335533'; ctx.font = '11px VT323, monospace'; ctx.textAlign = 'right';
+    ctx.fillText(db+'dB', pad.left-4, y+4);
+  }
+  ctx.textAlign = 'center'; ctx.fillStyle = '#335533';
+  for (const f of [20,50,100,200,500,1000,2000,5000,10000,20000]) {
+    if (f > nyquist) continue;
+    const x = pad.left+((Math.log10(f)-logMin)/logR)*pW;
+    ctx.fillText(f>=1000?(f/1000)+'k':f+'', x, H-4);
+    ctx.strokeStyle = '#0a1a0a'; ctx.beginPath(); ctx.moveTo(x,pad.top); ctx.lineTo(x,H-pad.bottom); ctx.stroke();
+  }
+
+  // Ideal slope line
+  const SLOPES = { white: 0, pink: -3, brown: -6, blue: 3, violet: 6, grey: 0 };
+  const type = document.getElementById('noiseType').value;
+  const slope = SLOPES[type];
+  if (slope !== 0) {
+    ctx.strokeStyle = '#224422'; ctx.lineWidth = 1; ctx.setLineDash([4,4]); ctx.beginPath();
+    const refFreq = 1000, refDB = -10;
+    for (let px = 0; px < pW; px++) {
+      const f = Math.pow(10, logMin + (px/pW)*logR);
+      const idealDB = refDB + slope * Math.log2(f / refFreq);
+      const y = pad.top + Math.max(0, Math.min(pH, ((dbMax-idealDB)/dbR)*pH));
+      if (px === 0) ctx.moveTo(pad.left+px, y); else ctx.lineTo(pad.left+px, y);
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+
+  ctx.beginPath();
+  for (let k = 1; k < numBins; k++) {
+    const f = (k/numBins)*nyquist; if (f < 10) continue;
+    const x = pad.left+((Math.log10(f)-logMin)/logR)*pW;
+    const y = pad.top + Math.max(0, Math.min(pH, ((dbMax-dB[k])/dbR)*pH));
+    if (k === 1) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle = '#00ff44'; ctx.lineWidth = 1; ctx.stroke();
+  ctx.globalAlpha = 0.15; ctx.lineWidth = 3; ctx.stroke(); ctx.globalAlpha = 1;
+}
+
+// ============================
+// WAV + AUDIO
+// ============================
+function encodeWAV(samples, sr, ampDB, bd) {
+  const N = samples.length, amp = Math.pow(10,ampDB/20), bps = bd/8, ds = N*bps;
+  const buf = new ArrayBuffer(44+ds), v = new DataView(buf);
+  const ws = (o,s) => { for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  ws(0,'RIFF'); v.setUint32(4,36+ds,true); ws(8,'WAVE'); ws(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr*bps,true); v.setUint16(32,bps,true); v.setUint16(34,bd,true);
+  ws(36,'data'); v.setUint32(40,ds,true);
+  if (bd===16) { for(let i=0;i<N;i++) v.setInt16(44+i*2, Math.round(Math.max(-1,Math.min(1,samples[i]*amp))*32767), true); }
+  else { for(let i=0;i<N;i++){const s=Math.round(Math.max(-1,Math.min(1,samples[i]*amp))*8388607),o=44+i*3;v.setUint8(o,s&0xFF);v.setUint8(o+1,(s>>8)&0xFF);v.setUint8(o+2,(s>>16)&0xFF);} }
+  return buf;
+}
+
+let audioCtx=null, currentSource=null, currentCtxRate=0;
+function playAudio(samples, sr, ampDB) {
+  stopAudio();
+  if (!audioCtx||currentCtxRate!==sr) { if(audioCtx)audioCtx.close(); audioCtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:sr}); currentCtxRate=sr; }
+  const amp=Math.pow(10,ampDB/20), buf=audioCtx.createBuffer(1,samples.length,sr), ch=buf.getChannelData(0);
+  for(let i=0;i<samples.length;i++) ch[i]=samples[i]*amp;
+  currentSource=audioCtx.createBufferSource(); currentSource.buffer=buf; currentSource.connect(audioCtx.destination);
+  currentSource.start(); currentSource.onended=()=>setStatus('Playback complete',false); setStatus('Playing...',true);
+}
+function stopAudio(){if(currentSource){try{currentSource.stop();}catch(e){}currentSource=null;}}
+function downloadBlob(b,fn){const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);}
+
+// ============================
+// UI
+// ============================
+let currentSamples=null, totalGens=0;
+const NAMES = {white:'White Noise',pink:'Pink Noise',brown:'Brown Noise',blue:'Blue Noise',violet:'Violet Noise',grey:'Grey Noise'};
+
+function getP(){return{type:document.getElementById('noiseType').value,dur:Math.max(.01,+document.getElementById('duration').value),sr:+document.getElementById('sampleRate').value,amp:+document.getElementById('amplitude').value,bd:+document.getElementById('bitDepth').value};}
+
+function updateInfo(){const p=getP(),n=Math.round(p.dur*p.sr),sz=44+n*(p.bd/8);document.getElementById('infoSamples').textContent=n.toLocaleString();document.getElementById('infoSize').textContent=sz>1048576?'~'+(sz/1048576).toFixed(1)+' MB':'~'+Math.round(sz/1024)+' KB';}
+
+function setStatus(t,a){document.getElementById('statusText').textContent=t;document.getElementById('statusDot').classList.toggle('active',!!a);}
+
+document.getElementById('generateBtn').addEventListener('click',()=>{
+  const p=getP(); setStatus('Generating '+NAMES[p.type]+'...',true);
+  setTimeout(()=>{
+    const N=Math.round(p.dur*p.sr), t0=performance.now();
+    switch(p.type){case'white':currentSamples=generateWhite(N);break;case'pink':currentSamples=generatePink(N);break;case'brown':currentSamples=generateBrown(N);break;case'blue':currentSamples=generateBlue(N);break;case'violet':currentSamples=generateViolet(N);break;case'grey':currentSamples=generateGrey(N);break;}
+    const ms=(performance.now()-t0).toFixed(0);
+    totalGens++; document.getElementById('genCount').textContent=String(totalGens).padStart(6,'0').replace(/(\d)(?=(\d{3})+$)/g,'$1,');
+    document.getElementById('infoBox').style.display='block';
+    document.getElementById('sigText').textContent=NAMES[p.type];
+    document.getElementById('sigDetail').textContent=N.toLocaleString()+' samples | '+p.dur+'s | '+p.sr.toLocaleString()+' Hz | Generated in '+ms+'ms';
+    document.getElementById('waveformBox').style.display='block';
+    document.getElementById('waveformInfo').textContent=N.toLocaleString()+' samples';
+    drawWaveform(document.getElementById('waveformCanvas'),currentSamples,p.sr);
+    if(N>=4096){
+      document.getElementById('fftBox').style.display='block';
+      document.getElementById('fftInfo').textContent=NAMES[p.type];
+      setTimeout(()=>{const spec=computeSpectrum(currentSamples,p.sr);drawFFT(document.getElementById('fftCanvas'),spec,p.sr);setStatus('Generated in '+ms+'ms',false);},20);
+    } else { setStatus('Generated in '+ms+'ms',false); }
+    document.getElementById('playBtn').disabled=false; document.getElementById('stopBtn').disabled=false; document.getElementById('downloadBtn').disabled=false;
+  },30);
+});
+
+document.getElementById('playBtn').addEventListener('click',()=>{if(!currentSamples)return;const p=getP();playAudio(currentSamples,p.sr,p.amp);});
+document.getElementById('stopBtn').addEventListener('click',()=>{stopAudio();setStatus('Stopped',false);});
+document.getElementById('downloadBtn').addEventListener('click',()=>{if(!currentSamples)return;const p=getP();setStatus('Encoding WAV...',true);setTimeout(()=>{const wav=encodeWAV(currentSamples,p.sr,p.amp,p.bd);const fn='noise_'+p.type+'_'+p.dur+'s_'+p.sr+'Hz.wav';downloadBlob(new Blob([wav],{type:'audio/wav'}),fn);setStatus('Downloaded '+fn,false);},20);});
+
+['noiseType','duration','sampleRate','amplitude','bitDepth'].forEach(id=>document.getElementById(id).addEventListener('change',updateInfo));
+document.getElementById('duration').addEventListener('input',updateInfo);
+window.addEventListener('resize',()=>{if(currentSamples){drawWaveform(document.getElementById('waveformCanvas'),currentSamples,getP().sr);}});
+updateInfo();
+</script>
+
+<script>
+(function(){var btn=document.getElementById('taRandomBtn');if(btn){btn.addEventListener('click',function(){var p='noise-generator.html,sweep-generator.html,mls-generator.html,click-factory.html,shot-forge.html,babel.html,about.html,games.html,itch.html'.split(',');window.location.href=p[Math.floor(Math.random()*p.length)];});}})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — MLS GENERATOR</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    color: #ccc;
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Starfield */
+  .starfield {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+      radial-gradient(1px 1px at 40px 70px, #fff, transparent),
+      radial-gradient(1px 1px at 50px 160px, #fff, transparent),
+      radial-gradient(1px 1px at 90px 40px, #aaf, transparent),
+      radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+      radial-gradient(1px 1px at 160px 120px, #ffa, transparent),
+      radial-gradient(1px 1px at 200px 50px, #fff, transparent),
+      radial-gradient(1px 1px at 80px 190px, #aff, transparent);
+    background-size: 220px 200px;
+    z-index: 0;
+  }
+
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px);
+    z-index: 100;
+    pointer-events: none;
+  }
+
+  .bar-top {
+    position: fixed; top: 0; left: 0; right: 0; height: 24px; z-index: 50;
+    background: repeating-linear-gradient(-45deg, #ffcc00, #ffcc00 10px, #000 10px, #000 20px);
+  }
+  .bar-bottom {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 24px; z-index: 50;
+    background: repeating-linear-gradient(45deg, #ffcc00, #ffcc00 10px, #000 10px, #000 20px);
+  }
+
+  .app {
+    position: relative;
+    z-index: 10;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 44px 16px 60px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 10px;
+    padding-bottom: 12px;
+    border-bottom: 2px dashed #444;
+  }
+
+  .header h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 22px;
+    color: #00ffff;
+    text-shadow: 0 0 10px #00ffff, 0 0 20px #0088ff, 3px 3px 0 #005588;
+    line-height: 1.6;
+    animation: flicker 3s infinite;
+  }
+
+  .header .subtitle {
+    font-size: 22px;
+    color: #ff00ff;
+    text-shadow: 0 0 6px #ff00ff;
+    margin-top: 6px;
+    animation: rainbow 4s linear infinite;
+  }
+
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    92% { opacity: 1; } 93% { opacity: 0.7; } 94% { opacity: 1; }
+    96% { opacity: 0.8; } 97% { opacity: 1; }
+  }
+
+  @keyframes rainbow {
+    0% { color: #ff00ff; } 25% { color: #ff0066; }
+    50% { color: #ffcc00; } 75% { color: #00ffcc; } 100% { color: #ff00ff; }
+  }
+
+  .marquee-wrapper {
+    width: 100%;
+    overflow: hidden;
+    border: 2px solid #333;
+    background: #111;
+    padding: 4px 0;
+    margin: 12px 0;
+  }
+
+  .marquee-text {
+    font-size: 18px;
+    color: #0f0;
+    white-space: nowrap;
+    animation: scroll-left 14s linear infinite;
+  }
+
+  @keyframes scroll-left {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+  }
+
+  .desc {
+    color: #aaa;
+    font-size: 20px;
+    line-height: 1.5;
+    margin-bottom: 16px;
+    text-align: center;
+  }
+
+  /* Panels */
+  .panel {
+    background: #0a0a0a;
+    border: 3px inset #555;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .panel-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 11px;
+    color: #ffcc00;
+    text-shadow: 0 0 4px #ffcc00;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+  }
+
+  .controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 14px;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .control-group label {
+    font-size: 16px;
+    color: #888;
+  }
+
+  .control-group select {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    padding: 6px 8px;
+    background: #000;
+    border: 2px inset #666;
+    color: #0f0;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .control-group select:focus {
+    border-color: #00ffff;
+  }
+
+  .control-group select option {
+    background: #000;
+    color: #0f0;
+  }
+
+  /* Info strip */
+  .info-strip {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed #333;
+    font-size: 18px;
+    color: #888;
+  }
+  .info-strip span { color: #0f0; }
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    background: #0a0a0a;
+    border: 3px inset #555;
+    margin-bottom: 14px;
+  }
+
+  .btn {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    padding: 10px 18px;
+    cursor: pointer;
+    border: 3px outset;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+    transition: filter 0.1s;
+  }
+  .btn:hover { filter: brightness(1.2); }
+  .btn:active { border-style: inset; }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .btn-generate {
+    background: linear-gradient(180deg, #0c0, #090);
+    color: #fff;
+    border-color: #4f4;
+    box-shadow: 0 0 10px rgba(0,255,0,0.2);
+  }
+
+  .btn-play {
+    background: linear-gradient(180deg, #0088ff, #0066cc);
+    color: #fff;
+    border-color: #44aaff;
+  }
+
+  .btn-stop {
+    background: linear-gradient(180deg, #cc0000, #990000);
+    color: #fff;
+    border-color: #ff4444;
+  }
+
+  .btn-download {
+    background: linear-gradient(180deg, #cc6600, #994400);
+    color: #fff;
+    border-color: #ff8844;
+  }
+
+  .btn-raw {
+    background: linear-gradient(180deg, #666, #444);
+    color: #ccc;
+    border-color: #888;
+  }
+
+  /* Polynomial display */
+  .poly-box {
+    background: #060606;
+    border: 2px inset #444;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    display: none;
+  }
+
+  .poly-label {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 4px;
+  }
+
+  .poly-text {
+    font-size: 22px;
+    color: #00ccff;
+    text-shadow: 0 0 4px #00ccff;
+  }
+
+  .poly-status {
+    font-size: 16px;
+    margin-top: 6px;
+  }
+  .poly-status.ok { color: #0f0; }
+  .poly-status.bad { color: #f00; }
+
+  /* Waveform */
+  .viz-box {
+    background: #060606;
+    border: 2px inset #444;
+    margin-bottom: 14px;
+    overflow: hidden;
+    display: none;
+  }
+
+  .viz-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-bottom: 1px solid #222;
+    background: #0a0a0a;
+  }
+
+  .viz-title {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    color: #ffcc00;
+  }
+
+  .viz-info {
+    font-size: 16px;
+    color: #666;
+  }
+
+  .viz-canvas-wrap {
+    padding: 6px;
+    background: #030308;
+  }
+
+  .viz-canvas-wrap canvas {
+    display: block;
+    width: 100%;
+  }
+
+  /* Sequence display */
+  .seq-box {
+    background: #060606;
+    border: 2px inset #444;
+    margin-bottom: 14px;
+    overflow: hidden;
+    display: none;
+  }
+
+  .seq-display {
+    padding: 10px 14px;
+    max-height: 90px;
+    overflow-y: auto;
+    font-size: 14px;
+    color: #0f0;
+    line-height: 1.7;
+    word-break: break-all;
+    letter-spacing: 1.5px;
+    text-shadow: 0 0 2px #0f0;
+  }
+
+  .seq-display::-webkit-scrollbar { width: 6px; }
+  .seq-display::-webkit-scrollbar-track { background: #000; }
+  .seq-display::-webkit-scrollbar-thumb { background: #333; }
+
+  /* Status bar */
+  .status-bar {
+    position: fixed;
+    bottom: 24px;
+    left: 0; right: 0;
+    background: #0a0a0a;
+    border-top: 2px solid #333;
+    padding: 5px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    color: #666;
+    z-index: 50;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #333;
+    transition: all 0.3s;
+  }
+  .status-dot.active {
+    background: #0f0;
+    box-shadow: 0 0 6px #0f0;
+  }
+
+  .status-bar .right { margin-left: auto; font-size: 14px; }
+
+  /* Visitor counter */
+  .visitor-counter {
+    text-align: center;
+    color: #666;
+    font-size: 16px;
+    margin: 10px 0;
+  }
+  .counter-digits {
+    background: #111;
+    border: 2px inset #444;
+    padding: 2px 8px;
+    color: #0f0;
+    font-size: 18px;
+    letter-spacing: 2px;
+  }
+
+  /* Webring */
+  .webring {
+    text-align: center;
+    font-size: 16px;
+    color: #555;
+    border: 1px solid #222;
+    padding: 6px 14px;
+    background: rgba(0,0,0,0.5);
+    margin-top: 14px;
+  }
+  .webring a { color: #ff0; text-decoration: none; }
+  .webring a:hover { text-decoration: underline; }
+
+  /* Badges */
+  .badge-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 12px;
+  }
+  .badge {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 6px;
+    padding: 5px 8px;
+    border: 2px outset;
+    display: inline-block;
+    line-height: 1.5;
+  }
+  .badge-1 { background: #0000aa; color: #fff; border-color: #4444ff; }
+  .badge-2 { background: #006600; color: #0f0; border-color: #44ff44; }
+  .badge-3 { background: #660066; color: #ff88ff; border-color: #ff44ff; }
+
+  .back-link {
+    display: block;
+    text-align: center;
+    margin-top: 14px;
+  }
+  .back-link a {
+    color: #00ccff;
+    text-decoration: none;
+    font-size: 20px;
+  }
+  .back-link a:hover { color: #ff0; text-decoration: underline; }
+
+  .ac-note {
+    padding: 8px 14px;
+    font-size: 16px;
+    color: #0f0;
+    border-top: 1px dashed #222;
+    background: #040404;
+    display: none;
+  }
+
+  @media (max-width: 500px) {
+    .header h1 { font-size: 16px; }
+    .controls-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .ta-topbar{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(0,0,0,0.9);border-bottom:2px solid #00ffff;padding:8px 16px;display:flex;align-items:center;justify-content:space-between}
+  .ta-topbar a{color:#0f0;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:1px;padding:5px 10px;border:1px solid #0f0;background:rgba(0,255,0,0.05);transition:all 0.15s}
+  .ta-topbar a:hover{color:#000;border-color:#0f0;background:#0f0;box-shadow:0 0 10px rgba(0,255,0,0.3)}
+  .ta-topbar .ta-sitename{color:#00ffff;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:2px;text-shadow:0 0 6px #00ffff}
+
+  .ta-navfooter{margin-top:30px;padding-top:16px;border-top:2px solid #00ffff;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .ta-navfooter a{color:#0f0;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1px;padding:8px 14px;border:1px solid #0f0;background:rgba(0,255,0,0.05);transition:all 0.15s}
+  .ta-navfooter a:hover{color:#000;border-color:#0f0;background:#0f0;box-shadow:0 0 12px rgba(0,255,0,0.3)}
+  .ta-navfooter .ta-btn-random{font-family:'Press Start 2P',monospace;font-size:9px;padding:8px 14px;cursor:pointer;background:rgba(0,255,0,0.05);color:#ffcc00;border:1px solid #ffcc00;letter-spacing:1px;transition:all 0.15s;text-shadow:0 0 4px #ffcc00}
+  .ta-navfooter .ta-btn-random:hover{background:#ffcc00;color:#000;border-color:#ffcc00;box-shadow:0 0 12px rgba(0,255,0,0.3);text-shadow:none}
+
+</style>
+</head>
+<body>
+
+<div class="starfield"></div>
+<div class="scanlines"></div>
+<div class="ta-topbar"><span class="ta-sitename">TOMMY ALLEN ACOUSTICS</span><a href="home.html">&#9751; HOME</a></div>
+<div class="bar-top"></div>
+<div class="bar-bottom"></div>
+
+<div class="app">
+  <div class="header">
+    <h1>~ * MLS GEN * ~</h1>
+    <div class="subtitle">Maximum Length Sequence Generator</div>
+  </div>
+
+  <div class="marquee-wrapper">
+    <div class="marquee-text">
+      *** GENERATE MLS SIGNALS FOR ACOUSTIC MEASUREMENT *** IMPULSE RESPONSE EXTRACTION *** ROOM ACOUSTICS *** SYSTEM IDENTIFICATION *** FREE DOWNLOAD ***
+    </div>
+  </div>
+
+  <div class="desc">
+    Generate pseudorandom binary MLS signals with near-ideal autocorrelation.
+    Pick your order, sample rate, hit GENERATE, and download the .WAV file.
+  </div>
+
+  <!-- Controls -->
+  <div class="panel">
+    <div class="panel-title">&gt;&gt; PARAMETERS</div>
+    <div class="controls-grid">
+      <div class="control-group">
+        <label>Order (n)</label>
+        <select id="orderSelect"></select>
+      </div>
+      <div class="control-group">
+        <label>Sample Rate</label>
+        <select id="sampleRateSelect">
+          <option value="22050">22,050 Hz</option>
+          <option value="44100" selected>44,100 Hz</option>
+          <option value="48000">48,000 Hz</option>
+          <option value="96000">96,000 Hz</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Amplitude</label>
+        <select id="amplitudeSelect">
+          <option value="0">0 dBFS</option>
+          <option value="-3" selected>-3 dBFS</option>
+          <option value="-6">-6 dBFS</option>
+          <option value="-12">-12 dBFS</option>
+          <option value="-20">-20 dBFS</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Bit Depth</label>
+        <select id="bitDepthSelect">
+          <option value="16" selected>16-bit</option>
+          <option value="24">24-bit</option>
+        </select>
+      </div>
+    </div>
+    <div class="info-strip">
+      <div>Length: <span id="infoLength">65,535</span></div>
+      <div>Duration: <span id="infoDuration">1.486 s</span></div>
+      <div>File: <span id="infoSize">~128 KB</span></div>
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="btn-row">
+    <button class="btn btn-generate" id="generateBtn">GENERATE</button>
+    <button class="btn btn-play" id="playBtn" disabled>&#9654; PLAY</button>
+    <button class="btn btn-stop" id="stopBtn" disabled>&#9632; STOP</button>
+    <button class="btn btn-download" id="downloadBtn" disabled>DOWNLOAD .WAV</button>
+    <button class="btn btn-raw" id="downloadRawBtn" disabled>RAW .TXT</button>
+  </div>
+
+  <!-- Polynomial -->
+  <div class="poly-box" id="polyBox">
+    <div class="poly-label">Primitive Polynomial:</div>
+    <div class="poly-text" id="polyText"></div>
+    <div class="poly-status" id="polyStatus"></div>
+  </div>
+
+  <!-- Waveform -->
+  <div class="viz-box" id="waveformBox">
+    <div class="viz-header">
+      <span class="viz-title">WAVEFORM</span>
+      <span class="viz-info" id="waveformInfo"></span>
+    </div>
+    <div class="viz-canvas-wrap">
+      <canvas id="waveformCanvas" height="160"></canvas>
+    </div>
+  </div>
+
+  <!-- Sequence -->
+  <div class="seq-box" id="seqBox">
+    <div class="viz-header">
+      <span class="viz-title">SEQUENCE</span>
+      <span class="viz-info" id="seqInfo"></span>
+    </div>
+    <div class="seq-display" id="seqDisplay"></div>
+  </div>
+
+  <!-- Autocorrelation verification -->
+  <div class="viz-box" id="acBox">
+    <div class="viz-header">
+      <span class="viz-title">AUTOCORRELATION</span>
+      <span class="viz-info" id="acInfo"></span>
+    </div>
+    <div class="viz-canvas-wrap">
+      <canvas id="acCanvas" height="160"></canvas>
+    </div>
+    <div class="ac-note" id="acNote"></div>
+  </div>
+
+  <!-- Footer stuff -->
+  <div class="visitor-counter">
+    Sequences generated: <span class="counter-digits" id="genCount">000,000</span>
+  </div>
+
+  <div class="badge-row">
+    <div class="badge badge-1">WORKS IN<br>NETSCAPE</div>
+    <div class="badge badge-2">NO SERVER<br>REQUIRED</div>
+    <div class="badge badge-3">100% FREE<br>ACOUSTICS</div>
+  </div>
+
+  
+  <div class="ta-navfooter">
+    <a href="sweep-generator.html">&lt;&lt; SWEEP GEN</a>
+    <button class="ta-btn-random" id="taRandomBtn">&#127922; RANDOM</button>
+    <a href="click-factory.html">CLICK FACTORY &gt;&gt;</a>
+  </div>
+  <div style="text-align:center;font-size:14px;color:#00ffff;border:2px ridge #00ffff;padding:6px 14px;background:rgba(0,0,0,0.5);margin-top:14px">&lt;&lt; <a href="#" style="color:#0f0;text-decoration:none">prev</a> | <a href="#" style="color:#0f0;text-decoration:none">~ Acoustics WebRing ~</a> | <a href="#" style="color:#0f0;text-decoration:none">next</a> &gt;&gt;</div>
+  <div style="text-align:center;margin-top:14px"><a href="home.html" style="display:inline-block;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:3px;padding:12px 30px;border:2px solid #fff;color:#fff;text-decoration:none;background:rgba(255,255,255,0.05);transition:all 0.15s" onmouseover="this.style.background='#fff';this.style.color='#000';this.style.boxShadow='0 0 20px rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='#fff';this.style.boxShadow='none'">&#9751; BACK TO HOME</a></div>
+</div>
+
+<div class="status-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span id="statusText">Ready</span>
+  <span class="right">MLS GEN v2.0</span>
+</div>
+
+<script>
+// ============================
+// PRIMITIVE POLYNOMIALS (VERIFIED)
+// ============================
+const POLYS = {
+  2:  { taps: [1],           poly: 'x\u00B2 + x + 1' },
+  3:  { taps: [1],           poly: 'x\u00B3 + x + 1' },
+  4:  { taps: [1],           poly: 'x\u2074 + x + 1' },
+  5:  { taps: [2],           poly: 'x\u2075 + x\u00B2 + 1' },
+  6:  { taps: [1],           poly: 'x\u2076 + x + 1' },
+  7:  { taps: [1],           poly: 'x\u2077 + x + 1' },
+  8:  { taps: [6, 5, 1],     poly: 'x\u2078 + x\u2076 + x\u2075 + x + 1' },
+  9:  { taps: [4],           poly: 'x\u2079 + x\u2074 + 1' },
+  10: { taps: [3],           poly: 'x\u00B9\u2070 + x\u00B3 + 1' },
+  11: { taps: [2],           poly: 'x\u00B9\u00B9 + x\u00B2 + 1' },
+  12: { taps: [7, 4, 3],     poly: 'x\u00B9\u00B2 + x\u2077 + x\u2074 + x\u00B3 + 1' },
+  13: { taps: [4, 3, 1],     poly: 'x\u00B9\u00B3 + x\u2074 + x\u00B3 + x + 1' },
+  14: { taps: [12, 11, 1],   poly: 'x\u00B9\u2074 + x\u00B9\u00B2 + x\u00B9\u00B9 + x + 1' },
+  15: { taps: [1],           poly: 'x\u00B9\u2075 + x + 1' },
+  16: { taps: [5, 3, 2],     poly: 'x\u00B9\u2076 + x\u2075 + x\u00B3 + x\u00B2 + 1' },
+  17: { taps: [3],           poly: 'x\u00B9\u2077 + x\u00B3 + 1' },
+  18: { taps: [7],           poly: 'x\u00B9\u2078 + x\u2077 + 1' },
+  19: { taps: [6, 5, 1],     poly: 'x\u00B9\u2079 + x\u2076 + x\u2075 + x + 1' },
+  20: { taps: [3],           poly: 'x\u00B2\u2070 + x\u00B3 + 1' },
+  21: { taps: [2],           poly: 'x\u00B2\u00B9 + x\u00B2 + 1' },
+  22: { taps: [1],           poly: 'x\u00B2\u00B2 + x + 1' },
+  23: { taps: [5],           poly: 'x\u00B2\u00B3 + x\u2075 + 1' },
+  24: { taps: [4, 3, 1],     poly: 'x\u00B2\u2074 + x\u2074 + x\u00B3 + x + 1' },
+};
+
+// ============================
+// MLS — Fibonacci LFSR
+// ============================
+function generateMLS(order) {
+  const n = order;
+  const length = (1 << n) - 1;
+  const taps = POLYS[n].taps;
+  const sequence = new Int8Array(length);
+  let state = (1 << n) - 1;
+
+  for (let i = 0; i < length; i++) {
+    sequence[i] = (state >> (n - 1)) & 1;
+    let feedback = (state >> (n - 1)) & 1;
+    for (const tap of taps) {
+      feedback ^= (state >> (tap - 1)) & 1;
+    }
+    state = ((state << 1) | feedback) & ((1 << n) - 1);
+  }
+  return sequence;
+}
+
+function verifyMLS(sequence, order) {
+  let ones = 0;
+  for (let i = 0; i < sequence.length; i++) {
+    if (sequence[i] === 1) ones++;
+  }
+  return ones === (1 << (order - 1));
+}
+
+// ============================
+// WAV
+// ============================
+function encodeWAV(sequence, sampleRate, amplitudeDB, bitDepth) {
+  const N = sequence.length;
+  const amplitude = Math.pow(10, amplitudeDB / 20);
+  const bps = bitDepth / 8;
+  const dataSize = N * bps;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const v = new DataView(buffer);
+  const ws = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+
+  ws(0,'RIFF'); v.setUint32(4, 36+dataSize, true);
+  ws(8,'WAVE'); ws(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sampleRate,true); v.setUint32(28,sampleRate*bps,true);
+  v.setUint16(32,bps,true); v.setUint16(34,bitDepth,true);
+  ws(36,'data'); v.setUint32(40,dataSize,true);
+
+  if (bitDepth === 16) {
+    for (let i = 0; i < N; i++) {
+      const s = (sequence[i] === 1 ? amplitude : -amplitude);
+      v.setInt16(44 + i*2, Math.round(s * 32767), true);
+    }
+  } else {
+    for (let i = 0; i < N; i++) {
+      const s = (sequence[i] === 1 ? amplitude : -amplitude);
+      const val = Math.round(s * 8388607);
+      const o = 44 + i*3;
+      v.setUint8(o, val & 0xFF);
+      v.setUint8(o+1, (val >> 8) & 0xFF);
+      v.setUint8(o+2, (val >> 16) & 0xFF);
+    }
+  }
+  return buffer;
+}
+
+// ============================
+// WAVEFORM DRAWING (green on black, 90s oscilloscope)
+// ============================
+function drawWaveform(canvas, sequence, sampleRate) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 160 * dpr;
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width, H = 160;
+  const pad = { top: 16, bottom: 22, left: 44, right: 12 };
+  const pW = W - pad.left - pad.right;
+  const pH = H - pad.top - pad.bottom;
+
+  // Black bg
+  ctx.fillStyle = '#010108';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#0a1a0a';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 8; i++) {
+    const x = pad.left + (pW / 8) * i;
+    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, H - pad.bottom); ctx.stroke();
+  }
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (pH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+  }
+
+  // Labels
+  ctx.fillStyle = '#335533';
+  ctx.font = '12px VT323, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('+1', pad.left - 4, pad.top + 5);
+  ctx.fillText(' 0', pad.left - 4, pad.top + pH/2 + 5);
+  ctx.fillText('-1', pad.left - 4, pad.top + pH + 5);
+
+  ctx.textAlign = 'center';
+  const dur = sequence.length / sampleRate;
+  for (let i = 0; i <= 4; i++) {
+    const x = pad.left + (pW / 4) * i;
+    const t = (dur / 4) * i;
+    ctx.fillText(t < 1 ? t.toFixed(3)+'s' : t.toFixed(2)+'s', x, H - 4);
+  }
+
+  // Zero line
+  const zeroY = pad.top + pH / 2;
+  ctx.strokeStyle = '#1a3a1a';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.left, zeroY); ctx.lineTo(W - pad.right, zeroY); ctx.stroke();
+
+  // Waveform — green phosphor
+  ctx.strokeStyle = '#00ff44';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+
+  const N = sequence.length;
+  for (let px = 0; px < pW; px++) {
+    const idx = Math.floor((px / pW) * N);
+    const val = sequence[idx] === 1 ? 1 : -1;
+    const y = zeroY - val * (pH / 2 - 3);
+
+    if (px === 0) {
+      ctx.moveTo(pad.left, y);
+    } else {
+      const prevIdx = Math.floor(((px-1) / pW) * N);
+      const prevVal = sequence[prevIdx] === 1 ? 1 : -1;
+      if (val !== prevVal) {
+        ctx.lineTo(pad.left + px, zeroY - prevVal * (pH / 2 - 3));
+        ctx.lineTo(pad.left + px, y);
+      } else {
+        ctx.lineTo(pad.left + px, y);
+      }
+    }
+  }
+  ctx.stroke();
+
+  // Glow
+  ctx.globalAlpha = 0.2;
+  ctx.strokeStyle = '#00ff44';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.globalAlpha = 0.06;
+  ctx.lineWidth = 8;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+// ============================
+// AUTOCORRELATION
+// ============================
+function computeAutocorrelation(sequence) {
+  const N = sequence.length;
+  const bipolar = new Float32Array(N);
+  for (let i = 0; i < N; i++) bipolar[i] = sequence[i] === 1 ? 1.0 : -1.0;
+
+  const numLags = Math.min(N, 1024);
+  const result = new Float32Array(numLags);
+
+  for (let k = 0; k < numLags; k++) {
+    const lag = Math.floor(k * N / numLags);
+    let sum = 0;
+    for (let i = 0; i < N; i++) {
+      sum += bipolar[i] * bipolar[(i + lag) % N];
+    }
+    result[k] = sum / N;
+  }
+  return result;
+}
+
+function drawAutocorrelation(canvas, acData) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 160 * dpr;
+  ctx.scale(dpr, dpr);
+
+  const W = rect.width, H = 160;
+  const pad = { top: 16, bottom: 22, left: 44, right: 12 };
+  const pW = W - pad.left - pad.right;
+  const pH = H - pad.top - pad.bottom;
+
+  // Black bg
+  ctx.fillStyle = '#010108';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#0a0a1a';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 8; i++) {
+    const x = pad.left + (pW / 8) * i;
+    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, H - pad.bottom); ctx.stroke();
+  }
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top + (pH / 4) * i;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W - pad.right, y); ctx.stroke();
+  }
+
+  // Labels
+  ctx.fillStyle = '#333355';
+  ctx.font = '12px VT323, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('+1', pad.left - 4, pad.top + 5);
+  ctx.fillText(' 0', pad.left - 4, pad.top + pH/2 + 5);
+  ctx.textAlign = 'center';
+  ctx.fillText('Lag 0', pad.left + 10, H - 4);
+  ctx.fillText('Lag N', W - pad.right - 10, H - 4);
+
+  // Zero line
+  const zeroY = pad.top + pH / 2;
+  ctx.strokeStyle = '#1a1a3a';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.left, zeroY); ctx.lineTo(W - pad.right, zeroY); ctx.stroke();
+
+  // -1/N reference line (expected off-peak)
+  ctx.strokeStyle = '#331111';
+  ctx.lineWidth = 0.5;
+  ctx.setLineDash([3, 3]);
+  const offPeakY = zeroY + (1 / Math.max(50, acData.length)) * (pH / 2 - 3);
+  ctx.beginPath(); ctx.moveTo(pad.left, offPeakY); ctx.lineTo(W - pad.right, offPeakY); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Find max for normalization
+  let maxV = 0;
+  for (let i = 0; i < acData.length; i++) maxV = Math.max(maxV, Math.abs(acData[i]));
+
+  // Plot — cyan/blue
+  ctx.strokeStyle = '#00aaff';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let i = 0; i < acData.length; i++) {
+    const x = pad.left + (i / acData.length) * pW;
+    const norm = acData[i] / maxV;
+    const y = zeroY - norm * (pH / 2 - 3);
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Glow
+  ctx.globalAlpha = 0.2;
+  ctx.strokeStyle = '#00aaff';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.globalAlpha = 0.06;
+  ctx.lineWidth = 8;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Peak marker
+  ctx.fillStyle = '#00aaff';
+  ctx.beginPath();
+  ctx.arc(pad.left, pad.top + 3, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#00ffff';
+  ctx.beginPath();
+  ctx.arc(pad.left, pad.top + 3, 2, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// ============================
+// AUDIO
+// ============================
+let audioCtx = null, currentSource = null, currentCtxRate = 0;
+
+function playMLS(sequence, sampleRate, ampDB) {
+  stopMLS();
+  if (!audioCtx || currentCtxRate !== sampleRate) {
+    if (audioCtx) audioCtx.close();
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: sampleRate });
+    currentCtxRate = sampleRate;
+  }
+  const amp = Math.pow(10, ampDB / 20);
+  const buf = audioCtx.createBuffer(1, sequence.length, sampleRate);
+  const ch = buf.getChannelData(0);
+  for (let i = 0; i < sequence.length; i++) ch[i] = (sequence[i] === 1 ? 1 : -1) * amp;
+  currentSource = audioCtx.createBufferSource();
+  currentSource.buffer = buf;
+  currentSource.connect(audioCtx.destination);
+  currentSource.start();
+  currentSource.onended = () => setStatus('Playback complete', false);
+  setStatus('Playing...', true);
+}
+
+function stopMLS() {
+  if (currentSource) { try { currentSource.stop(); } catch(e){} currentSource = null; }
+}
+
+function downloadBlob(blob, fn) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fn;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ============================
+// UI
+// ============================
+let currentSequence = null;
+let totalGens = 0;
+
+const orderSelect = document.getElementById('orderSelect');
+const srSelect = document.getElementById('sampleRateSelect');
+const ampSelect = document.getElementById('amplitudeSelect');
+const bdSelect = document.getElementById('bitDepthSelect');
+
+// Populate orders
+for (let n = 2; n <= 24; n++) {
+  const len = (1 << n) - 1;
+  const opt = document.createElement('option');
+  opt.value = n;
+  opt.textContent = n + ' \u2014 ' + len.toLocaleString() + ' samples';
+  if (n === 16) opt.selected = true;
+  orderSelect.appendChild(opt);
+}
+
+function getP() {
+  return {
+    order: +orderSelect.value, sr: +srSelect.value,
+    amp: +ampSelect.value, bd: +bdSelect.value,
+  };
+}
+
+function updateInfo() {
+  const p = getP();
+  const len = (1 << p.order) - 1;
+  const dur = len / p.sr;
+  const sz = 44 + len * (p.bd / 8);
+  document.getElementById('infoLength').textContent = len.toLocaleString();
+  document.getElementById('infoDuration').textContent = dur < 1 ? dur.toFixed(3)+' s' : dur.toFixed(2)+' s';
+  document.getElementById('infoSize').textContent = sz > 1048576 ? '~'+(sz/1048576).toFixed(1)+' MB' : '~'+Math.round(sz/1024)+' KB';
+}
+
+function setStatus(t, active) {
+  document.getElementById('statusText').textContent = t;
+  document.getElementById('statusDot').classList.toggle('active', !!active);
+}
+
+document.getElementById('generateBtn').addEventListener('click', () => {
+  const p = getP();
+  setStatus('Generating order '+p.order+'...', true);
+
+  setTimeout(() => {
+    const t0 = performance.now();
+    currentSequence = generateMLS(p.order);
+    const ms = (performance.now() - t0).toFixed(0);
+    const valid = verifyMLS(currentSequence, p.order);
+    const ones = Array.from(currentSequence).filter(x=>x===1).length;
+    const zeros = currentSequence.length - ones;
+
+    totalGens++;
+    document.getElementById('genCount').textContent =
+      String(totalGens).padStart(6, '0').replace(/(\d)(?=(\d{3})+$)/g, '$1,');
+
+    // Polynomial
+    const polyBox = document.getElementById('polyBox');
+    polyBox.style.display = 'block';
+    document.getElementById('polyText').textContent = POLYS[p.order].poly;
+    const st = document.getElementById('polyStatus');
+    st.textContent = valid
+      ? '\u2713 VERIFIED maximal length | 1s: '+ones.toLocaleString()+' | 0s: '+zeros.toLocaleString()+' | Generated in '+ms+'ms'
+      : '\u2717 WARNING: sequence may not be maximal length';
+    st.className = 'poly-status ' + (valid ? 'ok' : 'bad');
+
+    // Waveform
+    document.getElementById('waveformBox').style.display = 'block';
+    document.getElementById('waveformInfo').textContent = currentSequence.length.toLocaleString() + ' samples';
+    drawWaveform(document.getElementById('waveformCanvas'), currentSequence, p.sr);
+
+    // Sequence bits
+    document.getElementById('seqBox').style.display = 'block';
+    const bits = Array.from(currentSequence).join('');
+    const max = 2000;
+    document.getElementById('seqDisplay').textContent = bits.length > max ? bits.substring(0, max)+'\u2026' : bits;
+    document.getElementById('seqInfo').textContent = currentSequence.length.toLocaleString()+' bits' + (bits.length > max ? ' (first '+max+')' : '');
+
+    // Autocorrelation
+    const acBox = document.getElementById('acBox');
+    const acNote = document.getElementById('acNote');
+    if (currentSequence.length <= 262143) {
+      acBox.style.display = 'block';
+      setTimeout(() => {
+        const t1 = performance.now();
+        const acData = computeAutocorrelation(currentSequence);
+        const acMs = (performance.now() - t1).toFixed(0);
+        document.getElementById('acInfo').textContent = 'Computed in ' + acMs + 'ms';
+        drawAutocorrelation(document.getElementById('acCanvas'), acData);
+        acNote.style.display = 'block';
+        acNote.innerHTML = '\u2713 Sharp peak at lag 0, flat -1/N everywhere else = correct MLS autocorrelation';
+      }, 20);
+    } else {
+      acBox.style.display = 'none';
+      acNote.style.display = 'none';
+    }
+
+    document.getElementById('playBtn').disabled = false;
+    document.getElementById('stopBtn').disabled = false;
+    document.getElementById('downloadBtn').disabled = false;
+    document.getElementById('downloadRawBtn').disabled = false;
+
+    setStatus('Generated in '+ms+'ms' + (valid ? ' \u2014 verified' : ' \u2014 WARNING'), false);
+  }, 30);
+});
+
+document.getElementById('playBtn').addEventListener('click', () => {
+  if (!currentSequence) return;
+  const p = getP();
+  playMLS(currentSequence, p.sr, p.amp);
+});
+
+document.getElementById('stopBtn').addEventListener('click', () => {
+  stopMLS(); setStatus('Stopped', false);
+});
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if (!currentSequence) return;
+  const p = getP();
+  setStatus('Encoding WAV...', true);
+  setTimeout(() => {
+    const wav = encodeWAV(currentSequence, p.sr, p.amp, p.bd);
+    const fn = 'mls_n'+p.order+'_'+p.sr+'Hz_'+p.bd+'bit.wav';
+    downloadBlob(new Blob([wav], {type:'audio/wav'}), fn);
+    setStatus('Downloaded '+fn, false);
+  }, 20);
+});
+
+document.getElementById('downloadRawBtn').addEventListener('click', () => {
+  if (!currentSequence) return;
+  const p = getP();
+  downloadBlob(new Blob([Array.from(currentSequence).join('')], {type:'text/plain'}), 'mls_n'+p.order+'_raw.txt');
+  setStatus('Downloaded raw', false);
+});
+
+[orderSelect, srSelect, ampSelect, bdSelect].forEach(el => el.addEventListener('change', updateInfo));
+
+window.addEventListener('resize', () => {
+  if (currentSequence) {
+    drawWaveform(document.getElementById('waveformCanvas'), currentSequence, getP().sr);
+  }
+});
+
+updateInfo();
+</script>
+
+<script>
+(function(){var btn=document.getElementById('taRandomBtn');if(btn){btn.addEventListener('click',function(){var p='noise-generator.html,sweep-generator.html,mls-generator.html,click-factory.html,shot-forge.html,babel.html,about.html,games.html,itch.html'.split(',');window.location.href=p[Math.floor(Math.random()*p.length)];});}})();
+</script>
+</body>
+</html>

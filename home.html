@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — HOME</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Bungee+Shade&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0020;color:#ddd;font-family:'VT323',monospace;font-size:20px;min-height:100vh;overflow-x:hidden}
+
+  .bg{position:fixed;inset:0;z-index:0;background:
+    radial-gradient(ellipse at 20% 50%, rgba(139,92,246,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(6,182,212,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(217,70,239,0.05) 0%, transparent 50%)}
+  .scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);z-index:100;pointer-events:none}
+  .bar-top{position:fixed;top:0;left:0;right:0;height:4px;z-index:50;background:linear-gradient(90deg,#8b5cf6,#06b6d4,#d946ef,#f97316,#0f0,#8b5cf6);background-size:200% 100%;animation:barSlide 4s linear infinite}
+  @keyframes barSlide{0%{background-position:0% 0}100%{background-position:200% 0}}
+
+  .app{position:relative;z-index:10;max-width:700px;margin:0 auto;padding:30px 16px 80px}
+
+  .header{text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:3px double #8b5cf6}
+  .header h1{font-family:'Bungee Shade',cursive;font-size:26px;color:#06b6d4;text-shadow:3px 3px 0 #8b5cf6,0 0 30px rgba(6,182,212,0.3);line-height:1.5;animation:glow 3s ease-in-out infinite alternate}
+  @keyframes glow{0%{text-shadow:3px 3px 0 #8b5cf6,0 0 20px rgba(6,182,212,0.2)}100%{text-shadow:3px 3px 0 #8b5cf6,0 0 40px rgba(6,182,212,0.5)}}
+  .header .sub{font-size:18px;color:#a78bfa;letter-spacing:3px;margin-top:8px}
+  .header .blink{color:#0f0;animation:blink 1s steps(2) infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+  .visitor{text-align:center;font-size:14px;color:#d946ef;margin-bottom:16px;letter-spacing:2px}
+  .visitor span{background:#1a0a2e;border:1px solid #8b5cf6;padding:2px 10px;color:#0f0;font-size:15px;letter-spacing:3px;text-shadow:0 0 6px #0f0}
+
+  .marquee-wrapper{width:100%;overflow:hidden;border-top:2px solid #8b5cf6;border-bottom:2px solid #8b5cf6;background:#0f0520;padding:5px 0;margin-bottom:20px}
+  .marquee-text{font-size:15px;color:#ffcc00;white-space:nowrap;animation:sl 30s linear infinite;letter-spacing:3px;text-shadow:0 0 4px #ffcc00}
+  @keyframes sl{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+
+  .nav-section{margin-bottom:20px}
+  .nav-section h2{font-family:'Press Start 2P',monospace;font-size:11px;color:#ffcc00;letter-spacing:2px;margin-bottom:12px;padding-bottom:6px;border-bottom:2px dashed #8b5cf6;text-shadow:0 0 4px #ffcc00}
+  .nav-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .nav-card{display:block;background:#1a0a2e;border:2px solid #8b5cf6;padding:14px 12px;text-decoration:none;color:#06b6d4;transition:all 0.15s}
+  .nav-card:hover{border-color:#06b6d4;color:#fff;background:#2a1050;box-shadow:0 0 15px rgba(6,182,212,0.2)}
+  .nav-card:hover .card-icon{opacity:0.9;transform:scale(1.1)}
+  .nav-card .card-icon{font-size:22px;opacity:0.5;margin-bottom:6px;display:block;transition:all 0.15s}
+  .nav-card .card-title{font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1px;display:block;margin-bottom:4px;color:#06b6d4}
+  .nav-card:hover .card-title{color:#fff}
+  .nav-card .card-desc{font-size:15px;color:#a78bfa;display:block}
+  .nav-card:hover .card-desc{color:#d946ef}
+  .nav-card.wide{grid-column:1/-1}
+  .nav-card.secret{border-style:dashed;border-color:#d946ef}
+  .nav-card.secret:hover{border-color:#0f0;color:#0f0;box-shadow:0 0 15px rgba(0,255,0,0.15)}
+  .nav-card.secret:hover .card-desc{color:#0f0}
+  .nav-card.secret .card-title{color:#d946ef}
+  .nav-card.secret:hover .card-title{color:#0f0}
+
+  .random-wrap{text-align:center;margin:20px 0}
+  .btn-random{font-family:'Press Start 2P',monospace;font-size:10px;padding:12px 24px;cursor:pointer;background:#1a0a2e;color:#ffcc00;border:2px solid #ffcc00;letter-spacing:2px;transition:all 0.15s;text-shadow:0 0 4px #ffcc00}
+  .btn-random:hover{background:#ffcc00;color:#000;box-shadow:0 0 30px rgba(255,204,0,0.3);text-shadow:none}
+
+  .about-box{background:#1a0a2e;border:2px solid #8b5cf6;padding:16px;margin-bottom:20px;text-align:center}
+  .about-box p{color:#ccc;font-size:17px;line-height:1.6;max-width:500px;margin:0 auto 10px}
+  .about-box a{color:#06b6d4;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:2px;text-shadow:0 0 4px #06b6d4}
+  .about-box a:hover{color:#fff;text-shadow:0 0 8px #06b6d4}
+
+  .footer{text-align:center;margin-top:24px;padding-top:16px;border-top:2px solid #8b5cf6}
+  .footer .badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:14px}
+  .footer .badge{font-family:'Press Start 2P',monospace;font-size:7px;padding:6px 10px;border:1px solid #8b5cf6;color:#a78bfa;letter-spacing:1px;line-height:1.6;background:#0f0520}
+  .webring{text-align:center;font-size:16px;color:#d946ef;border:2px ridge #8b5cf6;padding:6px 14px;background:#0f0520;margin-top:14px}
+  .webring a{color:#06b6d4;text-decoration:none}.webring a:hover{color:#fff}
+  .colophon{font-family:'Press Start 2P',monospace;font-size:8px;color:#8b5cf6;letter-spacing:2px;margin-top:14px;line-height:2.2}
+  .construction{font-size:22px;animation:blink 0.8s steps(2) infinite;margin:10px 0}
+
+  @media(max-width:500px){.header h1{font-size:18px}.nav-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="scanlines"></div><div class="bar-top"></div>
+<div class="app">
+  <div class="header">
+    <h1>Tommy Allen<br>Acoustics</h1>
+    <div class="sub">MSc Acoustics &bull; Tools &bull; Games &bull; Experiments</div>
+    <div class="sub"><span class="blink">&#9608;</span> SITE UNDER CONSTRUCTION <span class="blink">&#9608;</span></div>
+  </div>
+
+  <div class="visitor">You are visitor number <span id="visitorNum">004,891</span></div>
+
+  <div class="marquee-wrapper"><div class="marquee-text">WELCOME TO MY CORNER OF THE INTERNET *** NEW TOOLS ADDED REGULARLY *** ALL AUDIO RUNS IN YOUR BROWSER *** NO TRACKING NO COOKIES JUST VIBES *** BOOKMARK THIS PAGE (CTRL+D)</div></div>
+
+  <div class="construction">&#128679; &#128679; &#128679;</div>
+
+  <div class="nav-section">
+    <h2>&gt;&gt; AUDIO TOOLS</h2>
+    <div class="nav-grid">
+      <a href="noise-generator.html" class="nav-card"><span class="card-icon">&#9618;&#9618;&#9618;</span><span class="card-title">NOISE GEN</span><span class="card-desc">White, pink, brown &amp; more</span></a>
+      <a href="sweep-generator.html" class="nav-card"><span class="card-icon">&#8767;&#8767;&#8767;</span><span class="card-title">SWEEP GEN</span><span class="card-desc">Sine sweeps &amp; chirps</span></a>
+      <a href="mls-generator.html" class="nav-card"><span class="card-icon">&#9121;&#9124;&#9121;</span><span class="card-title">MLS GEN</span><span class="card-desc">Maximum length sequences</span></a>
+      <a href="click-factory.html" class="nav-card"><span class="card-icon">&#9731; &#9731;</span><span class="card-title">CLICK FACTORY</span><span class="card-desc">UI sound generator</span></a>
+      <a href="shot-forge.html" class="nav-card"><span class="card-icon">&#9733;&#9733;&#9733;</span><span class="card-title">SHOT FORGE</span><span class="card-desc">Blast &amp; crack synthesizer</span></a>
+      <a href="babel.html" class="nav-card"><span class="card-icon">&#8734;</span><span class="card-title">BABEL</span><span class="card-desc">Every sound that ever was</span></a>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <h2>&gt;&gt; OTHER STUFF</h2>
+    <div class="nav-grid">
+      <a href="about.html" class="nav-card"><span class="card-icon">&#9786;</span><span class="card-title">ABOUT ME</span><span class="card-desc">Who is this person</span></a>
+      <a href="games.html" class="nav-card"><span class="card-icon">&#9670;&#9670;&#9670;</span><span class="card-title">MY GAMES</span><span class="card-desc">Rusty Nuts Studios</span></a>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <h2>&gt;&gt; SECRET ZONES</h2>
+    <div class="nav-grid">
+      <a href="itch.html" class="nav-card secret wide"><span class="card-icon">&#9760;</span><span class="card-title">??? MYSTERY LINK ???</span><span class="card-desc">Only one way to find out...</span></a>
+    </div>
+  </div>
+
+  <div class="random-wrap"><button class="btn-random" id="randomBtn">&#127922; TAKE ME SOMEWHERE RANDOM</button></div>
+
+  <div class="about-box">
+    <p>Acoustics MSc with a passion for video games. I make little browser tools that I find interesting. This site is the hub for all of them.</p>
+    <a href="about.html">&gt;&gt; READ MORE &lt;&lt;</a>
+  </div>
+
+  <div class="footer">
+    <div class="badges">
+      <div class="badge">MADE WITH<br>NOTEPAD</div>
+      <div class="badge">NO COOKIES<br>NO TRACKING</div>
+      <div class="badge">PURE HTML<br>CSS &amp; JS</div>
+      <div class="badge">Y2K<br>READY</div>
+    </div>
+    <div class="webring">&lt;&lt; <a href="#">prev</a> | <a href="#">~ Acoustics WebRing ~</a> | <a href="#">next</a> &gt;&gt;</div>
+    <div class="colophon">&copy; 2025-2026 TOMMY ALLEN ACOUSTICS</div>
+  </div>
+</div>
+
+<script>
+const c=document.getElementById('visitorNum');
+const base=4891+Math.floor((Date.now()-new Date('2025-01-01').getTime())/3600000);
+c.textContent=String(base).padStart(7,'0').replace(/(\d)(?=(\d{3})+$)/g,'$1,');
+const pages=['noise-generator.html','sweep-generator.html','mls-generator.html','click-factory.html','shot-forge.html','babel.html','about.html','games.html','itch.html'];
+document.getElementById('randomBtn').addEventListener('click',()=>{window.location.href=pages[Math.floor(Math.random()*pages.length)];});
+</script>
+</body>
+</html>

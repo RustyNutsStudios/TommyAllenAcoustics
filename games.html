@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — GAMES</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Bungee+Shade&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1a0505;color:#ddd;font-family:'VT323',monospace;font-size:20px;min-height:100vh;overflow-x:hidden}
+
+  .bg{position:fixed;inset:0;z-index:0;background:
+    radial-gradient(ellipse at 30% 40%, rgba(220,38,38,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 60%, rgba(249,115,22,0.05) 0%, transparent 50%)}
+  .scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);z-index:100;pointer-events:none}
+  .bar-top{position:fixed;top:0;left:0;right:0;height:4px;z-index:50;background:linear-gradient(90deg,#dc2626,#f97316,#ffcc00,#f97316,#dc2626);background-size:200% 100%;animation:barSlide 3s linear infinite}
+  @keyframes barSlide{0%{background-position:0% 0}100%{background-position:200% 0}}
+
+  .top-bar{position:fixed;top:4px;left:0;right:0;z-index:50;background:rgba(26,5,5,0.95);border-bottom:2px solid #dc2626;padding:8px 16px;display:flex;align-items:center;justify-content:space-between}
+  .top-bar a{color:#f97316;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:1px;padding:5px 10px;border:1px solid #f97316;background:rgba(249,115,22,0.05);transition:all 0.15s}
+  .top-bar a:hover{color:#000;background:#f97316;box-shadow:0 0 10px rgba(249,115,22,0.3)}
+  .top-bar .site-name{color:#fb923c;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:2px;text-shadow:0 0 6px #f97316}
+
+  .app{position:relative;z-index:10;max-width:660px;margin:0 auto;padding:70px 16px 80px}
+
+  .header{text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:3px double #dc2626}
+  .header h1{font-family:'Bungee Shade',cursive;font-size:24px;color:#f97316;text-shadow:3px 3px 0 #dc2626,0 0 20px rgba(249,115,22,0.3);line-height:1.6}
+  .header .sub{font-size:18px;color:#fb923c;letter-spacing:3px;margin-top:8px}
+
+  .promo-box{background:#200808;border:2px solid #dc2626;padding:20px;text-align:center;margin-bottom:24px;box-shadow:0 0 20px rgba(220,38,38,0.1)}
+  .promo-box .logo-text{font-family:'Press Start 2P',monospace;font-size:14px;color:#dc2626;text-shadow:0 0 10px rgba(220,38,38,0.4);margin-bottom:12px;letter-spacing:2px;line-height:1.8}
+  .promo-box p{color:#ddd;font-size:18px;line-height:1.6;margin-bottom:12px}
+  .promo-box .visit-btn{display:inline-block;font-family:'Press Start 2P',monospace;font-size:10px;padding:12px 24px;background:#dc2626;color:#fff;text-decoration:none;border:2px solid #dc2626;letter-spacing:2px;transition:all 0.15s}
+  .promo-box .visit-btn:hover{background:#fff;color:#dc2626;box-shadow:0 0 20px rgba(220,38,38,0.3)}
+
+  .divider{text-align:center;color:#f97316;font-size:18px;letter-spacing:8px;margin:20px 0;text-shadow:0 0 4px #f97316}
+
+  .game-section{margin-bottom:24px}
+  .game-section h2{font-family:'Press Start 2P',monospace;font-size:11px;color:#ffcc00;letter-spacing:2px;margin-bottom:12px;padding-bottom:6px;border-bottom:2px dashed #f97316;text-shadow:0 0 4px #ffcc00}
+  .game-section>p{color:#fb923c;font-size:16px;margin-bottom:8px;text-align:center}
+  .game-area{position:relative;width:100%;height:300px;background:#150303;border:2px solid #dc2626;overflow:hidden;cursor:crosshair;user-select:none;box-shadow:inset 0 0 30px rgba(220,38,38,0.05)}
+  .nut{position:absolute;font-size:28px;cursor:pointer;transition:all 0.2s;user-select:none;filter:drop-shadow(0 0 6px rgba(249,115,22,0.4))}
+  .nut.caught{transform:scale(1.5);opacity:0;transition:all 0.3s}
+  .game-score{text-align:center;font-family:'Press Start 2P',monospace;font-size:9px;color:#fb923c;margin-top:10px;letter-spacing:1px}
+  .game-score span{color:#ffcc00;text-shadow:0 0 4px #ffcc00}
+  .game-msg{text-align:center;font-size:18px;color:#f97316;margin-top:6px;min-height:22px}
+
+  /* NAV FOOTER */
+  .nav-footer{margin-top:30px;padding-top:16px;border-top:2px solid #dc2626;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .nav-footer a,.btn-random{color:#f97316;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1px;padding:8px 14px;border:1px solid #f97316;background:rgba(249,115,22,0.05);transition:all 0.15s;cursor:pointer}
+  .nav-footer a:hover,.btn-random:hover{color:#000;background:#f97316;box-shadow:0 0 12px rgba(249,115,22,0.3)}
+  .webring{text-align:center;font-size:16px;color:#fb923c;border:2px ridge #dc2626;padding:6px 14px;background:#200808;margin-top:14px}
+  .webring a{color:#ffcc00;text-decoration:none}.webring a:hover{color:#fff}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="scanlines"></div><div class="bar-top"></div>
+<div class="top-bar">
+  <span class="site-name">TOMMY ALLEN ACOUSTICS</span>
+  <a href="home.html">&#9751; HOME</a>
+</div>
+<div class="app">
+  <div class="header">
+    <h1>MY GAMES</h1>
+    <div class="sub">I ALSO MAKE VIDEO GAMES APPARENTLY</div>
+  </div>
+
+  <div class="promo-box">
+    <div class="logo-text">&#9760; RUSTY NUTS STUDIOS &#9760;</div>
+    <p>That's right. I'm making video games. Real ones. With Unreal Engine 5 and everything. It's going about as well as you'd expect.</p>
+    <p>Check out what's cooking:</p>
+    <a href="https://rustynutsstudios.com" target="_blank" class="visit-btn">VISIT RUSTYNUTSSTUDIOS.COM</a>
+  </div>
+
+  <div class="divider">&#9733; &#9733; &#9733; &#9733; &#9733;</div>
+
+  <div class="game-section">
+    <h2>&gt;&gt; CATCH THE RUSTY NUT (mini game)</h2>
+    <p>Click the nuts. They're quick. Get 10 and something happens.</p>
+    <div class="game-area" id="gameArea"></div>
+    <div class="game-score">NUTS CAUGHT: <span id="score">0</span> / 10</div>
+    <div class="game-msg" id="gameMsg"></div>
+  </div>
+
+  <div class="nav-footer">
+    <a href="about.html">&lt;&lt; ABOUT</a>
+    <button class="btn-random" id="randomBtn">&#127922; RANDOM</button>
+    <a href="noise-generator.html">NEXT &gt;&gt;</a>
+  </div>
+  <div class="webring">&lt;&lt; <a href="#">prev</a> | <a href="#">~ Acoustics WebRing ~</a> | <a href="#">next</a> &gt;&gt;</div>
+
+  <div style="text-align:center;margin-top:14px"><a href="home.html" style="display:inline-block;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:3px;padding:12px 30px;border:2px solid #f97316;color:#f97316;text-decoration:none;background:rgba(249,115,22,0.05);transition:all 0.15s" onmouseover="this.style.background='#f97316';this.style.color='#000';this.style.boxShadow='0 0 20px rgba(249,115,22,0.3)'" onmouseout="this.style.background='rgba(249,115,22,0.05)';this.style.color='#f97316';this.style.boxShadow='none'">&#9751; BACK TO HOME</a></div>
+</div>
+
+<script>
+const area=document.getElementById('gameArea'),scoreEl=document.getElementById('score'),msgEl=document.getElementById('gameMsg');
+let score=0;
+const nuts=['&#129472;','&#128296;','&#128297;','&#9881;','&#128298;'];
+function spawnNut(){
+  const nut=document.createElement('div');nut.className='nut';
+  nut.innerHTML=nuts[Math.floor(Math.random()*nuts.length)];
+  const maxX=area.offsetWidth-40,maxY=area.offsetHeight-40;
+  nut.style.left=(Math.random()*maxX)+'px';nut.style.top=(Math.random()*maxY)+'px';
+  area.appendChild(nut);
+  const mi=setInterval(()=>{if(!area.contains(nut)){clearInterval(mi);return}nut.style.left=Math.random()*maxX+'px';nut.style.top=Math.random()*maxY+'px';},800-Math.min(score*50,500));
+  const to=setTimeout(()=>{if(area.contains(nut)){nut.remove();spawnNut()}clearInterval(mi);},3000-Math.min(score*150,2000));
+  nut.addEventListener('click',(e)=>{e.stopPropagation();clearInterval(mi);clearTimeout(to);nut.classList.add('caught');score++;scoreEl.textContent=score;
+    setTimeout(()=>{nut.remove();if(score>=10){msgEl.innerHTML='YOU DID IT. <a href="https://rustynutsstudios.com" target="_blank" style="color:#ffcc00;text-shadow:0 0 6px #ffcc00">SECRET LINK TO THE STUDIOS</a>';
+      for(let i=0;i<20;i++){const c=document.createElement('div');c.style.cssText='position:absolute;font-size:16px;pointer-events:none;transition:all 1.5s;opacity:1;';c.innerHTML=['&#9733;','&#9760;','&#128165;','&#129472;'][Math.floor(Math.random()*4)];c.style.left=Math.random()*100+'%';c.style.top=Math.random()*100+'%';area.appendChild(c);setTimeout(()=>{c.style.opacity='0';c.style.top='-20px'},50);setTimeout(()=>c.remove(),1600)}
+    }else{const msgs=['Nice.','Got one.','Quick hands.','Not bad.','Keep going.','Almost there.','Slippery.','Focus.'];msgEl.textContent=msgs[Math.floor(Math.random()*msgs.length)];spawnNut()}},300);});
+}
+spawnNut();setTimeout(spawnNut,500);
+const pages=['noise-generator.html','sweep-generator.html','mls-generator.html','click-factory.html','shot-forge.html','babel.html','about.html','itch.html'];
+document.getElementById('randomBtn').addEventListener('click',()=>{window.location.href=pages[Math.floor(Math.random()*pages.length)];});
+</script>
+</body>
+</html>

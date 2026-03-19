@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — BABEL</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Cinzel:wght@400;700;900&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #000; color: #666; font-family: 'VT323', monospace; font-size: 20px; min-height: 100vh; overflow-x: hidden; }
+  .static-bg { position: fixed; inset: 0; z-index: 0; opacity: 0.04; background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='6' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 256px; animation: ss 0.1s steps(3) infinite; }
+  @keyframes ss { 0%{transform:translate(0,0)} 33%{transform:translate(-2px,1px)} 66%{transform:translate(1px,-1px)} 100%{transform:translate(0,0)} }
+  .scanlines { position: fixed; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.15) 2px, rgba(0,0,0,0.15) 4px); z-index: 100; pointer-events: none; }
+  .bar-top { position: fixed; top: 0; left: 0; right: 0; height: 16px; z-index: 50; background: repeating-linear-gradient(-45deg, #fff, #fff 6px, #000 6px, #000 12px); opacity: 0.08; }
+  .bar-bottom { position: fixed; bottom: 0; left: 0; right: 0; height: 16px; z-index: 50; background: repeating-linear-gradient(45deg, #fff, #fff 6px, #000 6px, #000 12px); opacity: 0.08; }
+  .app { position: relative; z-index: 10; max-width: 660px; margin: 0 auto; padding: 60px 16px 60px; }
+  .header { text-align: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid #151515; }
+  .header .icon { font-size: 40px; letter-spacing: 10px; opacity: 0.2; margin-bottom: 10px; animation: pulse 5s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:0.12} 50%{opacity:0.35} }
+  .header h1 { font-family: 'Cinzel', serif; font-weight: 900; font-size: 30px; color: #fff; letter-spacing: 8px; text-transform: uppercase; text-shadow: 0 0 50px rgba(255,255,255,0.1); line-height: 1.4; }
+  .header .sub { font-family: 'Cinzel', serif; font-size: 14px; color: #333; letter-spacing: 6px; text-transform: uppercase; margin-top: 10px; }
+  .epigraph { text-align: center; font-family: 'Cinzel', serif; font-style: italic; font-size: 17px; color: #444; max-width: 520px; margin: 0 auto 24px; line-height: 1.8; }
+  .epigraph .attr { display: block; font-style: normal; font-size: 12px; color: #222; margin-top: 8px; letter-spacing: 4px; }
+  .marquee-wrapper { width: 100%; overflow: hidden; border-top: 1px solid #111; border-bottom: 1px solid #111; background: #030303; padding: 5px 0; margin: 0 0 24px; }
+  .marquee-text { font-size: 14px; color: #222; white-space: nowrap; animation: sl 35s linear infinite; letter-spacing: 3px; }
+  @keyframes sl { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+  .reveal-area { text-align: center; margin: 30px 0; }
+  .btn-reveal { font-family: 'Cinzel', serif; font-weight: 900; font-size: 18px; letter-spacing: 8px; text-transform: uppercase; padding: 18px 50px; cursor: pointer; background: #fff; color: #000; border: 2px solid #fff; box-shadow: 0 0 40px rgba(255,255,255,0.06); transition: all 0.3s; }
+  .btn-reveal:hover { box-shadow: 0 0 60px rgba(255,255,255,0.15); }
+  .btn-reveal:active { background: #ccc; }
+  .controls-row { display: flex; gap: 8px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+  .btn-sm { font-family: 'Press Start 2P', monospace; font-size: 8px; padding: 8px 14px; cursor: pointer; border: 1px solid; transition: all 0.15s; letter-spacing: 1px; }
+  .btn-sm:hover { filter: brightness(1.4); } .btn-sm:disabled { opacity: 0.15; cursor: not-allowed; }
+  .btn-play { background: #111; color: #888; border-color: #333; }
+  .btn-stop { background: #111; color: #555; border-color: #222; }
+  .btn-save { background: #111; color: #888; border-color: #333; }
+
+  .viz-box { background: #030303; border: 1px solid #111; margin-bottom: 14px; overflow: hidden; display: none; }
+  .viz-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #0a0a0a; }
+  .viz-title { font-family: 'Cinzel', serif; font-size: 9px; color: #333; letter-spacing: 4px; text-transform: uppercase; }
+  .viz-info { font-size: 12px; color: #222; }
+  .viz-canvas-wrap { padding: 4px; background: #010101; }
+  .viz-canvas-wrap canvas { display: block; width: 100%; }
+  .status-bar { position: fixed; bottom: 16px; left: 0; right: 0; background: #050505; border-top: 1px solid #111; padding: 4px 16px; display: flex; align-items: center; gap: 10px; font-size: 12px; color: #222; z-index: 50; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #111; transition: all 0.3s; }
+  .status-dot.active { background: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
+  .status-bar .right { margin-left: auto; }
+  .counter-area { text-align: center; color: #1a1a1a; font-size: 13px; margin: 20px 0 10px; letter-spacing: 2px; }
+  .counter-digits { background: #030303; border: 1px solid #111; padding: 2px 8px; color: #333; font-size: 14px; letter-spacing: 3px; }
+  .links-row { display: flex; gap: 16px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+  .links-row a { color: #333; text-decoration: none; font-size: 14px; letter-spacing: 1px; } .links-row a:hover { color: #777; }
+  .back-link { display: block; text-align: center; margin-top: 14px; }
+  .back-link a { color: #333; text-decoration: none; font-size: 16px; } .back-link a:hover { color: #777; }
+  .webring { text-align: center; font-size: 14px; color: #1a1a1a; border: 1px solid #0a0a0a; padding: 6px 14px; background: #030303; margin-top: 14px; }
+  .webring a { color: #333; text-decoration: none; } .webring a:hover { color: #666; }
+  .colophon { text-align: center; margin-top: 24px; font-family: 'Cinzel', serif; font-size: 11px; color: #111; letter-spacing: 4px; line-height: 2.2; }
+  @media (max-width: 500px) { .header h1 { font-size: 20px; letter-spacing: 4px; } }
+
+  .ta-topbar{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(0,0,0,0.9);border-bottom:2px solid #999;padding:8px 16px;display:flex;align-items:center;justify-content:space-between}
+  .ta-topbar a{color:#fff;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:1px;padding:5px 10px;border:1px solid #fff;background:rgba(255,255,255,0.03);transition:all 0.15s}
+  .ta-topbar a:hover{color:#000;border-color:#fff;background:#fff;box-shadow:0 0 10px rgba(255,255,255,0.2)}
+  .ta-topbar .ta-sitename{color:#999;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:2px;text-shadow:0 0 6px #999}
+
+  .ta-navfooter{margin-top:30px;padding-top:16px;border-top:2px solid #999;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .ta-navfooter a{color:#fff;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1px;padding:8px 14px;border:1px solid #fff;background:rgba(255,255,255,0.03);transition:all 0.15s}
+  .ta-navfooter a:hover{color:#000;border-color:#fff;background:#fff;box-shadow:0 0 12px rgba(255,255,255,0.2)}
+  .ta-navfooter .ta-btn-random{font-family:'Press Start 2P',monospace;font-size:9px;padding:8px 14px;cursor:pointer;background:rgba(255,255,255,0.03);color:#666;border:1px solid #666;letter-spacing:1px;transition:all 0.15s;text-shadow:0 0 4px #666}
+  .ta-navfooter .ta-btn-random:hover{background:#666;color:#000;border-color:#666;box-shadow:0 0 12px rgba(255,255,255,0.2);text-shadow:none}
+
+</style>
+</head>
+<body>
+<div class="static-bg"></div><div class="scanlines"></div>
+<div class="ta-topbar"><span class="ta-sitename">TOMMY ALLEN ACOUSTICS</span><a href="home.html">&#9751; HOME</a></div><div class="bar-top"></div><div class="bar-bottom"></div>
+<div class="app">
+  <div class="header">
+    <div class="icon">&#9646; &#9646; &#9646;</div>
+    <h1>The Audio File<br>of Babel</h1>
+    <div class="sub">Every sound that was, is, or will be</div>
+  </div>
+  <div class="epigraph">Within infinite randomness exists every possible arrangement of sound. Every word ever spoken. Every melody yet to be composed. The exact recording of your last breath.<span class="attr">&mdash; SEED UNKNOWN</span></div>
+  <div class="marquee-wrapper"><div class="marquee-text">THE DATE OF YOUR DEATH IS ENCODED HERE *** YOUR FUTURE PARTNER'S NAME SPOKEN ALOUD *** THE LAST WORDS OF EVERYONE YOU LOVE *** A SYMPHONY THAT WOULD MAKE YOU WEEP *** THE SOUND OF A DOOR YOU HAVEN'T OPENED YET *** MOST OF THE TIME IT IS NOTHING *** BUT SOMETIMES</div></div>
+  <div class="reveal-area">
+    <button class="btn-reveal" id="revealBtn">REVEAL</button>
+    <div class="controls-row">
+      <button class="btn-sm btn-play" id="playBtn" disabled>&#9654; LISTEN</button>
+      <button class="btn-sm btn-stop" id="stopBtn" disabled>&#9632; SILENCE</button>
+      <button class="btn-sm btn-save" id="saveBtn" disabled>PRESERVE</button>
+    </div>
+  </div>
+
+  <div class="viz-box" id="fftBox">
+    <div class="viz-header"><span class="viz-title">Spectrum</span><span class="viz-info" id="fftInfo"></span></div>
+    <div class="viz-canvas-wrap"><canvas id="fftCanvas" height="180"></canvas></div>
+  </div>
+  <div class="counter-area">Files revealed: <span class="counter-digits" id="genCount">000,000</span><br><span style="font-size:11px;">Of uncountably many</span></div>
+  
+  <div class="ta-navfooter">
+    <a href="shot-forge.html">&lt;&lt; SHOT FORGE</a>
+    <button class="ta-btn-random" id="taRandomBtn">&#127922; RANDOM</button>
+    <a href="noise-generator.html">NOISE GEN &gt;&gt;</a>
+  </div>
+  <div style="text-align:center;font-size:14px;color:#999;border:2px ridge #999;padding:6px 14px;background:rgba(0,0,0,0.5);margin-top:14px">&lt;&lt; <a href="#" style="color:#fff;text-decoration:none">prev</a> | <a href="#" style="color:#fff;text-decoration:none">~ Acoustics WebRing ~</a> | <a href="#" style="color:#fff;text-decoration:none">next</a> &gt;&gt;</div>
+  <div style="text-align:center;margin-top:14px"><a href="home.html" style="display:inline-block;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:3px;padding:12px 30px;border:2px solid #fff;color:#fff;text-decoration:none;background:rgba(255,255,255,0.05);transition:all 0.15s" onmouseover="this.style.background='#fff';this.style.color='#000';this.style.boxShadow='0 0 20px rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='#fff';this.style.boxShadow='none'">&#9751; BACK TO HOME</a></div>
+</div>
+<div class="status-bar"><div class="status-dot" id="statusDot"></div><span id="statusText">Awaiting</span><span class="right">BABEL v1.0</span></div>
+
+<script>
+const SR = 44100, DUR = 10, N = SR * DUR;
+
+function generateBabel() {
+  const samples = new Float32Array(N);
+  const buf = new Uint32Array(N);
+  const chunk = 16384;
+  for (let i = 0; i < N; i += chunk) window.crypto.getRandomValues(buf.subarray(i, Math.min(i+chunk, N)));
+  for (let i = 0; i < N; i++) samples[i] = (buf[i] / 0xFFFFFFFF) * 2 - 1;
+  return samples;
+}
+
+function fftR2(re, im) {
+  const n = re.length;
+  for (let i=1,j=0;i<n;i++){let b=n>>1;for(;j&b;b>>=1)j^=b;j^=b;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]];}}
+  for (let len=2;len<=n;len<<=1){const h=len>>1,a=-2*Math.PI/len,wR=Math.cos(a),wI=Math.sin(a);for(let i=0;i<n;i+=len){let cR=1,cI=0;for(let j=0;j<h;j++){const tR=cR*re[i+j+h]-cI*im[i+j+h],tI=cR*im[i+j+h]+cI*re[i+j+h];re[i+j+h]=re[i+j]-tR;im[i+j+h]=im[i+j]-tI;re[i+j]+=tR;im[i+j]+=tI;const nR=cR*wR-cI*wI;cI=cR*wI+cI*wR;cR=nR;}}}
+}
+
+function spectrum(samples) {
+  const sz=8192,segs=Math.min(8,Math.floor(N/sz)),bins=sz/2,avg=new Float32Array(bins);
+  for(let s=0;s<segs;s++){const st=Math.floor(s*(N-sz)/Math.max(1,segs-1)),re=new Float32Array(sz),im=new Float32Array(sz);for(let i=0;i<sz;i++)re[i]=samples[st+i]*(0.5-0.5*Math.cos(2*Math.PI*i/(sz-1)));fftR2(re,im);for(let k=0;k<bins;k++)avg[k]+=(re[k]*re[k]+im[k]*im[k])/segs;}
+  let mx=0;for(let i=0;i<bins;i++)mx=Math.max(mx,avg[i]);
+  const dB=new Float32Array(bins);for(let i=0;i<bins;i++)dB[i]=avg[i]>0?10*Math.log10(avg[i]/mx):-100;
+  return{dB,numBins:bins,nyquist:SR/2};
+}
+
+function drawFFT(canvas, sp) {
+  const ctx=canvas.getContext('2d'),dpr=window.devicePixelRatio||1,rect=canvas.getBoundingClientRect();
+  canvas.width=rect.width*dpr;canvas.height=180*dpr;ctx.scale(dpr,dpr);
+  const W=rect.width,H=180,pad={top:14,bottom:22,left:50,right:10},pW=W-pad.left-pad.right,pH=H-pad.top-pad.bottom;
+  ctx.fillStyle='#010101';ctx.fillRect(0,0,W,H);
+  const{dB,numBins,nyquist}=sp,dbMin=-80,dbMax=0,dbR=dbMax-dbMin,logMin=Math.log10(20),logMax=Math.log10(nyquist),logR=logMax-logMin;
+  ctx.strokeStyle='#0a0a0a';ctx.lineWidth=0.5;
+  for(let db=0;db>=dbMin;db-=20){const y=pad.top+((dbMax-db)/dbR)*pH;ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(W-pad.right,y);ctx.stroke();ctx.fillStyle='#1a1a1a';ctx.font='11px VT323,monospace';ctx.textAlign='right';ctx.fillText(db+'dB',pad.left-4,y+4);}
+  ctx.textAlign='center';ctx.fillStyle='#1a1a1a';
+  for(const f of[20,50,100,200,500,1000,2000,5000,10000,20000]){if(f>nyquist)continue;const x=pad.left+((Math.log10(f)-logMin)/logR)*pW;ctx.fillText(f>=1000?(f/1000)+'k':f+'',x,H-4);}
+  ctx.beginPath();for(let k=1;k<numBins;k++){const f=(k/numBins)*nyquist;if(f<10)continue;const x=pad.left+((Math.log10(f)-logMin)/logR)*pW,y=pad.top+Math.max(0,Math.min(pH,((dbMax-dB[k])/dbR)*pH));if(k===1)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+  ctx.strokeStyle='#999';ctx.lineWidth=1;ctx.stroke();
+  const lx=pad.left+((Math.log10((numBins-1)/numBins*nyquist)-logMin)/logR)*pW;
+  ctx.lineTo(lx,H-pad.bottom);ctx.lineTo(pad.left,H-pad.bottom);ctx.closePath();
+  const g=ctx.createLinearGradient(0,pad.top,0,H-pad.bottom);g.addColorStop(0,'rgba(255,255,255,0.06)');g.addColorStop(1,'rgba(255,255,255,0.005)');ctx.fillStyle=g;ctx.fill();
+  ctx.beginPath();for(let k=1;k<numBins;k++){const f=(k/numBins)*nyquist;if(f<10)continue;const x=pad.left+((Math.log10(f)-logMin)/logR)*pW,y=pad.top+Math.max(0,Math.min(pH,((dbMax-dB[k])/dbR)*pH));if(k===1)ctx.moveTo(x,y);else ctx.lineTo(x,y);}
+  ctx.globalAlpha=0.12;ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();ctx.globalAlpha=1;
+}
+
+function encodeWAV(samples){const amp=Math.pow(10,-3/20),ds=N*2,buf=new ArrayBuffer(44+ds),v=new DataView(buf);const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};ws(0,'RIFF');v.setUint32(4,36+ds,true);ws(8,'WAVE');ws(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,SR,true);v.setUint32(28,SR*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);ws(36,'data');v.setUint32(40,ds,true);for(let i=0;i<N;i++)v.setInt16(44+i*2,Math.round(Math.max(-1,Math.min(1,samples[i]*amp))*32767),true);return buf;}
+
+
+
+let audioCtx=null,src=null;
+function play(s){stop();if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:SR});const amp=Math.pow(10,-3/20),buf=audioCtx.createBuffer(1,N,SR),ch=buf.getChannelData(0);for(let i=0;i<N;i++)ch[i]=s[i]*amp;src=audioCtx.createBufferSource();src.buffer=buf;src.connect(audioCtx.destination);src.start();src.onended=()=>ss('The silence returns',false);ss('Listening...',true);}
+function stop(){if(src){try{src.stop();}catch(e){}src=null;}}
+function ss(t,a){document.getElementById('statusText').textContent=t;document.getElementById('statusDot').classList.toggle('active',!!a);}
+
+let cur=null,tot=0;
+document.getElementById('revealBtn').addEventListener('click',()=>{
+  ss('Divining...',true);const seed=Date.now()^(Math.random()*0xFFFFFFFF);
+  setTimeout(()=>{
+    const t0=performance.now();cur=generateBabel();const ms=(performance.now()-t0).toFixed(0);
+    tot++;document.getElementById('genCount').textContent=String(tot).padStart(6,'0').replace(/(\d)(?=(\d{3})+$)/g,'$1,');
+    document.getElementById('fftBox').style.display='block';
+    document.getElementById('fftInfo').textContent=N.toLocaleString()+' samples';
+    setTimeout(()=>{drawFFT(document.getElementById('fftCanvas'),spectrum(cur));ss('Revealed',false);play(cur);},20);
+    document.getElementById('playBtn').disabled=false;document.getElementById('stopBtn').disabled=false;document.getElementById('saveBtn').disabled=false;
+  },50);
+});
+document.getElementById('playBtn').addEventListener('click',()=>{if(cur)play(cur);});
+document.getElementById('stopBtn').addEventListener('click',()=>{stop();ss('Silenced',false);});
+document.getElementById('saveBtn').addEventListener('click',()=>{if(!cur)return;ss('Preserving...',true);setTimeout(()=>{const w=encodeWAV(cur),fn='babel_'+Date.now()+'.wav',a=document.createElement('a');a.href=URL.createObjectURL(new Blob([w],{type:'audio/wav'}));a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);ss('Preserved as '+fn,false);},20);});
+window.addEventListener('resize',()=>{if(cur){drawFFT(document.getElementById('fftCanvas'),spectrum(cur));}});
+</script>
+
+<script>
+(function(){var btn=document.getElementById('taRandomBtn');if(btn){btn.addEventListener('click',function(){var p='noise-generator.html,sweep-generator.html,mls-generator.html,click-factory.html,shot-forge.html,babel.html,about.html,games.html,itch.html'.split(',');window.location.href=p[Math.floor(Math.random()*p.length)];});}})();
+</script>
+</body>
+</html>
