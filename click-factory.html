@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — CLICK FACTORY</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Bungee+Shade&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1a0a2e;color:#ddd;font-family:'VT323',monospace;font-size:20px;min-height:100vh;overflow-x:hidden}
+
+  .bg{position:fixed;inset:0;z-index:0;
+    background:radial-gradient(circle at 25% 25%,#2a1050 0%,transparent 50%),radial-gradient(circle at 75% 75%,#0a2040 0%,transparent 50%),radial-gradient(circle at 50% 50%,#1a0a2e 0%,#0a0618 100%)}
+  .bg-grid{position:fixed;inset:0;z-index:1;opacity:0.06;
+    background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:40px 40px}
+  .scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.08) 3px,rgba(0,0,0,0.08) 6px);z-index:100;pointer-events:none}
+  .bar-top{position:fixed;top:0;left:0;right:0;height:28px;z-index:50;background:repeating-linear-gradient(-45deg,#8b5cf6,#8b5cf6 10px,#1a0a2e 10px,#1a0a2e 20px);border-bottom:3px solid #06b6d4}
+  .bar-bottom{position:fixed;bottom:0;left:0;right:0;height:28px;z-index:50;background:repeating-linear-gradient(45deg,#06b6d4,#06b6d4 10px,#1a0a2e 10px,#1a0a2e 20px);border-top:3px solid #8b5cf6}
+
+  .app{position:relative;z-index:10;max-width:760px;margin:0 auto;padding:48px 16px 64px}
+  .header{text-align:center;margin-bottom:14px;padding-bottom:14px;border-bottom:3px double #8b5cf6}
+  .header h1{font-family:'Bungee Shade',cursive;font-size:28px;color:#06b6d4;text-shadow:3px 3px 0 #8b5cf6,0 0 20px rgba(6,182,212,0.3);line-height:1.4;animation:glow 2s ease-in-out infinite alternate}
+  @keyframes glow{0%{text-shadow:3px 3px 0 #8b5cf6,0 0 10px rgba(6,182,212,0.2)}100%{text-shadow:3px 3px 0 #8b5cf6,0 0 30px rgba(6,182,212,0.5),0 0 60px rgba(139,92,246,0.2)}}
+  .header .sub{font-size:22px;color:#a78bfa;margin-top:4px;animation:blink 1.5s steps(2) infinite}
+  @keyframes blink{50%{opacity:0.6}}
+  .marquee-wrapper{width:100%;overflow:hidden;border:3px ridge #8b5cf6;background:#0f0520;padding:4px 0;margin:12px 0}
+  .marquee-text{font-size:18px;color:#06b6d4;white-space:nowrap;animation:sl 12s linear infinite}
+  @keyframes sl{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+  .desc{color:#a78bfa;font-size:20px;line-height:1.5;margin-bottom:16px;text-align:center}
+
+  .panel{background:rgba(15,5,32,0.9);border:3px ridge #8b5cf6;padding:16px;margin-bottom:14px;box-shadow:inset 0 0 30px rgba(139,92,246,0.05)}
+  .panel-title{font-family:'Press Start 2P',monospace;font-size:11px;color:#06b6d4;text-shadow:0 0 6px #06b6d4;margin-bottom:14px;letter-spacing:2px}
+  .controls-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px}
+  .control-group{display:flex;flex-direction:column;gap:4px}
+  .control-group label{font-size:15px;color:#8b5cf6;letter-spacing:1px}
+  .control-group select{font-family:'VT323',monospace;font-size:20px;padding:6px 8px;background:#0f0520;border:2px ridge #8b5cf6;color:#06b6d4;outline:none;width:100%;cursor:pointer}
+  .control-group select:focus{border-color:#06b6d4}
+  .control-group select option{background:#0f0520;color:#06b6d4}
+  input[type="range"]{-webkit-appearance:none;height:8px;border-radius:0;background:linear-gradient(90deg,#8b5cf6,#06b6d4);border:2px ridge #8b5cf6;padding:0;width:100%;cursor:pointer}
+  input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:22px;background:#06b6d4;border:2px outset #8b5cf6;cursor:pointer}
+  input[type="range"]::-moz-range-thumb{width:16px;height:22px;background:#06b6d4;border:2px outset #8b5cf6;cursor:pointer;border-radius:0}
+  .range-val{font-size:16px;color:#06b6d4;text-align:center;margin-top:2px}
+
+  .btn-row{display:flex;gap:10px;flex-wrap:wrap;padding:14px 16px;background:rgba(15,5,32,0.9);border:3px ridge #8b5cf6;margin-bottom:14px;align-items:center}
+  .btn{font-family:'Press Start 2P',monospace;font-size:10px;padding:10px 18px;cursor:pointer;border:3px outset;text-shadow:1px 1px 0 rgba(0,0,0,0.5);transition:all 0.1s}
+  .btn:hover{filter:brightness(1.3);transform:scale(1.02)}
+  .btn:active{border-style:inset;transform:scale(0.98)}
+  .btn:disabled{opacity:0.3;cursor:not-allowed;transform:none}
+  .btn-randomise{background:linear-gradient(180deg,#d946ef,#a21caf);color:#fff;border-color:#e879f9;box-shadow:0 0 15px rgba(217,70,239,0.3)}
+  .btn-generate{background:linear-gradient(180deg,#8b5cf6,#6d28d9);color:#fff;border-color:#a78bfa;box-shadow:0 0 15px rgba(139,92,246,0.3)}
+  .btn-test{background:linear-gradient(180deg,#06b6d4,#0891b2);color:#fff;border-color:#22d3ee;box-shadow:0 0 15px rgba(6,182,212,0.3)}
+  .btn-download{background:linear-gradient(180deg,#444,#222);color:#ccc;border-color:#666}
+
+  .viz-box{background:rgba(10,3,22,0.95);border:3px ridge #8b5cf6;margin-bottom:14px;overflow:hidden;display:none}
+  .viz-header{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:2px solid #1a0a2e;background:rgba(15,5,32,0.9)}
+  .viz-title{font-family:'Press Start 2P',monospace;font-size:9px;color:#06b6d4}
+  .viz-info{font-size:16px;color:#8b5cf6}
+  .viz-canvas-wrap{padding:6px;background:#050210}
+  .viz-canvas-wrap canvas{display:block;width:100%}
+
+  .status-bar{position:fixed;bottom:28px;left:0;right:0;background:#0f0520;border-top:3px solid #8b5cf6;padding:5px 16px;display:flex;align-items:center;gap:10px;font-size:16px;color:#8b5cf6;z-index:50}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:#2a1050;transition:all 0.3s}
+  .status-dot.active{background:#06b6d4;box-shadow:0 0 8px #06b6d4}
+  .status-bar .right{margin-left:auto;font-size:14px;color:#6d28d9}
+
+  .counter{text-align:center;color:#6d28d9;font-size:16px;margin:12px 0}
+  .counter-digits{background:#0f0520;border:3px ridge #8b5cf6;padding:2px 10px;color:#06b6d4;font-size:18px;letter-spacing:3px}
+  .badge-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+  .badge{font-family:'Press Start 2P',monospace;font-size:6px;padding:5px 8px;border:2px outset;display:inline-block;line-height:1.5}
+  .badge-1{background:#2a1050;color:#a78bfa;border-color:#8b5cf6}
+  .badge-2{background:#0a2040;color:#06b6d4;border-color:#22d3ee}
+  .badge-3{background:#3b0764;color:#d946ef;border-color:#e879f9}
+  .links-row{display:flex;gap:16px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+  .links-row a{color:#a78bfa;text-decoration:none;font-size:18px}.links-row a:hover{color:#06b6d4;text-decoration:underline}
+  .back-link{display:block;text-align:center;margin-top:14px}
+  .back-link a{color:#a78bfa;text-decoration:none;font-size:20px}.back-link a:hover{color:#06b6d4}
+  .webring{text-align:center;font-size:16px;color:#6d28d9;border:2px ridge #8b5cf6;padding:6px 14px;background:rgba(15,5,32,0.8);margin-top:14px}
+  .webring a{color:#06b6d4;text-decoration:none}.webring a:hover{color:#d946ef}
+
+  .hover-strip{display:flex;gap:3px;flex-wrap:wrap}
+  .hover-btn{flex:1;min-width:32px;height:44px;border:2px outset #8b5cf6;background:#1a0a2e;cursor:pointer;transition:background 0.05s,transform 0.05s}
+  .hover-btn:hover{background:#8b5cf6;transform:scaleY(1.15);box-shadow:0 0 12px rgba(139,92,246,0.4)}
+  .hover-btn:active{background:#06b6d4;border-style:inset}
+
+  @media(max-width:500px){.header h1{font-size:18px}.controls-grid{grid-template-columns:1fr 1fr}}
+
+  .ta-topbar{position:fixed;top:0;left:0;right:0;z-index:50;background:rgba(0,0,0,0.9);border-bottom:2px solid #8b5cf6;padding:8px 16px;display:flex;align-items:center;justify-content:space-between}
+  .ta-topbar a{color:#06b6d4;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:1px;padding:5px 10px;border:1px solid #06b6d4;background:rgba(6,182,212,0.05);transition:all 0.15s}
+  .ta-topbar a:hover{color:#000;border-color:#06b6d4;background:#06b6d4;box-shadow:0 0 10px rgba(6,182,212,0.3)}
+  .ta-topbar .ta-sitename{color:#8b5cf6;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:2px;text-shadow:0 0 6px #8b5cf6}
+
+  .ta-navfooter{margin-top:30px;padding-top:16px;border-top:2px solid #8b5cf6;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .ta-navfooter a{color:#06b6d4;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1px;padding:8px 14px;border:1px solid #06b6d4;background:rgba(6,182,212,0.05);transition:all 0.15s}
+  .ta-navfooter a:hover{color:#000;border-color:#06b6d4;background:#06b6d4;box-shadow:0 0 12px rgba(6,182,212,0.3)}
+  .ta-navfooter .ta-btn-random{font-family:'Press Start 2P',monospace;font-size:9px;padding:8px 14px;cursor:pointer;background:rgba(6,182,212,0.05);color:#d946ef;border:1px solid #d946ef;letter-spacing:1px;transition:all 0.15s;text-shadow:0 0 4px #d946ef}
+  .ta-navfooter .ta-btn-random:hover{background:#d946ef;color:#000;border-color:#d946ef;box-shadow:0 0 12px rgba(6,182,212,0.3);text-shadow:none}
+
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="bg-grid"></div><div class="scanlines"></div>
+<div class="ta-topbar"><span class="ta-sitename">TOMMY ALLEN ACOUSTICS</span><a href="home.html">&#9751; HOME</a></div>
+<div class="bar-top"></div><div class="bar-bottom"></div>
+
+<div class="app">
+  <div class="header">
+    <h1>*~CLICK FACTORY~*</h1>
+    <div class="sub">UI Sound Generator_</div>
+  </div>
+  <div class="marquee-wrapper"><div class="marquee-text">*** CLICKS *** POPS *** TAPS *** BLIPS *** TONES *** SNAPS *** BOINGS *** PINGS *** FREE WAV *** ROYALTY FREE *** UNLIMITED ***</div></div>
+  <div class="desc">Set the parameters or hit RANDOMISE to shuffle them. Then GENERATE to synthesise a new click within those constraints. Each generate is different.</div>
+
+  <!-- Parameters -->
+  <div class="panel">
+    <div class="panel-title">&gt;&gt; PARAMETERS</div>
+    <div class="controls-grid">
+      <div class="control-group">
+        <label>Duration</label>
+        <input type="range" id="pDuration" min="5" max="300" value="40" step="1">
+        <div class="range-val" id="vDuration">40 ms</div>
+      </div>
+      <div class="control-group">
+        <label>Pitch</label>
+        <input type="range" id="pPitch" min="80" max="8000" value="800" step="1">
+        <div class="range-val" id="vPitch">800 Hz</div>
+      </div>
+      <div class="control-group">
+        <label>Tonality</label>
+        <input type="range" id="pTonality" min="0" max="100" value="50" step="1">
+        <div class="range-val" id="vTonality">50%</div>
+      </div>
+      <div class="control-group">
+        <label>Brightness</label>
+        <input type="range" id="pBrightness" min="0" max="100" value="60" step="1">
+        <div class="range-val" id="vBrightness">60%</div>
+      </div>
+      <div class="control-group">
+        <label>Resonance</label>
+        <input type="range" id="pResonance" min="0" max="100" value="20" step="1">
+        <div class="range-val" id="vResonance">20%</div>
+      </div>
+      <div class="control-group">
+        <label>Volume</label>
+        <input type="range" id="pVolume" min="0" max="100" value="80" step="1">
+        <div class="range-val" id="vVolume">80%</div>
+      </div>
+      <div class="control-group">
+        <label>Bitcrush</label>
+        <input type="range" id="pCrush" min="0" max="100" value="0" step="1">
+        <div class="range-val" id="vCrush">Off</div>
+      </div>
+      <div class="control-group">
+        <label>Envelope</label>
+        <select id="pEnvelope">
+          <option value="snap" selected>Snap</option>
+          <option value="exp">Exponential</option>
+          <option value="pluck">Pluck</option>
+          <option value="tap">Tap</option>
+          <option value="pop">Pop</option>
+          <option value="reverse">Reverse</option>
+          <option value="bounce">Bounce</option>
+          <option value="gate">Gate</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Pitch Sweep</label>
+        <select id="pSweep">
+          <option value="down" selected>Down</option>
+          <option value="up">Up</option>
+          <option value="chirp">Chirp (up/down)</option>
+          <option value="flat">Flat</option>
+          <option value="wobble">Wobble</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Layers</label>
+        <select id="pLayers">
+          <option value="1">1 — Minimal</option>
+          <option value="2" selected>2 — Standard</option>
+          <option value="3">3 — Rich</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Double Hit</label>
+        <select id="pDouble">
+          <option value="off" selected>Off</option>
+          <option value="on">On</option>
+          <option value="maybe">Random</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="btn-row">
+    <button class="btn btn-randomise" id="randomBtn">RANDOMISE</button>
+    <button class="btn btn-generate" id="generateBtn">GENERATE</button>
+    <button class="btn btn-test" id="testBtn" disabled>&#9654; TEST</button>
+    <button class="btn btn-download" id="downloadBtn" disabled>DOWNLOAD .WAV</button>
+  </div>
+
+  <!-- Hover Test -->
+  <div class="panel" id="hoverPanel" style="display:none">
+    <div class="panel-title">&gt;&gt; HOVER TEST</div>
+    <div class="hover-strip" id="hoverStrip"></div>
+  </div>
+
+  <!-- Waveform -->
+  <div class="viz-box" id="waveformBox">
+    <div class="viz-header">
+      <span class="viz-title">WAVEFORM</span>
+      <span class="viz-info" id="waveformInfo"></span>
+    </div>
+    <div class="viz-canvas-wrap"><canvas id="waveformCanvas" height="140"></canvas></div>
+  </div>
+
+  <div class="counter">Clicks forged: <span class="counter-digits" id="genCount">000,000</span></div>
+  <div class="badge-row">
+    <div class="badge badge-1">100% RANDOM<br>SYNTHESIS</div>
+    <div class="badge badge-2">ROYALTY<br>FREE</div>
+    <div class="badge badge-3">UNLIMITED<br>CLICKS</div>
+  </div>
+  
+  <div class="ta-navfooter">
+    <a href="mls-generator.html">&lt;&lt; MLS GEN</a>
+    <button class="ta-btn-random" id="taRandomBtn">&#127922; RANDOM</button>
+    <a href="shot-forge.html">SHOT FORGE &gt;&gt;</a>
+  </div>
+  <div style="text-align:center;font-size:14px;color:#8b5cf6;border:2px ridge #8b5cf6;padding:6px 14px;background:rgba(0,0,0,0.5);margin-top:14px">&lt;&lt; <a href="#" style="color:#06b6d4;text-decoration:none">prev</a> | <a href="#" style="color:#06b6d4;text-decoration:none">~ Acoustics WebRing ~</a> | <a href="#" style="color:#06b6d4;text-decoration:none">next</a> &gt;&gt;</div>
+  <div style="text-align:center;margin-top:14px"><a href="home.html" style="display:inline-block;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:3px;padding:12px 30px;border:2px solid #fff;color:#fff;text-decoration:none;background:rgba(255,255,255,0.05);transition:all 0.15s" onmouseover="this.style.background='#fff';this.style.color='#000';this.style.boxShadow='0 0 20px rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.05)';this.style.color='#fff';this.style.boxShadow='none'">&#9751; BACK TO HOME</a></div>
+</div>
+
+<div class="status-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span id="statusText">Ready</span>
+  <span class="right">CLICK FACTORY v2.0</span>
+</div>
+
+<script>
+const SR = 48000;
+
+// ============================
+// PARAMETER ELEMENTS
+// ============================
+const els = {
+  duration:   { r: document.getElementById('pDuration'),   v: document.getElementById('vDuration') },
+  pitch:      { r: document.getElementById('pPitch'),      v: document.getElementById('vPitch') },
+  tonality:   { r: document.getElementById('pTonality'),   v: document.getElementById('vTonality') },
+  brightness: { r: document.getElementById('pBrightness'), v: document.getElementById('vBrightness') },
+  resonance:  { r: document.getElementById('pResonance'),  v: document.getElementById('vResonance') },
+  volume:     { r: document.getElementById('pVolume'),     v: document.getElementById('vVolume') },
+  crush:      { r: document.getElementById('pCrush'),      v: document.getElementById('vCrush') },
+  envelope:   { s: document.getElementById('pEnvelope') },
+  sweep:      { s: document.getElementById('pSweep') },
+  layers:     { s: document.getElementById('pLayers') },
+  double:     { s: document.getElementById('pDouble') },
+};
+
+// Display formatters
+const fmt = {
+  duration:   v => v + ' ms',
+  pitch:      v => v >= 1000 ? (v/1000).toFixed(1) + ' kHz' : v + ' Hz',
+  tonality:   v => v + '%',
+  brightness: v => v + '%',
+  resonance:  v => v + '%',
+  volume:     v => v + '%',
+  crush:      v => v == 0 ? 'Off' : v + '%',
+};
+
+// Hook up range display updates
+for (const [key, el] of Object.entries(els)) {
+  if (el.r) {
+    el.r.addEventListener('input', () => { el.v.textContent = fmt[key](+el.r.value); });
+  }
+}
+
+// Read all params
+function getParams() {
+  return {
+    durationMs:   +els.duration.r.value,
+    pitchHz:      +els.pitch.r.value,
+    tonality:     +els.tonality.r.value / 100,
+    brightness:   +els.brightness.r.value / 100,
+    resonance:    +els.resonance.r.value / 100,
+    volume:       +els.volume.r.value / 100,
+    crush:        +els.crush.r.value / 100,
+    envelope:     els.envelope.s.value,
+    sweep:        els.sweep.s.value,
+    layers:       +els.layers.s.value,
+    doubleHit:    els.double.s.value,
+  };
+}
+
+// ============================
+// RANDOMISE PARAMETERS
+// ============================
+function randomiseParams() {
+  const rnd = (min, max) => min + Math.random() * (max - min);
+  const rndInt = (min, max) => Math.floor(rnd(min, max + 1));
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+
+  els.duration.r.value = rndInt(5, 300);
+  els.pitch.r.value = rndInt(80, 8000);
+  els.tonality.r.value = rndInt(0, 100);
+  els.brightness.r.value = rndInt(0, 100);
+  els.resonance.r.value = rndInt(0, 100);
+  // Keep volume in a usable range
+  els.volume.r.value = rndInt(50, 100);
+  els.crush.r.value = Math.random() > 0.7 ? rndInt(10, 70) : 0;
+
+  els.envelope.s.value = pick(['snap','exp','pluck','tap','pop','reverse','bounce','gate']);
+  els.sweep.s.value = pick(['down','up','chirp','flat','wobble']);
+  els.layers.s.value = pick(['1','2','3']);
+  els.double.s.value = pick(['off','on','maybe']);
+
+  // Update displays
+  for (const [key, el] of Object.entries(els)) {
+    if (el.r && el.v) el.v.textContent = fmt[key](+el.r.value);
+  }
+}
+
+// ============================
+// SYNTHESIS ENGINE
+// ============================
+function generateClick(p) {
+  const N = Math.max(8, Math.round((p.durationMs / 1000) * SR));
+  const out = new Float32Array(N);
+  const rnd = () => Math.random();
+
+  for (let layer = 0; layer < p.layers; layer++) {
+    const layerBuf = new Float32Array(N);
+
+    // Each layer has slight random variation on the user params
+    const spread = 0.15; // 15% random spread per layer
+    const layerPitch = p.pitchHz * (1 + (rnd() - 0.5) * spread * 2);
+    const layerPitch2 = layerPitch * (0.5 + rnd() * 2);
+    const layerDecayRate = 4 + rnd() * 18;
+    const attackLen = Math.max(1, Math.floor(N * (0.002 + rnd() * 0.03)));
+
+    // Timing offset for later layers
+    const offset = layer === 0 ? 0 : Math.floor(N * rnd() * 0.06 * layer);
+    const activeN = N - offset;
+    if (activeN < 2) continue;
+
+    // ---- ENVELOPE ----
+    const envelope = new Float32Array(activeN);
+    for (let i = 0; i < activeN; i++) {
+      const t = i / activeN;
+      const att = i < attackLen ? i / attackLen : 1;
+      let e;
+      switch (p.envelope) {
+        case 'exp':     e = att * Math.exp(-layerDecayRate * t); break;
+        case 'snap':    e = att * Math.pow(Math.max(0, 1 - t), layerDecayRate * 0.5); break;
+        case 'pluck':   e = att * Math.exp(-layerDecayRate * 0.6 * t) * (1 + 0.25 * Math.sin(t * 22 + rnd() * 6)); break;
+        case 'tap':     e = att * (t < 0.08 ? 1 : Math.exp(-layerDecayRate * 1.8 * (t - 0.08))); break;
+        case 'pop':     e = att * Math.exp(-layerDecayRate * 0.5 * t * t * 4); break;
+        case 'reverse': e = Math.pow(t, 2 + rnd() * 2) * Math.exp(-1.5 * (1 - t)); break;
+        case 'bounce': {
+          const bn = 2 + Math.floor(rnd() * 4);
+          e = att * Math.abs(Math.sin(t * bn * Math.PI)) * Math.exp(-layerDecayRate * 0.35 * t);
+          break;
+        }
+        case 'gate':    e = t < (0.3 + rnd() * 0.5) ? att : 0; break;
+        default:        e = att * Math.exp(-layerDecayRate * t);
+      }
+      envelope[i] = e;
+    }
+
+    // ---- OSCILLATOR with pitch sweep ----
+    let phase1 = rnd() * Math.PI * 2;
+    let phase2 = rnd() * Math.PI * 2;
+    // Detuned harmonics
+    const h2r = 2 + (rnd() - 0.5) * 0.05;
+    const h3r = 3 + (rnd() - 0.5) * 0.07;
+    const h2amt = 0.1 + rnd() * 0.25;
+    const h3amt = 0.05 + rnd() * 0.15;
+    const hasH2 = rnd() > 0.35;
+    const hasH3 = rnd() > 0.55;
+    let ph2 = 0, ph3 = 0;
+
+    for (let i = 0; i < activeN; i++) {
+      const t = i / activeN;
+
+      // Instantaneous frequency based on sweep type
+      let f1;
+      switch (p.sweep) {
+        case 'down':   f1 = layerPitch * (1 - t * 0.7); break;
+        case 'up':     f1 = layerPitch * (0.3 + t * 0.7); break;
+        case 'chirp':  f1 = layerPitch * (t < 0.25 ? (0.5 + 2 * t) : (1 - 0.6 * (t - 0.25))); break;
+        case 'flat':   f1 = layerPitch; break;
+        case 'wobble': f1 = layerPitch * (1 + 0.25 * Math.sin(t * 12 * Math.PI)); break;
+        default:       f1 = layerPitch;
+      }
+      const f2 = layerPitch2 * (1 - t * 0.5);
+
+      phase1 += 2 * Math.PI * f1 / SR;
+      phase2 += 2 * Math.PI * f2 / SR;
+
+      // Tonal signal
+      let tonal = Math.sin(phase1) + 0.3 * Math.sin(phase2);
+      if (hasH2) { ph2 += 2 * Math.PI * f1 * h2r / SR; tonal += h2amt * Math.sin(ph2); }
+      if (hasH3) { ph3 += 2 * Math.PI * f1 * h3r / SR; tonal += h3amt * Math.sin(ph3); }
+
+      // Noise
+      const noise = rnd() * 2 - 1;
+
+      // Mix tonal vs noise — at 100% tonality, pure tone
+      const noiseBoost = layer === 0 ? (1 - p.tonality) * 0.15 : 0;
+      const tMix = Math.min(1, p.tonality + noiseBoost);
+      const sig = tonal * tMix + noise * (1 - tMix);
+
+      layerBuf[i + offset] = envelope[i] * sig;
+    }
+
+    // Layer gain: first layer full, subsequent layers progressively quieter
+    const layerGain = layer === 0 ? 1.0 : 0.3 + rnd() * 0.4;
+    for (let i = 0; i < N; i++) out[i] += layerBuf[i] * layerGain;
+  }
+
+  // ---- DOUBLE HIT ----
+  const doDouble = p.doubleHit === 'on' || (p.doubleHit === 'maybe' && rnd() > 0.5);
+  if (doDouble && N > 200) {
+    const offset = Math.floor(N * (0.1 + rnd() * 0.2));
+    const subLen = Math.min(Math.floor(N * 0.2), N - offset);
+    const subFreq = p.pitchHz * (0.6 + rnd() * 0.8);
+    const subDecay = 12 + rnd() * 15;
+    for (let i = 0; i < subLen; i++) {
+      const env = Math.exp(-subDecay * (i / subLen));
+      const sig = Math.sin(2 * Math.PI * subFreq * (i / SR)) * p.tonality
+        + (rnd() * 2 - 1) * (1 - p.tonality);
+      out[offset + i] += env * 0.35 * sig;
+    }
+  }
+
+  // ---- BITCRUSH ----
+  if (p.crush > 0) {
+    const crushRate = Math.max(1, Math.floor(1 + p.crush * 40));
+    const levels = Math.max(2, Math.floor(256 * (1 - p.crush * 0.95)));
+    for (let i = 0; i < N; i++) {
+      if (i % crushRate !== 0 && i > 0) out[i] = out[i - 1];
+      out[i] = Math.round(out[i] * levels) / levels;
+    }
+  }
+
+  // ---- BIQUAD LOWPASS FILTER ----
+  // Brightness controls cutoff, resonance controls Q
+  // Min cutoff scales with pitch so low brightness always passes fundamentals
+  {
+    const minCut = Math.max(800, p.pitchHz * 0.5);
+    const cutoffHz = Math.min(minCut + p.brightness * (20000 - minCut), SR * 0.45);
+    const Q = 0.5 + p.resonance * 8;
+    const w0 = 2 * Math.PI * cutoffHz / SR;
+    const alpha = Math.sin(w0) / (2 * Q);
+    const cosw = Math.cos(w0);
+    const b0 = (1 - cosw) / 2 / (1 + alpha);
+    const b1 = (1 - cosw) / (1 + alpha);
+    const b2 = b0;
+    const a1 = (-2 * cosw) / (1 + alpha);
+    const a2 = (1 - alpha) / (1 + alpha);
+    let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+    for (let i = 0; i < N; i++) {
+      const x = out[i];
+      const y = b0*x + b1*x1 + b2*x2 - a1*y1 - a2*y2;
+      x2 = x1; x1 = x; y2 = y1; y1 = y;
+      out[i] = y;
+    }
+  }
+
+  // ---- DC REMOVAL ----
+  {
+    let sum = 0;
+    for (let i = 0; i < N; i++) sum += out[i];
+    const dc = sum / N;
+    // 20Hz highpass
+    let prev = 0, prevOut = 0;
+    const a = 1 / (1 + 2 * Math.PI * 20 / SR);
+    for (let i = 0; i < N; i++) {
+      const x = out[i] - dc;
+      prevOut = a * (prevOut + x - prev);
+      prev = x;
+      out[i] = prevOut;
+    }
+  }
+
+  // ---- NORMALIZE ----
+  let mx = 0;
+  for (let i = 0; i < N; i++) mx = Math.max(mx, Math.abs(out[i]));
+  if (mx > 0) for (let i = 0; i < N; i++) out[i] *= p.volume / mx;
+
+  return out;
+}
+
+// ============================
+// WAV
+// ============================
+function encodeWAV(samples) {
+  const N = samples.length, ds = N * 2;
+  const buf = new ArrayBuffer(44 + ds), v = new DataView(buf);
+  const ws = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  ws(0,'RIFF'); v.setUint32(4, 36+ds, true); ws(8,'WAVE'); ws(12,'fmt ');
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,SR,true); v.setUint32(28,SR*2,true); v.setUint16(32,2,true); v.setUint16(34,16,true);
+  ws(36,'data'); v.setUint32(40,ds,true);
+  for (let i = 0; i < N; i++) v.setInt16(44+i*2, Math.round(Math.max(-1,Math.min(1,samples[i]))*32767), true);
+  return buf;
+}
+
+// ============================
+// DRAWING
+// ============================
+function drawWaveform(canvas, samples) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr; canvas.height = 140 * dpr; ctx.scale(dpr, dpr);
+  const W = rect.width, H = 140;
+  const pad = {top:12,bottom:16,left:30,right:10};
+  const pW = W-pad.left-pad.right, pH = H-pad.top-pad.bottom;
+
+  ctx.fillStyle = '#050210'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = '#1a0a2e'; ctx.lineWidth = 0.5;
+  for (let i = 0; i <= 4; i++) {
+    const y = pad.top+(pH/4)*i;
+    ctx.beginPath(); ctx.moveTo(pad.left,y); ctx.lineTo(W-pad.right,y); ctx.stroke();
+  }
+  const zY = pad.top + pH / 2;
+  ctx.strokeStyle = '#2a1050'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad.left,zY); ctx.lineTo(W-pad.right,zY); ctx.stroke();
+
+  ctx.fillStyle = '#6d28d9'; ctx.font = '11px VT323,monospace';
+  ctx.textAlign = 'right'; ctx.fillText('+1',pad.left-4,pad.top+5); ctx.fillText('-1',pad.left-4,pad.top+pH+5);
+  const durMs = (samples.length / SR * 1000).toFixed(0);
+  ctx.textAlign = 'center';
+  ctx.fillText('0', pad.left, H-2);
+  ctx.fillText(durMs+'ms', W-pad.right, H-2);
+  ctx.fillText((durMs/2|0)+'ms', pad.left+pW/2, H-2);
+
+  // Draw
+  const N = samples.length;
+  ctx.beginPath();
+  for (let px = 0; px < pW; px++) {
+    const idx = Math.floor((px / pW) * N);
+    const y = zY - samples[idx] * (pH/2-2);
+    if (px === 0) ctx.moveTo(pad.left,y); else ctx.lineTo(pad.left+px,y);
+  }
+  ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.globalAlpha = 0.2; ctx.lineWidth = 4; ctx.stroke();
+  ctx.globalAlpha = 0.06; ctx.lineWidth = 10; ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Fill
+  ctx.beginPath();
+  for (let px = 0; px < pW; px++) {
+    const idx = Math.floor((px / pW) * N);
+    const y = zY - samples[idx] * (pH/2-2);
+    if (px === 0) ctx.moveTo(pad.left,y); else ctx.lineTo(pad.left+px,y);
+  }
+  ctx.lineTo(pad.left+pW,zY); ctx.lineTo(pad.left,zY); ctx.closePath();
+  const g = ctx.createLinearGradient(0,pad.top,0,zY);
+  g.addColorStop(0,'rgba(6,182,212,0.1)'); g.addColorStop(1,'rgba(6,182,212,0)');
+  ctx.fillStyle = g; ctx.fill();
+}
+
+// ============================
+// AUDIO
+// ============================
+let audioCtx = null;
+function playClick(samples) {
+  if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)({sampleRate:SR});
+  const buf = audioCtx.createBuffer(1, samples.length, SR);
+  buf.getChannelData(0).set(samples);
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf; src.connect(audioCtx.destination); src.start();
+}
+
+// ============================
+// UI WIRING
+// ============================
+let currentSamples = null, totalGens = 0;
+
+function setStatus(t, a) {
+  document.getElementById('statusText').textContent = t;
+  document.getElementById('statusDot').classList.toggle('active', !!a);
+}
+
+document.getElementById('randomBtn').addEventListener('click', () => {
+  randomiseParams();
+  // Generate and play immediately
+  document.getElementById('generateBtn').click();
+});
+
+document.getElementById('generateBtn').addEventListener('click', () => {
+  const p = getParams();
+  currentSamples = generateClick(p);
+
+  totalGens++;
+  document.getElementById('genCount').textContent =
+    String(totalGens).padStart(6,'0').replace(/(\d)(?=(\d{3})+$)/g,'$1,');
+
+  document.getElementById('waveformBox').style.display = 'block';
+  document.getElementById('hoverPanel').style.display = 'block';
+  document.getElementById('waveformInfo').textContent =
+    currentSamples.length + ' samples | ' + p.durationMs + 'ms | ' + p.envelope + ' | ' + p.sweep;
+  drawWaveform(document.getElementById('waveformCanvas'), currentSamples);
+
+  document.getElementById('testBtn').disabled = false;
+  document.getElementById('downloadBtn').disabled = false;
+
+  playClick(currentSamples);
+  setStatus('Click #' + totalGens, false);
+});
+
+document.getElementById('testBtn').addEventListener('click', () => {
+  if (currentSamples) playClick(currentSamples);
+});
+
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if (!currentSamples) return;
+  const wav = encodeWAV(currentSamples);
+  const p = getParams();
+  const fn = 'click_' + p.envelope + '_' + p.sweep + '_' + p.durationMs + 'ms_' + Date.now() + '.wav';
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([wav],{type:'audio/wav'}));
+  a.download = fn; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setStatus('Downloaded ' + fn, false);
+});
+
+window.addEventListener('resize', () => {
+  if (currentSamples) drawWaveform(document.getElementById('waveformCanvas'), currentSamples);
+});
+
+// ============================
+// HOVER TEST STRIP
+// ============================
+(function() {
+  const strip = document.getElementById('hoverStrip');
+  const count = 16;
+  for (let i = 0; i < count; i++) {
+    const btn = document.createElement('div');
+    btn.className = 'hover-btn';
+    btn.addEventListener('mouseenter', () => {
+      if (currentSamples) playClick(currentSamples);
+    });
+    btn.addEventListener('click', () => {
+      if (currentSamples) playClick(currentSamples);
+    });
+    btn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (currentSamples) playClick(currentSamples);
+    }, { passive: false });
+    strip.appendChild(btn);
+  }
+})();
+</script>
+
+<script>
+(function(){var btn=document.getElementById('taRandomBtn');if(btn){btn.addEventListener('click',function(){var p='noise-generator.html,sweep-generator.html,mls-generator.html,click-factory.html,shot-forge.html,babel.html,about.html,games.html,itch.html'.split(',');window.location.href=p[Math.floor(Math.random()*p.length)];});}})();
+</script>
+</body>
+</html>
