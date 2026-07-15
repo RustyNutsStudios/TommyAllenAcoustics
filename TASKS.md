@@ -22,3 +22,7 @@ Format: `[ ]` = to do, `[~]` = in progress, `[x]` = done & pushed live.
 - [x] Reorganized home.html into 3 sections: Signal Generators, Sound Design Tools, Mini Games
       (Babel placed in Signal Generators; Click Factory + Shot Forge = Sound Design Tools)
 - [x] Updated the RANDOM button page list to include all new pages
+- [x] Added 3 more Sound Design Tools: shot-forge-2 (upgraded), scifi-shot-forge, pewboy
+      (kept the original shot-forge.html alongside Shot Forge 2)
+- [x] Added Tommy's tunnel photo (images/tommy-tunnel.jpg) to the About Me page avatar,
+      bumped "tools built" stat to 14
