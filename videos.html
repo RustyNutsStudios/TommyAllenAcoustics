@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — SIMULATIONS &amp; VIDEO</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Bungee+Shade&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#02040a;color:#ddd;font-family:'VT323',monospace;font-size:20px;min-height:100vh;overflow-x:hidden}
+
+  .bg{position:fixed;inset:0;z-index:0;background:
+    radial-gradient(ellipse at 25% 30%, rgba(6,182,212,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 75% 70%, rgba(139,92,246,0.07) 0%, transparent 50%)}
+  .scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);z-index:100;pointer-events:none}
+  .bar-top{position:fixed;top:0;left:0;right:0;height:4px;z-index:50;background:linear-gradient(90deg,#06b6d4,#8b5cf6,#d946ef,#06b6d4);background-size:200% 100%;animation:barSlide 4s linear infinite}
+  @keyframes barSlide{0%{background-position:0% 0}100%{background-position:200% 0}}
+
+  .top-bar{position:fixed;top:4px;left:0;right:0;z-index:50;background:rgba(2,4,10,0.95);border-bottom:2px solid #06b6d4;padding:8px 16px;display:flex;align-items:center;justify-content:space-between}
+  .top-bar a{color:#06b6d4;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:1px;padding:5px 10px;border:1px solid #06b6d4;background:rgba(6,182,212,0.05);transition:all 0.15s}
+  .top-bar a:hover{color:#000;background:#06b6d4;box-shadow:0 0 10px rgba(6,182,212,0.3)}
+  .top-bar .site-name{color:#8b5cf6;font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:2px;text-shadow:0 0 6px #8b5cf6}
+
+  .app{position:relative;z-index:10;max-width:720px;margin:0 auto;padding:70px 16px 80px}
+
+  .header{text-align:center;margin-bottom:20px;padding-bottom:16px;border-bottom:3px double #06b6d4}
+  .header h1{font-family:'Bungee Shade',cursive;font-size:24px;color:#06b6d4;text-shadow:3px 3px 0 #8b5cf6,0 0 20px rgba(6,182,212,0.3);line-height:1.5}
+  .header .sub{font-size:18px;color:#a78bfa;letter-spacing:2px;margin-top:8px}
+
+  .marquee-wrapper{width:100%;overflow:hidden;border-top:2px solid #06b6d4;border-bottom:2px solid #06b6d4;background:#0a0518;padding:5px 0;margin-bottom:24px}
+  .marquee-text{font-size:15px;color:#ffcc00;white-space:nowrap;animation:sl 26s linear infinite;letter-spacing:3px;text-shadow:0 0 4px #ffcc00}
+  @keyframes sl{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+
+  .vid-section{margin-bottom:34px}
+  .vid-section h2{font-family:'Press Start 2P',monospace;font-size:12px;color:#ffcc00;letter-spacing:2px;margin-bottom:6px;padding-bottom:6px;border-bottom:2px dashed #8b5cf6;text-shadow:0 0 4px #ffcc00}
+  .vid-section .section-intro{color:#a78bfa;font-size:17px;margin-bottom:18px;line-height:1.5}
+
+  .video{margin-bottom:26px;background:#0a0518;border:2px solid #8b5cf6;padding:14px;box-shadow:0 0 14px rgba(139,92,246,0.08)}
+  .video h3{font-family:'Press Start 2P',monospace;font-size:11px;color:#06b6d4;letter-spacing:1px;margin-bottom:12px;line-height:1.6;text-shadow:0 0 4px #06b6d4}
+  .video-frame{position:relative;width:100%;padding-bottom:56.25%;height:0;border:3px solid #06b6d4;box-shadow:0 0 15px rgba(6,182,212,0.2);background:#000;overflow:hidden}
+  .video-frame iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
+  .video .desc{color:#ddd;font-size:18px;line-height:1.6;margin-top:12px}
+  .video .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+  .video .tag{font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:1px;color:#d946ef;border:1px solid #d946ef;padding:5px 8px;background:rgba(217,70,239,0.06)}
+
+  .nav-footer{margin-top:20px;padding-top:16px;border-top:2px solid #06b6d4;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+  .nav-footer a,.btn-random{color:#06b6d4;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1px;padding:8px 14px;border:1px solid #06b6d4;background:rgba(6,182,212,0.05);transition:all 0.15s;cursor:pointer}
+  .nav-footer a:hover,.btn-random:hover{color:#000;background:#06b6d4;box-shadow:0 0 12px rgba(6,182,212,0.3)}
+  .webring{text-align:center;font-size:16px;color:#d946ef;border:2px ridge #06b6d4;padding:6px 14px;background:#0a0518;margin-top:14px}
+  .webring a{color:#06b6d4;text-decoration:none}.webring a:hover{color:#fff}
+
+  @media(max-width:500px){.header h1{font-size:16px}.video h3{font-size:9px}}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="scanlines"></div><div class="bar-top"></div>
+<div class="top-bar">
+  <span class="site-name">TOMMY ALLEN ACOUSTICS</span>
+  <a href="home.html">&#9751; HOME</a>
+</div>
+<div class="app">
+  <div class="header">
+    <h1>SIMULATIONS<br>&amp; VIDEO</h1>
+    <div class="sub">RAY TRACING &bull; FEM &bull; GAME AUDIO</div>
+  </div>
+
+  <div class="marquee-wrapper"><div class="marquee-text">*** WHAT DOES A GIANT STRAWBERRY SOUND LIKE *** COMSOL + MATLAB *** FINITE ELEMENT METHOD *** UNREAL ENGINE *** PROJECT ACOUSTICS *** WWISE REFLECT ***</div></div>
+
+  <!-- PHYSICAL SIMULATIONS -->
+  <div class="vid-section" id="simulations">
+    <h2>&gt;&gt; PHYSICAL SIMULATIONS</h2>
+    <p class="section-intro">Ray-traced and finite-element acoustic models — recreating the reverb of spaces that shouldn't exist.</p>
+
+    <div class="video" id="strawberry">
+      <h3>INSIDE A GIANT CONCRETE STRAWBERRY</h3>
+      <div class="video-frame">
+        <iframe src="https://www.youtube-nocookie.com/embed/Ja3MLEv_3Wc" title="What it sounds like inside a giant concrete strawberry" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+      <p class="desc">A ray-traced, physically accurate model of a strawberry — recreating what its reverb would actually sound like, computed in COMSOL and MATLAB.</p>
+      <div class="tags"><span class="tag">COMSOL</span><span class="tag">MATLAB</span><span class="tag">RAY TRACING</span></div>
+    </div>
+
+    <div class="video" id="dumbbell">
+      <h3>INSIDE A GIANT DUMBBELL</h3>
+      <div class="video-frame">
+        <iframe src="https://www.youtube-nocookie.com/embed/eDnX7kpfJfs" title="What it sounds like inside a giant dumbbell" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+      <p class="desc">Same idea, different impossible object — what it sounds like inside a giant dumbbell, modelled with the finite element method and ray tracing.</p>
+      <div class="tags"><span class="tag">FEM</span><span class="tag">RAY TRACING</span></div>
+    </div>
+  </div>
+
+  <!-- VIDEO GAME AUDIO -->
+  <div class="vid-section" id="gamedev">
+    <h2>&gt;&gt; VIDEO GAME AUDIO</h2>
+    <p class="section-intro">Learning real-time game audio and acoustics inside Unreal Engine.</p>
+
+    <div class="video" id="project-acoustics">
+      <h3>PROJECT ACOUSTICS IN UNREAL</h3>
+      <div class="video-frame">
+        <iframe src="https://www.youtube-nocookie.com/embed/aemeVbghDjg" title="Learning video game audio in Unreal Engine with Project Acoustics" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+      <p class="desc">Learning video game audio in Unreal Engine using Microsoft Project Acoustics for baked, physically-based occlusion and reverb.</p>
+      <div class="tags"><span class="tag">UNREAL ENGINE</span><span class="tag">PROJECT ACOUSTICS</span></div>
+    </div>
+
+    <div class="video" id="wwise-reflect">
+      <h3>WWISE REFLECT IN UNREAL</h3>
+      <div class="video-frame">
+        <iframe src="https://www.youtube-nocookie.com/embed/uLFbV7PoKmA" title="Using Wwise Reflect in Unreal Engine" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+      </div>
+      <p class="desc">Using Wwise Reflect in Unreal Engine to drive dynamic, geometry-aware early reflections in real time.</p>
+      <div class="tags"><span class="tag">UNREAL ENGINE</span><span class="tag">WWISE REFLECT</span></div>
+    </div>
+  </div>
+
+  <div class="nav-footer">
+    <a href="home.html">&lt;&lt; HOME</a>
+    <button class="btn-random" id="randomBtn">&#127922; RANDOM</button>
+    <a href="about.html">ABOUT &gt;&gt;</a>
+  </div>
+  <div class="webring">&lt;&lt; <a href="#">prev</a> | <a href="#">~ Acoustics WebRing ~</a> | <a href="#">next</a> &gt;&gt;</div>
+</div>
+
+<script>
+const pages=['tone-generator.html','noise-generator.html','sweep-generator.html','mls-generator.html','impulse-generator.html','shot-forge-2.html','pewboy.html','click-clicker.html','about.html','games.html'];
+document.getElementById('randomBtn').addEventListener('click',()=>{window.location.href=pages[Math.floor(Math.random()*pages.length)];});
+</script>
+</body>
+</html>

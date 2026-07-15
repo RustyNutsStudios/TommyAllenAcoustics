@@ -26,3 +26,7 @@ Format: `[ ]` = to do, `[~]` = in progress, `[x]` = done & pushed live.
       (kept the original shot-forge.html alongside Shot Forge 2)
 - [x] Added Tommy's tunnel photo (images/tommy-tunnel.jpg) to the About Me page avatar,
       bumped "tools built" stat to 14
+- [x] Created videos.html with embedded YouTube (no-cookie) players in two sections:
+      Physical Simulations (concrete strawberry - COMSOL/MATLAB; giant dumbbell - FEM/ray tracing)
+      and Video Game Audio (Project Acoustics; Wwise Reflect in Unreal). Linked from home.html
+      via new PHYSICAL SIMULATIONS and VIDEO GAME AUDIO sections.
