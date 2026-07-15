@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>~ * TONE GENERATOR * ~</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    color: #ccc;
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .starfield {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+      radial-gradient(1px 1px at 40px 70px, #fff, transparent),
+      radial-gradient(1px 1px at 50px 160px, #fff, transparent),
+      radial-gradient(1px 1px at 90px 40px, #aaf, transparent),
+      radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+      radial-gradient(1px 1px at 160px 120px, #ffa, transparent),
+      radial-gradient(1px 1px at 200px 50px, #fff, transparent),
+      radial-gradient(1px 1px at 80px 190px, #aff, transparent);
+    background-size: 220px 200px;
+    z-index: 0;
+  }
+
+  .scanlines {
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px);
+    z-index: 100; pointer-events: none;
+  }
+
+  .bar-top {
+    position: fixed; top: 0; left: 0; right: 0; height: 24px; z-index: 50;
+    background: repeating-linear-gradient(-45deg, #ff00ff, #ff00ff 10px, #000 10px, #000 20px);
+  }
+  .bar-bottom {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 24px; z-index: 50;
+    background: repeating-linear-gradient(45deg, #ff00ff, #ff00ff 10px, #000 10px, #000 20px);
+  }
+
+  .app {
+    position: relative; z-index: 10;
+    max-width: 760px; margin: 0 auto;
+    padding: 44px 16px 60px;
+  }
+
+  .header { text-align: center; margin-bottom: 10px; padding-bottom: 12px; border-bottom: 2px dashed #444; }
+  .header h1 {
+    font-family: 'Press Start 2P', monospace; font-size: 20px;
+    color: #ff00ff; text-shadow: 0 0 10px #ff00ff, 0 0 20px #cc00cc, 3px 3px 0 #660066;
+    line-height: 1.6; animation: flicker 3s infinite;
+  }
+  .header .subtitle {
+    font-size: 22px; color: #00ffff; text-shadow: 0 0 6px #00ffff;
+    margin-top: 6px; animation: rainbow 4s linear infinite;
+  }
+
+  @keyframes flicker {
+    0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:.7} 94%{opacity:1} 96%{opacity:.8} 97%{opacity:1}
+  }
+  @keyframes rainbow {
+    0%{color:#00ffff} 25%{color:#00ffcc} 50%{color:#ffcc00} 75%{color:#ff00ff} 100%{color:#00ffff}
+  }
+
+  .marquee-wrapper {
+    width: 100%; overflow: hidden; border: 2px solid #333;
+    background: #111; padding: 4px 0; margin: 12px 0;
+  }
+  .marquee-text {
+    font-size: 18px; color: #0f0; white-space: nowrap;
+    animation: scroll-left 18s linear infinite;
+  }
+  @keyframes scroll-left { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+
+  .desc { color: #aaa; font-size: 20px; line-height: 1.5; margin-bottom: 16px; text-align: center; }
+
+  .panel {
+    background: #0a0a0a; border: 3px inset #555;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .panel-title {
+    font-family: 'Press Start 2P', monospace; font-size: 11px;
+    color: #ffcc00; text-shadow: 0 0 4px #ffcc00;
+    margin-bottom: 12px; letter-spacing: 1px;
+  }
+
+  .controls-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 14px;
+  }
+  .control-group { display: flex; flex-direction: column; gap: 4px; }
+  .control-group label { font-size: 16px; color: #888; }
+  .control-group select,
+  .control-group input[type="number"] {
+    font-family: 'VT323', monospace; font-size: 20px;
+    padding: 6px 8px; background: #000; border: 2px inset #666;
+    color: #0f0; outline: none; width: 100%;
+  }
+  .control-group select:focus,
+  .control-group input:focus { border-color: #ff00ff; }
+  .control-group select option { background: #000; color: #0f0; }
+
+  /* Frequency input with big display */
+  .freq-display {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 28px; color: #ff00ff;
+    text-shadow: 0 0 10px #ff00ff, 0 0 20px #cc00cc;
+    text-align: center; padding: 10px;
+    background: #060606; border: 2px inset #444;
+    margin-bottom: 14px; letter-spacing: 2px;
+  }
+  .freq-display .unit { font-size: 14px; color: #888; }
+
+  .info-strip {
+    display: flex; gap: 16px; flex-wrap: wrap;
+    margin-top: 12px; padding-top: 10px;
+    border-top: 1px dashed #333; font-size: 18px; color: #888;
+  }
+  .info-strip span { color: #0f0; }
+
+  /* Quick-dial preset buttons */
+  .preset-panel {
+    background: #0a0a0a; border: 3px inset #555;
+    padding: 14px; margin-bottom: 14px;
+  }
+  .preset-grid {
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .preset-btn {
+    font-family: 'VT323', monospace; font-size: 18px;
+    padding: 5px 12px; cursor: pointer; border: 2px outset #555;
+    background: #111; color: #0ff;
+    transition: filter 0.1s; white-space: nowrap;
+  }
+  .preset-btn:hover { background: #001a1a; filter: brightness(1.3); border-color: #0ff; }
+  .preset-btn:active { border-style: inset; }
+
+  .btn-row {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    padding: 14px 16px; background: #0a0a0a;
+    border: 3px inset #555; margin-bottom: 14px;
+  }
+  .btn {
+    font-family: 'Press Start 2P', monospace; font-size: 10px;
+    padding: 10px 18px; cursor: pointer; border: 3px outset;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5); transition: filter 0.1s;
+  }
+  .btn:hover { filter: brightness(1.2); }
+  .btn:active { border-style: inset; }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .btn-generate { background: linear-gradient(180deg, #0c0, #090); color: #fff; border-color: #4f4; box-shadow: 0 0 10px rgba(0,255,0,0.2); }
+  .btn-play { background: linear-gradient(180deg, #cc00cc, #880088); color: #fff; border-color: #ff44ff; }
+  .btn-stop { background: linear-gradient(180deg, #cc0000, #990000); color: #fff; border-color: #ff4444; }
+  .btn-download { background: linear-gradient(180deg, #cc6600, #994400); color: #fff; border-color: #ff8844; }
+
+  .tone-info-box {
+    background: #060606; border: 2px inset #444;
+    padding: 10px 14px; margin-bottom: 14px; display: none;
+  }
+  .tone-info-label { font-size: 14px; color: #888; margin-bottom: 4px; }
+  .tone-info-text { font-size: 20px; color: #ff00ff; text-shadow: 0 0 4px #ff00ff; }
+  .tone-info-detail { font-size: 16px; color: #0f0; margin-top: 6px; }
+
+  .viz-box {
+    background: #060606; border: 2px inset #444;
+    margin-bottom: 14px; overflow: hidden; display: none;
+  }
+  .viz-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; border-bottom: 1px solid #222; background: #0a0a0a;
+  }
+  .viz-title { font-family: 'Press Start 2P', monospace; font-size: 9px; color: #ffcc00; }
+  .viz-info { font-size: 16px; color: #666; }
+  .viz-canvas-wrap { padding: 6px; background: #030308; }
+  .viz-canvas-wrap canvas { display: block; width: 100%; }
+
+  .status-bar {
+    position: fixed; bottom: 24px; left: 0; right: 0;
+    background: #0a0a0a; border-top: 2px solid #333;
+    padding: 5px 16px; display: flex; align-items: center;
+    gap: 10px; font-size: 16px; color: #666; z-index: 50;
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: #333; transition: all 0.3s;
+  }
+  .status-dot.active { background: #ff00ff; box-shadow: 0 0 6px #ff00ff; }
+  .status-bar .right { margin-left: auto; font-size: 14px; }
+
+  .visitor-counter { text-align: center; color: #666; font-size: 16px; margin: 10px 0; }
+  .counter-digits {
+    background: #111; border: 2px inset #444; padding: 2px 8px;
+    color: #0f0; font-size: 18px; letter-spacing: 2px;
+  }
+
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .badge {
+    font-family: 'Press Start 2P', monospace; font-size: 6px;
+    padding: 5px 8px; border: 2px outset; display: inline-block; line-height: 1.5;
+  }
+  .badge-1 { background: #0000aa; color: #fff; border-color: #4444ff; }
+  .badge-2 { background: #006600; color: #0f0; border-color: #44ff44; }
+  .badge-3 { background: #550055; color: #ff00ff; border-color: #ff44ff; }
+
+  .webring {
+    text-align: center; font-size: 16px; color: #555;
+    border: 1px solid #222; padding: 6px 14px;
+    background: rgba(0,0,0,0.5); margin-top: 14px;
+  }
+  .webring a { color: #ff0; text-decoration: none; }
+  .webring a:hover { text-decoration: underline; }
+
+  .back-link { display: block; text-align: center; margin-top: 14px; }
+  .back-link a { color: #00ccff; text-decoration: none; font-size: 20px; }
+  .back-link a:hover { color: #ff0; text-decoration: underline; }
+
+  @media (max-width: 500px) {
+    .header h1 { font-size: 14px; }
+    .controls-grid { grid-template-columns: 1fr 1fr; }
+    .freq-display { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="starfield"></div>
+<div class="scanlines"></div>
+<div class="bar-top"></div>
+<div class="bar-bottom"></div>
+
+<div class="app">
+  <div class="header">
+    <h1>~ * TONE GEN * ~</h1>
+    <div class="subtitle">Test Tone Generator — Pure Sine / Square / Saw / Tri</div>
+  </div>
+
+  <div class="marquee-wrapper">
+    <div class="marquee-text">
+      *** SINE WAVE *** SQUARE WAVE *** SAWTOOTH *** TRIANGLE *** 1kHz REFERENCE *** PINK NOISE *** WHITE NOISE *** FREE .WAV DOWNLOAD *** SET YOUR FREQUENCY *** SET YOUR DURATION ***
+    </div>
+  </div>
+
+  <div class="desc">
+    Type a frequency and duration, pick a waveform, hit generate. Download or play instantly.
+  </div>
+
+  <!-- Big freq display -->
+  <div class="freq-display" id="freqDisplay">1000 <span class="unit">Hz</span></div>
+
+  <!-- Parameters -->
+  <div class="panel">
+    <div class="panel-title">&gt;&gt; PARAMETERS</div>
+    <div class="controls-grid">
+      <div class="control-group">
+        <label>Frequency (Hz)</label>
+        <input type="number" id="frequency" value="1000" min="1" max="24000" step="1">
+      </div>
+      <div class="control-group">
+        <label>Duration (s)</label>
+        <input type="number" id="duration" value="5" min="0.1" max="3600" step="0.1">
+      </div>
+      <div class="control-group">
+        <label>Waveform</label>
+        <select id="waveform">
+          <option value="sine" selected>Sine</option>
+          <option value="square">Square</option>
+          <option value="sawtooth">Sawtooth</option>
+          <option value="triangle">Triangle</option>
+          <option value="whitenoise">White Noise</option>
+          <option value="pinknoise">Pink Noise</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Amplitude</label>
+        <select id="amplitude">
+          <option value="0">0 dBFS</option>
+          <option value="-3" selected>-3 dBFS</option>
+          <option value="-6">-6 dBFS</option>
+          <option value="-12">-12 dBFS</option>
+          <option value="-20">-20 dBFS</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Sample Rate</label>
+        <select id="sampleRate">
+          <option value="22050">22,050 Hz</option>
+          <option value="44100" selected>44,100 Hz</option>
+          <option value="48000">48,000 Hz</option>
+          <option value="96000">96,000 Hz</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Bit Depth</label>
+        <select id="bitDepth">
+          <option value="16" selected>16-bit</option>
+          <option value="24">24-bit</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Fade In/Out</label>
+        <select id="fade">
+          <option value="0">None</option>
+          <option value="0.005" selected>5 ms</option>
+          <option value="0.01">10 ms</option>
+          <option value="0.05">50 ms</option>
+          <option value="0.1">100 ms</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Channels</label>
+        <select id="channels">
+          <option value="1" selected>Mono</option>
+          <option value="2">Stereo</option>
+        </select>
+      </div>
+    </div>
+    <div class="info-strip">
+      <div>Samples: <span id="infoSamples">220,500</span></div>
+      <div>File: <span id="infoSize">~430 KB</span></div>
+      <div>Period: <span id="infoPeriod">1.000 ms</span></div>
+      <div>Wavelength: <span id="infoWavelength">0.343 m</span></div>
+    </div>
+  </div>
+
+  <!-- Presets -->
+  <div class="preset-panel">
+    <div class="panel-title">&gt;&gt; QUICK DIAL</div>
+    <div class="preset-grid" id="presetGrid"></div>
+  </div>
+
+  <!-- Buttons -->
+  <div class="btn-row">
+    <button class="btn btn-generate" id="generateBtn">GENERATE</button>
+    <button class="btn btn-play" id="playBtn" disabled>&#9654; PLAY</button>
+    <button class="btn btn-stop" id="stopBtn" disabled>&#9632; STOP</button>
+    <button class="btn btn-download" id="downloadBtn" disabled>DOWNLOAD .WAV</button>
+  </div>
+
+  <!-- Tone info -->
+  <div class="tone-info-box" id="toneInfoBox">
+    <div class="tone-info-label">Tone Configuration:</div>
+    <div class="tone-info-text" id="toneInfoText"></div>
+    <div class="tone-info-detail" id="toneInfoDetail"></div>
+  </div>
+
+  <!-- Waveform viz -->
+  <div class="viz-box" id="waveformBox">
+    <div class="viz-header">
+      <span class="viz-title">WAVEFORM PREVIEW</span>
+      <span class="viz-info" id="waveformInfo"></span>
+    </div>
+    <div class="viz-canvas-wrap">
+      <canvas id="waveformCanvas" height="140"></canvas>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="visitor-counter">
+    Tones generated: <span class="counter-digits" id="genCount">000,000</span>
+  </div>
+
+  <div class="badge-row">
+    <div class="badge badge-1">WORKS IN<br>NETSCAPE</div>
+    <div class="badge badge-2">NO SERVER<br>REQUIRED</div>
+    <div class="badge badge-3">PURE<br>SINE TONE</div>
+  </div>
+
+  <div class="back-link">
+    <a href="sweep-generator.html">&lt;&lt; SWEEP GENERATOR &gt;&gt;</a>
+  </div>
+
+  <div class="webring">
+    &lt;&lt; <a href="#">prev</a> |
+    <a href="#">~ Acoustics WebRing ~</a>
+    | <a href="#">next</a> &gt;&gt;
+  </div>
+</div>
+
+<div class="status-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span id="statusText">Ready</span>
+  <span class="right">TONE GEN v1.0</span>
+</div>
+
+<script>
+// ============================
+// PRESETS
+// ============================
+const PRESETS = [
+  { label: '20 Hz',    hz: 20 },
+  { label: '31.5 Hz',  hz: 31.5 },
+  { label: '63 Hz',    hz: 63 },
+  { label: '100 Hz',   hz: 100 },
+  { label: '125 Hz',   hz: 125 },
+  { label: '250 Hz',   hz: 250 },
+  { label: '440 Hz',   hz: 440 },
+  { label: '500 Hz',   hz: 500 },
+  { label: '1 kHz',    hz: 1000 },
+  { label: '2 kHz',    hz: 2000 },
+  { label: '4 kHz',    hz: 4000 },
+  { label: '8 kHz',    hz: 8000 },
+  { label: '10 kHz',   hz: 10000 },
+  { label: '16 kHz',   hz: 16000 },
+  { label: '20 kHz',   hz: 20000 },
+];
+
+const grid = document.getElementById('presetGrid');
+PRESETS.forEach(p => {
+  const btn = document.createElement('button');
+  btn.className = 'preset-btn';
+  btn.textContent = p.label;
+  btn.addEventListener('click', () => {
+    document.getElementById('frequency').value = p.hz;
+    updateInfo();
+  });
+  grid.appendChild(btn);
+});
+
+// ============================
+// TONE GENERATION
+// ============================
+
+function generateSine(freq, duration, sr) {
+  const N = Math.round(duration * sr);
+  const s = new Float32Array(N);
+  let phase = 0;
+  const dPhase = 2 * Math.PI * freq / sr;
+  for (let i = 0; i < N; i++) { s[i] = Math.sin(phase); phase += dPhase; }
+  return s;
+}
+
+function generateSquare(freq, duration, sr) {
+  const N = Math.round(duration * sr);
+  const s = new Float32Array(N);
+  let phase = 0;
+  const dPhase = 2 * Math.PI * freq / sr;
+  for (let i = 0; i < N; i++) {
+    s[i] = Math.sin(phase) >= 0 ? 1.0 : -1.0;
+    phase += dPhase;
+  }
+  return s;
+}
+
+function generateSawtooth(freq, duration, sr) {
+  const N = Math.round(duration * sr);
+  const s = new Float32Array(N);
+  const period = sr / freq;
+  for (let i = 0; i < N; i++) {
+    const t = (i % period) / period;
+    s[i] = 2 * t - 1;
+  }
+  return s;
+}
+
+function generateTriangle(freq, duration, sr) {
+  const N = Math.round(duration * sr);
+  const s = new Float32Array(N);
+  const period = sr / freq;
+  for (let i = 0; i < N; i++) {
+    const t = (i % period) / period;
+    s[i] = t < 0.5 ? 4 * t - 1 : 3 - 4 * t;
+  }
+  return s;
+}
+
+function generateWhiteNoise(duration, sr) {
+  const N = Math.round(duration * sr);
+  const s = new Float32Array(N);
+  for (let i = 0; i < N; i++) s[i] = Math.random() * 2 - 1;
+  return s;
+}
+
+// Voss-McCartney pink noise
+function generatePinkNoise(duration, sr) {
+  const N = Math.round(duration * sr);
+  const s = new Float32Array(N);
+  const rows = 16;
+  const running = new Float32Array(rows);
+  let runningSum = 0;
+  for (let i = 0; i < N; i++) {
+    const white = Math.random() * 2 - 1;
+    const key = i & (-i); // lowest set bit trick
+    for (let j = 0; j < rows; j++) {
+      if ((key >> j) & 1) {
+        runningSum -= running[j];
+        running[j] = Math.random() * 2 - 1;
+        runningSum += running[j];
+      }
+    }
+    s[i] = (runningSum + white) / (rows + 1);
+  }
+  // Normalize
+  let maxAbs = 0;
+  for (let i = 0; i < N; i++) maxAbs = Math.max(maxAbs, Math.abs(s[i]));
+  if (maxAbs > 0) for (let i = 0; i < N; i++) s[i] /= maxAbs;
+  return s;
+}
+
+function applyFade(samples, sr, fadeTime) {
+  if (!fadeTime) return;
+  const fadeSamples = Math.min(Math.round(fadeTime * sr), Math.floor(samples.length / 2));
+  for (let i = 0; i < fadeSamples; i++) {
+    const gain = i / fadeSamples;
+    samples[i] *= gain;
+    samples[samples.length - 1 - i] *= gain;
+  }
+}
+
+// ============================
+// WAV ENCODER
+// ============================
+function encodeWAV(samples, sr, ampDB, bitDepth, channels) {
+  const amp = Math.pow(10, ampDB / 20);
+  const numSamples = samples.length;
+  const bytesPerSample = bitDepth / 8;
+  const blockAlign = channels * bytesPerSample;
+  const dataSize = numSamples * channels * bytesPerSample;
+  const buffer = new ArrayBuffer(44 + dataSize);
+  const view = new DataView(buffer);
+
+  function ws(off, str) { for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); }
+  ws(0, 'RIFF');
+  view.setUint32(4, 36 + dataSize, true);
+  ws(8, 'WAVE');
+  ws(12, 'fmt ');
+  view.setUint32(16, 16, true);
+  view.setUint16(20, bitDepth === 32 ? 3 : 1, true); // PCM or IEEE float
+  view.setUint16(22, channels, true);
+  view.setUint32(24, sr, true);
+  view.setUint32(28, sr * blockAlign, true);
+  view.setUint16(32, blockAlign, true);
+  view.setUint16(34, bitDepth, true);
+  ws(36, 'data');
+  view.setUint32(40, dataSize, true);
+
+  let off = 44;
+  for (let i = 0; i < numSamples; i++) {
+    const val = Math.max(-1, Math.min(1, samples[i] * amp));
+    for (let ch = 0; ch < channels; ch++) {
+      if (bitDepth === 16) {
+        view.setInt16(off, val < 0 ? val * 32768 : val * 32767, true); off += 2;
+      } else if (bitDepth === 24) {
+        const iv = val < 0 ? val * 8388608 : val * 8388607;
+        view.setUint8(off,   iv & 0xFF);
+        view.setUint8(off+1, (iv >> 8) & 0xFF);
+        view.setUint8(off+2, (iv >> 16) & 0xFF);
+        off += 3;
+      }
+    }
+  }
+  return buffer;
+}
+
+// ============================
+// WAVEFORM DRAW
+// ============================
+function drawWaveform(canvas, samples, sr, freq) {
+  const W = canvas.parentElement.clientWidth - 12;
+  const H = canvas.height;
+  canvas.width = W;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, W, H);
+
+  // Background
+  ctx.fillStyle = '#030308';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = '#111';
+  ctx.lineWidth = 1;
+  for (let y = 0; y <= 4; y++) {
+    const yp = (y / 4) * H;
+    ctx.beginPath(); ctx.moveTo(0, yp); ctx.lineTo(W, yp); ctx.stroke();
+  }
+  for (let x = 0; x <= 8; x++) {
+    const xp = (x / 8) * W;
+    ctx.beginPath(); ctx.moveTo(xp, 0); ctx.lineTo(xp, H); ctx.stroke();
+  }
+
+  // Centreline
+  ctx.strokeStyle = '#222';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, H/2); ctx.lineTo(W, H/2); ctx.stroke();
+
+  // Determine preview window: show exactly 10 cycles, but never fewer than W samples
+  // (so each pixel maps to ≥1 sample — prevents aliasing shimmer at high freqs)
+  const isNoise = (freq <= 0);
+  const samplesPerCycle = isNoise ? W : sr / Math.max(1, freq);
+  const cyclesWanted = isNoise ? 1 : 10;
+  // previewSamples must be >= W so the step per pixel is always >= 1
+  const previewSamples = Math.max(W, Math.min(samples.length, Math.round(samplesPerCycle * cyclesWanted)));
+
+  // Waveform — plot using min/max envelope per pixel to handle any ratio cleanly
+  ctx.strokeStyle = '#ff00ff';
+  ctx.lineWidth = 1.5;
+  ctx.shadowColor = '#ff00ff';
+  ctx.shadowBlur = 4;
+  ctx.beginPath();
+  let firstPt = true;
+  for (let px = 0; px < W; px++) {
+    const i0 = Math.floor((px / W) * previewSamples);
+    const i1 = Math.max(i0 + 1, Math.floor(((px + 1) / W) * previewSamples));
+    // average over the bucket — kills aliasing flicker
+    let sum = 0, count = 0;
+    for (let k = i0; k < i1 && k < samples.length; k++) { sum += samples[k]; count++; }
+    const val = count ? sum / count : 0;
+    const y = H / 2 - (val * H * 0.44);
+    if (firstPt) { ctx.moveTo(px, y); firstPt = false; } else ctx.lineTo(px, y);
+  }
+  ctx.stroke();
+
+  // Glow pass
+  ctx.globalAlpha = 0.15;
+  ctx.lineWidth = 6;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.shadowBlur = 0;
+}
+
+// ============================
+// AUDIO PLAYBACK
+// ============================
+let audioCtx = null, currentSource = null, currentCtxRate = 0;
+
+function playTone(samples, sr, ampDB) {
+  stopTone();
+  if (!audioCtx || currentCtxRate !== sr) {
+    if (audioCtx) audioCtx.close();
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: sr });
+    currentCtxRate = sr;
+  }
+  const amp = Math.pow(10, ampDB / 20);
+  const buf = audioCtx.createBuffer(1, samples.length, sr);
+  const ch = buf.getChannelData(0);
+  for (let i = 0; i < samples.length; i++) ch[i] = samples[i] * amp;
+  currentSource = audioCtx.createBufferSource();
+  currentSource.buffer = buf;
+  currentSource.connect(audioCtx.destination);
+  currentSource.start();
+  currentSource.onended = () => setStatus('Playback complete', false);
+  setStatus('Playing...', true);
+}
+
+function stopTone() {
+  if (currentSource) { try { currentSource.stop(); } catch(e){} currentSource = null; }
+}
+
+function downloadBlob(blob, fn) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fn;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+}
+
+// ============================
+// UI
+// ============================
+let currentSamples = null;
+let currentFreq = 1000;
+let totalGens = 0;
+
+const freqEl      = document.getElementById('frequency');
+const durEl       = document.getElementById('duration');
+const waveEl      = document.getElementById('waveform');
+const srEl        = document.getElementById('sampleRate');
+const ampEl       = document.getElementById('amplitude');
+const bdEl        = document.getElementById('bitDepth');
+const fadeEl      = document.getElementById('fade');
+const chanEl      = document.getElementById('channels');
+
+const NOISE_TYPES = new Set(['whitenoise', 'pinknoise']);
+
+function getP() {
+  return {
+    freq: Math.max(1, +freqEl.value),
+    dur:  Math.max(0.1, +durEl.value),
+    wave: waveEl.value,
+    sr:   +srEl.value,
+    amp:  +ampEl.value,
+    bd:   +bdEl.value,
+    fade: +fadeEl.value,
+    ch:   +chanEl.value,
+  };
+}
+
+function updateInfo() {
+  const p = getP();
+  currentFreq = p.freq;
+
+  // Update big display
+  const freqDisp = p.freq >= 1000
+    ? (p.freq / 1000).toFixed(p.freq % 1000 === 0 ? 0 : 3).replace(/\.?0+$/, '') + ' kHz'
+    : p.freq + ' Hz';
+  document.getElementById('freqDisplay').innerHTML = freqDisp + ' <span class="unit">/ ' + p.dur + 's</span>';
+
+  const samples = Math.round(p.dur * p.sr);
+  const bytesPerSample = p.bd / 8;
+  const sz = 44 + samples * p.ch * bytesPerSample;
+  document.getElementById('infoSamples').textContent  = samples.toLocaleString();
+  document.getElementById('infoSize').textContent     = sz > 1048576 ? '~'+(sz/1048576).toFixed(1)+' MB' : '~'+Math.round(sz/1024)+' KB';
+
+  if (NOISE_TYPES.has(p.wave)) {
+    document.getElementById('infoPeriod').textContent    = 'N/A';
+    document.getElementById('infoWavelength').textContent = 'N/A';
+  } else {
+    const period = 1000 / p.freq;
+    document.getElementById('infoPeriod').textContent    = period < 1 ? (period * 1000).toFixed(2) + ' μs' : period.toFixed(3) + ' ms';
+    document.getElementById('infoWavelength').textContent = (343 / p.freq).toFixed(3) + ' m';
+  }
+
+  // Disable freq input for noise
+  freqEl.disabled = NOISE_TYPES.has(p.wave);
+}
+
+function setStatus(t, active) {
+  document.getElementById('statusText').textContent = t;
+  document.getElementById('statusDot').classList.toggle('active', !!active);
+}
+
+// Generate
+document.getElementById('generateBtn').addEventListener('click', () => {
+  const p = getP();
+
+  if (!NOISE_TYPES.has(p.wave) && p.freq > p.sr / 2) {
+    setStatus('Frequency exceeds Nyquist (' + (p.sr/2).toLocaleString() + ' Hz)', false);
+    return;
+  }
+
+  const waveNames = {
+    sine: 'Sine Wave', square: 'Square Wave', sawtooth: 'Sawtooth Wave',
+    triangle: 'Triangle Wave', whitenoise: 'White Noise', pinknoise: 'Pink Noise'
+  };
+
+  setStatus('Generating ' + waveNames[p.wave] + '...', true);
+
+  setTimeout(() => {
+    const t0 = performance.now();
+
+    switch (p.wave) {
+      case 'sine':       currentSamples = generateSine(p.freq, p.dur, p.sr); break;
+      case 'square':     currentSamples = generateSquare(p.freq, p.dur, p.sr); break;
+      case 'sawtooth':   currentSamples = generateSawtooth(p.freq, p.dur, p.sr); break;
+      case 'triangle':   currentSamples = generateTriangle(p.freq, p.dur, p.sr); break;
+      case 'whitenoise': currentSamples = generateWhiteNoise(p.dur, p.sr); break;
+      case 'pinknoise':  currentSamples = generatePinkNoise(p.dur, p.sr); break;
+    }
+
+    applyFade(currentSamples, p.sr, p.fade);
+
+    const ms = (performance.now() - t0).toFixed(0);
+    totalGens++;
+    document.getElementById('genCount').textContent =
+      String(totalGens).padStart(6, '0').replace(/(\d)(?=(\d{3})+$)/g, '$1,');
+
+    // Info box
+    document.getElementById('toneInfoBox').style.display = 'block';
+    const freqStr = NOISE_TYPES.has(p.wave) ? '' : ' | ' + p.freq.toLocaleString() + ' Hz';
+    document.getElementById('toneInfoText').textContent = waveNames[p.wave] + freqStr;
+    document.getElementById('toneInfoDetail').textContent =
+      p.dur + 's | ' + p.sr.toLocaleString() + ' Hz | ' + p.bd + '-bit | ' +
+      (p.ch === 1 ? 'Mono' : 'Stereo') + ' | ' +
+      currentSamples.length.toLocaleString() + ' samples | Generated in ' + ms + 'ms';
+
+    // Waveform viz
+    document.getElementById('waveformBox').style.display = 'block';
+    document.getElementById('waveformInfo').textContent =
+      NOISE_TYPES.has(p.wave) ? currentSamples.length.toLocaleString() + ' samples' :
+      currentSamples.length.toLocaleString() + ' samples | ' + Math.round(p.dur * p.freq) + ' cycles';
+    drawWaveform(document.getElementById('waveformCanvas'), currentSamples, p.sr, p.freq);
+
+    document.getElementById('playBtn').disabled = false;
+    document.getElementById('stopBtn').disabled = false;
+    document.getElementById('downloadBtn').disabled = false;
+
+    setStatus('Generated ' + waveNames[p.wave] + (NOISE_TYPES.has(p.wave) ? '' : ' @ ' + p.freq.toLocaleString() + ' Hz') + ' in ' + ms + 'ms', false);
+  }, 30);
+});
+
+// Play
+document.getElementById('playBtn').addEventListener('click', () => {
+  if (!currentSamples) return;
+  playTone(currentSamples, getP().sr, getP().amp);
+});
+
+// Stop
+document.getElementById('stopBtn').addEventListener('click', () => {
+  stopTone(); setStatus('Stopped', false);
+});
+
+// Download
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if (!currentSamples) return;
+  const p = getP();
+  setStatus('Encoding WAV...', true);
+  setTimeout(() => {
+    const wav = encodeWAV(currentSamples, p.sr, p.amp, p.bd, p.ch);
+    const noiseTypes = { whitenoise: 'whitenoise', pinknoise: 'pinknoise' };
+    const fn = noiseTypes[p.wave]
+      ? p.wave + '_' + p.dur + 's_' + p.sr + 'Hz.wav'
+      : 'tone_' + p.wave + '_' + p.freq + 'Hz_' + p.dur + 's_' + p.sr + 'Hz.wav';
+    downloadBlob(new Blob([wav], {type:'audio/wav'}), fn);
+    setStatus('Downloaded ' + fn, false);
+  }, 20);
+});
+
+// Live update
+[freqEl, durEl, waveEl, srEl, ampEl, bdEl, fadeEl, chanEl].forEach(el =>
+  el.addEventListener('change', updateInfo)
+);
+freqEl.addEventListener('input', updateInfo);
+durEl.addEventListener('input', updateInfo);
+
+window.addEventListener('resize', () => {
+  if (currentSamples) {
+    drawWaveform(document.getElementById('waveformCanvas'), currentSamples, getP().sr, currentFreq);
+  }
+});
+
+updateInfo();
+</script>
+</body>
+</html>

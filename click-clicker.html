@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>*~CLICK CLICKER~*</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Bungee+Shade&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;user-select:none}
+  body{background:#1a0a2e;color:#ddd;font-family:'VT323',monospace;font-size:20px;min-height:100vh;overflow-x:hidden}
+  .bg{position:fixed;inset:0;z-index:0;background:radial-gradient(circle at 25% 25%,#2a1050 0%,transparent 50%),radial-gradient(circle at 75% 75%,#0a2040 0%,transparent 50%),radial-gradient(circle at 50% 50%,#1a0a2e 0%,#0a0618 100%)}
+  .bg-grid{position:fixed;inset:0;z-index:1;opacity:0.06;background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:40px 40px}
+  .scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.08) 3px,rgba(0,0,0,0.08) 6px);z-index:100;pointer-events:none}
+  .bar-top{position:fixed;top:0;left:0;right:0;height:28px;z-index:50;background:repeating-linear-gradient(-45deg,#8b5cf6,#8b5cf6 10px,#1a0a2e 10px,#1a0a2e 20px);border-bottom:3px solid #06b6d4}
+  .bar-bottom{position:fixed;bottom:0;left:0;right:0;height:28px;z-index:50;background:repeating-linear-gradient(45deg,#06b6d4,#06b6d4 10px,#1a0a2e 10px,#1a0a2e 20px);border-top:3px solid #8b5cf6}
+
+  .app{position:relative;z-index:10;max-width:760px;margin:0 auto;padding:48px 16px 64px}
+  .header{text-align:center;margin-bottom:10px}
+  .header h1{font-family:'Bungee Shade',cursive;font-size:26px;color:#06b6d4;text-shadow:3px 3px 0 #8b5cf6,0 0 20px rgba(6,182,212,0.3);line-height:1.4;animation:glow 2s ease-in-out infinite alternate}
+  @keyframes glow{0%{text-shadow:3px 3px 0 #8b5cf6,0 0 10px rgba(6,182,212,0.2)}100%{text-shadow:3px 3px 0 #8b5cf6,0 0 30px rgba(6,182,212,0.5),0 0 60px rgba(139,92,246,0.2)}}
+
+  /* Score */
+  .score-area{text-align:center;padding:16px 0;border-bottom:2px solid #2a1050;margin-bottom:14px}
+  .score-num{font-family:'Press Start 2P',monospace;font-size:32px;color:#06b6d4;text-shadow:0 0 20px rgba(6,182,212,0.4);transition:transform 0.05s}
+  .score-num.bump{transform:scale(1.08)}
+  .score-label{font-size:18px;color:#8b5cf6;letter-spacing:3px;margin-top:4px}
+  .cps{font-size:16px;color:#6d28d9;margin-top:4px}
+
+  /* Big Click Button */
+  .click-zone{text-align:center;margin:16px 0}
+  .big-btn{
+    width:180px;height:180px;border-radius:50%;
+    background:radial-gradient(circle at 40% 35%,#a78bfa,#8b5cf6 40%,#6d28d9 70%,#4c1d95);
+    border:4px outset #a78bfa;
+    font-family:'Press Start 2P',monospace;font-size:14px;color:#fff;
+    cursor:pointer;text-shadow:2px 2px 0 rgba(0,0,0,0.5);
+    box-shadow:0 0 30px rgba(139,92,246,0.3),inset 0 -4px 10px rgba(0,0,0,0.3);
+    transition:transform 0.06s,box-shadow 0.06s;
+    line-height:1.4;
+  }
+  .big-btn:hover{box-shadow:0 0 50px rgba(139,92,246,0.5),inset 0 -4px 10px rgba(0,0,0,0.3)}
+  .big-btn:active{transform:scale(0.92);border-style:inset;box-shadow:0 0 20px rgba(139,92,246,0.2),inset 0 4px 10px rgba(0,0,0,0.4)}
+
+  /* Floating +1 */
+  .floater{position:absolute;pointer-events:none;font-family:'Press Start 2P',monospace;font-size:14px;color:#06b6d4;text-shadow:0 0 6px #06b6d4;animation:floatUp 0.8s ease-out forwards;z-index:200}
+  @keyframes floatUp{0%{opacity:1;transform:translateY(0)}100%{opacity:0;transform:translateY(-80px)}}
+
+  /* Panels */
+  .panel{background:rgba(15,5,32,0.9);border:3px ridge #8b5cf6;padding:14px;margin-bottom:12px;box-shadow:inset 0 0 30px rgba(139,92,246,0.05)}
+  .panel-title{font-family:'Press Start 2P',monospace;font-size:10px;color:#06b6d4;text-shadow:0 0 6px #06b6d4;margin-bottom:10px;letter-spacing:2px}
+
+  /* Current Sound Display */
+  .sound-display{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:16px;color:#a78bfa}
+  .sound-display span{color:#06b6d4}
+
+  /* Shop */
+  .shop-grid{display:grid;gap:8px}
+  .upgrade{display:flex;align-items:center;gap:12px;padding:10px 12px;background:#0f0520;border:2px ridge #8b5cf6;cursor:pointer;transition:all 0.1s}
+  .upgrade:hover{border-color:#06b6d4;background:#150830}
+  .upgrade.locked{opacity:0.35;cursor:not-allowed}
+  .upgrade.maxed{opacity:0.5;border-color:#333;cursor:default}
+  .upgrade .icon{font-size:28px;width:36px;text-align:center}
+  .upgrade .info{flex:1}
+  .upgrade .name{font-family:'Press Start 2P',monospace;font-size:8px;color:#06b6d4;letter-spacing:1px}
+  .upgrade .desc{font-size:15px;color:#a78bfa;margin-top:2px}
+  .upgrade .effect{font-size:13px;color:#6d28d9;margin-top:1px}
+  .upgrade .cost{font-family:'Press Start 2P',monospace;font-size:9px;color:#d946ef;white-space:nowrap}
+
+  /* Auto-clicker bar */
+  .auto-info{font-size:14px;color:#6d28d9;text-align:center;margin-top:8px}
+
+  .links-row{display:flex;gap:16px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+  .links-row a{color:#a78bfa;text-decoration:none;font-size:18px}.links-row a:hover{color:#06b6d4;text-decoration:underline}
+  .back-link{display:block;text-align:center;margin-top:10px}
+  .back-link a{color:#a78bfa;text-decoration:none;font-size:18px}.back-link a:hover{color:#06b6d4}
+
+  .status-bar{position:fixed;bottom:28px;left:0;right:0;background:#0f0520;border-top:3px solid #8b5cf6;padding:5px 16px;display:flex;align-items:center;gap:10px;font-size:14px;color:#8b5cf6;z-index:50}
+  .status-bar .right{margin-left:auto;color:#6d28d9}
+
+  @media(max-width:500px){.header h1{font-size:18px}.big-btn{width:140px;height:140px;font-size:11px}}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="bg-grid"></div><div class="scanlines"></div>
+<div class="bar-top"></div><div class="bar-bottom"></div>
+
+<div class="app">
+  <div class="header">
+    <h1>*~CLICK CLICKER~*</h1>
+  </div>
+
+  <div class="score-area">
+    <div class="score-num" id="score">0</div>
+    <div class="score-label">C L I C K S</div>
+    <div class="cps" id="cpsDisplay">0 clicks/sec</div>
+  </div>
+
+  <div class="click-zone" id="clickZone">
+    <button class="big-btn" id="bigBtn">CLICK<br>ME</button>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">&gt;&gt; CURRENT SOUND</div>
+    <div class="sound-display" id="soundDisplay"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">&gt;&gt; UPGRADES</div>
+    <div class="shop-grid" id="shop"></div>
+    <div class="auto-info" id="autoInfo"></div>
+  </div>
+
+  <div class="links-row">
+    <a href="click-factory.html">&gt; Click Factory</a>
+    <a href="mls-generator.html">&gt; MLS Generator</a>
+    <a href="sweep-generator.html">&gt; Sweep Generator</a>
+    <a href="noise-generator.html">&gt; Noise Generator</a>
+    <a href="babel.html">&gt; Audio File of Babel</a>
+  </div>
+  <div class="back-link"><a href="index.html">&lt;&lt; BACK TO MAIN SITE &gt;&gt;</a></div>
+</div>
+
+<div class="status-bar">
+  <span>Total clicks: <strong id="totalClicks">0</strong></span>
+  <span class="right">CLICK CLICKER v1.0</span>
+</div>
+
+<script>
+const SR = 48000;
+
+// ============================
+// GAME STATE
+// ============================
+let clicks = 0;
+let totalClicks = 0;
+let clickValue = 1;
+let autoClickRate = 0; // per second
+
+// Sound parameters — start basic, upgrades improve them
+const sp = {
+  durationMs: 15,
+  pitchHz: 1200,
+  tonality: 0.3,
+  brightness: 0.4,
+  resonance: 0,
+  volume: 0.7,
+  crush: 0,
+  envelope: 'snap',
+  sweep: 'down',
+  layers: 1,
+  doubleHit: 'off',
+};
+
+// ============================
+// SYNTHESIS ENGINE (from Click Factory)
+// ============================
+function generateClick(p) {
+  const N = Math.max(8, Math.round((p.durationMs / 1000) * SR));
+  const out = new Float32Array(N);
+  const rnd = () => Math.random();
+
+  for (let layer = 0; layer < p.layers; layer++) {
+    const layerBuf = new Float32Array(N);
+    const spread = 0.15;
+    const layerPitch = p.pitchHz * (1 + (rnd() - 0.5) * spread * 2);
+    const layerPitch2 = layerPitch * (0.5 + rnd() * 2);
+    const layerDecayRate = 4 + rnd() * 18;
+    const attackLen = Math.max(1, Math.floor(N * (0.002 + rnd() * 0.03)));
+    const offset = layer === 0 ? 0 : Math.floor(N * rnd() * 0.06 * layer);
+    const activeN = N - offset;
+    if (activeN < 2) continue;
+
+    const envelope = new Float32Array(activeN);
+    for (let i = 0; i < activeN; i++) {
+      const t = i / activeN;
+      const att = i < attackLen ? i / attackLen : 1;
+      let e;
+      switch (p.envelope) {
+        case 'exp':     e = att * Math.exp(-layerDecayRate * t); break;
+        case 'snap':    e = att * Math.pow(Math.max(0, 1 - t), layerDecayRate * 0.5); break;
+        case 'pluck':   e = att * Math.exp(-layerDecayRate * 0.6 * t) * (1 + 0.25 * Math.sin(t * 22 + rnd() * 6)); break;
+        case 'tap':     e = att * (t < 0.08 ? 1 : Math.exp(-layerDecayRate * 1.8 * (t - 0.08))); break;
+        case 'pop':     e = att * Math.exp(-layerDecayRate * 0.5 * t * t * 4); break;
+        case 'reverse': e = Math.pow(t, 2 + rnd() * 2) * Math.exp(-1.5 * (1 - t)); break;
+        case 'bounce': { const bn = 2 + Math.floor(rnd() * 4); e = att * Math.abs(Math.sin(t * bn * Math.PI)) * Math.exp(-layerDecayRate * 0.35 * t); break; }
+        case 'gate':    e = t < (0.3 + rnd() * 0.5) ? att : 0; break;
+        default:        e = att * Math.exp(-layerDecayRate * t);
+      }
+      envelope[i] = e;
+    }
+
+    let phase1 = rnd() * Math.PI * 2, phase2 = rnd() * Math.PI * 2;
+    const h2r = 2 + (rnd() - 0.5) * 0.05, h3r = 3 + (rnd() - 0.5) * 0.07;
+    const h2amt = 0.1 + rnd() * 0.25, h3amt = 0.05 + rnd() * 0.15;
+    const hasH2 = rnd() > 0.35, hasH3 = rnd() > 0.55;
+    let ph2 = 0, ph3 = 0;
+
+    for (let i = 0; i < activeN; i++) {
+      const t = i / activeN;
+      let f1;
+      switch (p.sweep) {
+        case 'down':   f1 = layerPitch * (1 - t * 0.7); break;
+        case 'up':     f1 = layerPitch * (0.3 + t * 0.7); break;
+        case 'chirp':  f1 = layerPitch * (t < 0.25 ? (0.5 + 2 * t) : (1 - 0.6 * (t - 0.25))); break;
+        case 'flat':   f1 = layerPitch; break;
+        case 'wobble': f1 = layerPitch * (1 + 0.25 * Math.sin(t * 12 * Math.PI)); break;
+        default:       f1 = layerPitch;
+      }
+      const f2 = layerPitch2 * (1 - t * 0.5);
+      phase1 += 2 * Math.PI * f1 / SR; phase2 += 2 * Math.PI * f2 / SR;
+      let tonal = Math.sin(phase1) + 0.3 * Math.sin(phase2);
+      if (hasH2) { ph2 += 2 * Math.PI * f1 * h2r / SR; tonal += h2amt * Math.sin(ph2); }
+      if (hasH3) { ph3 += 2 * Math.PI * f1 * h3r / SR; tonal += h3amt * Math.sin(ph3); }
+      const noise = rnd() * 2 - 1;
+      const noiseBoost = layer === 0 ? (1 - p.tonality) * 0.15 : 0;
+      const tMix = Math.min(1, p.tonality + noiseBoost);
+      layerBuf[i + offset] = envelope[i] * (tonal * tMix + noise * (1 - tMix));
+    }
+    const layerGain = layer === 0 ? 1.0 : 0.3 + rnd() * 0.4;
+    for (let i = 0; i < N; i++) out[i] += layerBuf[i] * layerGain;
+  }
+
+  const doDouble = p.doubleHit === 'on' || (p.doubleHit === 'maybe' && Math.random() > 0.5);
+  if (doDouble && N > 200) {
+    const rnd = () => Math.random();
+    const off2 = Math.floor(N * (0.1 + rnd() * 0.2));
+    const subLen = Math.min(Math.floor(N * 0.2), N - off2);
+    const subFreq = p.pitchHz * (0.6 + rnd() * 0.8);
+    const subDecay = 12 + rnd() * 15;
+    for (let i = 0; i < subLen; i++) {
+      const env = Math.exp(-subDecay * (i / subLen));
+      out[off2 + i] += env * 0.35 * (Math.sin(2 * Math.PI * subFreq * (i / SR)) * p.tonality + (rnd() * 2 - 1) * (1 - p.tonality));
+    }
+  }
+
+  if (p.crush > 0) {
+    const crushRate = Math.max(1, Math.floor(1 + p.crush * 40));
+    const levels = Math.max(2, Math.floor(256 * (1 - p.crush * 0.95)));
+    for (let i = 0; i < N; i++) { if (i % crushRate !== 0 && i > 0) out[i] = out[i-1]; out[i] = Math.round(out[i] * levels) / levels; }
+  }
+
+  { const minCut = Math.max(800, p.pitchHz * 0.5);
+    const cutoffHz = Math.min(minCut + p.brightness * (20000 - minCut), SR * 0.45);
+    const Q = 0.5 + p.resonance * 8;
+    const w0 = 2 * Math.PI * cutoffHz / SR, alpha = Math.sin(w0) / (2 * Q), cosw = Math.cos(w0);
+    const b0 = (1-cosw)/2/(1+alpha), b1 = (1-cosw)/(1+alpha), b2 = b0;
+    const a1 = (-2*cosw)/(1+alpha), a2 = (1-alpha)/(1+alpha);
+    let x1=0,x2=0,y1=0,y2=0;
+    for (let i = 0; i < N; i++) { const x=out[i]; const y=b0*x+b1*x1+b2*x2-a1*y1-a2*y2; x2=x1;x1=x;y2=y1;y1=y; out[i]=y; }
+  }
+  { let sum=0; for (let i=0;i<N;i++) sum+=out[i]; const dc=sum/N;
+    let prev=0,prevOut=0; const a=1/(1+2*Math.PI*20/SR);
+    for (let i=0;i<N;i++){const x=out[i]-dc;prevOut=a*(prevOut+x-prev);prev=x;out[i]=prevOut;}
+  }
+  let mx=0; for (let i=0;i<N;i++) mx=Math.max(mx,Math.abs(out[i]));
+  if (mx>0) for (let i=0;i<N;i++) out[i]*=p.volume/mx;
+  return out;
+}
+
+// ============================
+// AUDIO
+// ============================
+let audioCtx = null;
+function playClick(samples) {
+  if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)({sampleRate:SR});
+  const buf = audioCtx.createBuffer(1, samples.length, SR);
+  buf.getChannelData(0).set(samples);
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf; src.connect(audioCtx.destination); src.start();
+}
+
+let cachedSound = null;
+function regenSound() {
+  cachedSound = generateClick(sp);
+}
+regenSound();
+
+// ============================
+// UPGRADES
+// ============================
+const upgrades = [
+  { id:'pitch_low',   name:'BASS DROP',       desc:'Lower pitch',              icon:'🔈', baseCost:15,   costMult:1.6, maxLvl:8,  lvl:0, apply:l=>{sp.pitchHz=Math.max(80,1200-l*140)} },
+  { id:'pitch_high',  name:'TREBLE BOOST',    desc:'Higher pitch',             icon:'🔊', baseCost:15,   costMult:1.6, maxLvl:8,  lvl:0, apply:l=>{sp.pitchHz=Math.min(8000,1200+l*800)} },
+  { id:'duration',    name:'SUSTAIN',          desc:'Longer clicks',            icon:'📏', baseCost:20,   costMult:1.5, maxLvl:6,  lvl:0, apply:l=>{sp.durationMs=15+l*25} },
+  { id:'tonality',    name:'PURE TONE',        desc:'More tonal, less noise',   icon:'🎵', baseCost:25,   costMult:1.7, maxLvl:7,  lvl:0, apply:l=>{sp.tonality=Math.min(1,0.3+l*0.1)} },
+  { id:'brightness',  name:'SHIMMER',          desc:'Open the filter',          icon:'✨', baseCost:20,   costMult:1.5, maxLvl:6,  lvl:0, apply:l=>{sp.brightness=Math.min(1,0.4+l*0.1)} },
+  { id:'resonance',   name:'RESONANCE',        desc:'Filter ring',              icon:'🔔', baseCost:50,   costMult:1.8, maxLvl:5,  lvl:0, apply:l=>{sp.resonance=l*0.15} },
+  { id:'layers',      name:'LAYER CAKE',       desc:'Add synthesis layers',     icon:'📚', baseCost:100,  costMult:2.5, maxLvl:2,  lvl:0, apply:l=>{sp.layers=1+l} },
+  { id:'env_pluck',   name:'PLUCK',            desc:'Pluck envelope',           icon:'🎸', baseCost:30,   costMult:1,   maxLvl:1,  lvl:0, apply:l=>{if(l)sp.envelope='pluck'} },
+  { id:'env_bounce',  name:'BOUNCE',           desc:'Bouncy envelope',          icon:'🏀', baseCost:60,   costMult:1,   maxLvl:1,  lvl:0, apply:l=>{if(l)sp.envelope='bounce'} },
+  { id:'env_pop',     name:'POP',              desc:'Pop envelope',             icon:'🫧', baseCost:40,   costMult:1,   maxLvl:1,  lvl:0, apply:l=>{if(l)sp.envelope='pop'} },
+  { id:'sweep_chirp', name:'CHIRP',            desc:'Chirp pitch sweep',        icon:'🐦', baseCost:45,   costMult:1,   maxLvl:1,  lvl:0, apply:l=>{if(l)sp.sweep='chirp'} },
+  { id:'sweep_wob',   name:'WOBBLE',           desc:'Wobbly pitch',             icon:'🌀', baseCost:55,   costMult:1,   maxLvl:1,  lvl:0, apply:l=>{if(l)sp.sweep='wobble'} },
+  { id:'double',      name:'DOUBLE TAP',       desc:'Random double hits',       icon:'👆', baseCost:80,   costMult:1,   maxLvl:1,  lvl:0, apply:l=>{sp.doubleHit=l?'maybe':'off'} },
+  { id:'crush',       name:'BITCRUSH',         desc:'Lo-fi crunch',             icon:'👾', baseCost:70,   costMult:1.8, maxLvl:5,  lvl:0, apply:l=>{sp.crush=l*0.12} },
+  { id:'click2x',     name:'DOUBLE CLICK',     desc:'+1 click per click',       icon:'🖱️', baseCost:50,   costMult:2.0, maxLvl:5,  lvl:0, apply:l=>{clickValue=1+l} },
+  { id:'auto1',       name:'AUTO CLICKER',     desc:'1 click/sec',              icon:'🤖', baseCost:100,  costMult:2.5, maxLvl:10, lvl:0, apply:l=>{autoClickRate=l} },
+];
+
+function getCost(u) { return Math.floor(u.baseCost * Math.pow(u.costMult, u.lvl)); }
+
+function renderShop() {
+  const shop = document.getElementById('shop');
+  shop.innerHTML = '';
+  for (const u of upgrades) {
+    const cost = getCost(u);
+    const maxed = u.lvl >= u.maxLvl;
+    const canAfford = clicks >= cost && !maxed;
+
+    const div = document.createElement('div');
+    div.className = 'upgrade' + (!canAfford && !maxed ? ' locked' : '') + (maxed ? ' maxed' : '');
+    div.innerHTML =
+      '<div class="icon">' + u.icon + '</div>' +
+      '<div class="info">' +
+        '<div class="name">' + u.name + (u.maxLvl > 1 ? ' [' + u.lvl + '/' + u.maxLvl + ']' : (u.lvl ? ' [ON]' : '')) + '</div>' +
+        '<div class="desc">' + u.desc + '</div>' +
+      '</div>' +
+      '<div class="cost">' + (maxed ? 'MAX' : cost + ' clicks') + '</div>';
+
+    if (canAfford) {
+      div.addEventListener('click', () => {
+        clicks -= cost;
+        u.lvl++;
+        u.apply(u.lvl);
+        regenSound();
+        playClick(cachedSound);
+        renderShop();
+        updateDisplay();
+      });
+    }
+    shop.appendChild(div);
+  }
+
+  // Auto info
+  const autoInfo = document.getElementById('autoInfo');
+  if (autoClickRate > 0) {
+    autoInfo.textContent = 'Auto-clicker: ' + autoClickRate + '/sec (' + (autoClickRate * clickValue) + ' clicks/sec)';
+  } else {
+    autoInfo.textContent = '';
+  }
+}
+
+// ============================
+// DISPLAY
+// ============================
+function updateDisplay() {
+  const scoreEl = document.getElementById('score');
+  scoreEl.textContent = Math.floor(clicks).toLocaleString();
+  scoreEl.classList.add('bump');
+  setTimeout(() => scoreEl.classList.remove('bump'), 50);
+  document.getElementById('totalClicks').textContent = totalClicks.toLocaleString();
+  document.getElementById('cpsDisplay').textContent =
+    (autoClickRate * clickValue) + ' clicks/sec | +' + clickValue + ' per click';
+
+  // Sound params
+  const sd = document.getElementById('soundDisplay');
+  sd.innerHTML =
+    'Pitch: <span>' + sp.pitchHz + 'Hz</span> | ' +
+    'Dur: <span>' + sp.durationMs + 'ms</span> | ' +
+    'Tone: <span>' + (sp.tonality * 100).toFixed(0) + '%</span> | ' +
+    'Bright: <span>' + (sp.brightness * 100).toFixed(0) + '%</span> | ' +
+    'Reso: <span>' + (sp.resonance * 100).toFixed(0) + '%</span> | ' +
+    'Env: <span>' + sp.envelope + '</span> | ' +
+    'Sweep: <span>' + sp.sweep + '</span> | ' +
+    'Layers: <span>' + sp.layers + '</span>' +
+    (sp.crush > 0 ? ' | Crush: <span>' + (sp.crush * 100).toFixed(0) + '%</span>' : '') +
+    (sp.doubleHit !== 'off' ? ' | <span>Double</span>' : '');
+}
+
+// ============================
+// CLICK HANDLER
+// ============================
+function doClick(e) {
+  clicks += clickValue;
+  totalClicks += clickValue;
+  playClick(cachedSound);
+  updateDisplay();
+  renderShop();
+
+  // Floating +N
+  if (e) {
+    const zone = document.getElementById('clickZone');
+    const rect = zone.getBoundingClientRect();
+    const f = document.createElement('div');
+    f.className = 'floater';
+    f.textContent = '+' + clickValue;
+    f.style.left = (e.clientX - rect.left - 10) + 'px';
+    f.style.top = (e.clientY - rect.top - 20) + 'px';
+    zone.style.position = 'relative';
+    zone.appendChild(f);
+    setTimeout(() => f.remove(), 800);
+  }
+}
+
+document.getElementById('bigBtn').addEventListener('click', doClick);
+document.getElementById('bigBtn').addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  doClick(e.touches[0]);
+}, { passive: false });
+
+// ============================
+// AUTO CLICKER
+// ============================
+let autoAccum = 0;
+let lastTime = performance.now();
+function gameLoop() {
+  const now = performance.now();
+  const dt = (now - lastTime) / 1000;
+  lastTime = now;
+
+  if (autoClickRate > 0) {
+    autoAccum += autoClickRate * dt;
+    while (autoAccum >= 1) {
+      autoAccum -= 1;
+      clicks += clickValue;
+      totalClicks += clickValue;
+      // Play auto-click sound at reduced volume occasionally
+      if (Math.random() < 0.15) playClick(cachedSound);
+    }
+    updateDisplay();
+    renderShop();
+  }
+  requestAnimationFrame(gameLoop);
+}
+
+// ============================
+// INIT
+// ============================
+updateDisplay();
+renderShop();
+requestAnimationFrame(gameLoop);
+</script>
+</body>
+</html>

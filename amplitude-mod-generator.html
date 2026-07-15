@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>~ * AMPLITUDE MOD GEN * ~</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000; color: #ccc;
+    font-family: 'VT323', monospace; font-size: 20px;
+    min-height: 100vh; overflow-x: hidden;
+  }
+
+  .starfield {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+      radial-gradient(1px 1px at 40px 70px, #ffe, transparent),
+      radial-gradient(1px 1px at 55px 160px, #fff, transparent),
+      radial-gradient(1px 1px at 90px 40px, #ffa, transparent),
+      radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+      radial-gradient(1px 1px at 160px 120px, #ffc, transparent),
+      radial-gradient(1px 1px at 200px 50px, #fff, transparent),
+      radial-gradient(1px 1px at 80px 190px, #ffe, transparent);
+    background-size: 220px 200px; z-index: 0;
+  }
+  .scanlines {
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px);
+    z-index: 100; pointer-events: none;
+  }
+  .bar-top {
+    position: fixed; top: 0; left: 0; right: 0; height: 24px; z-index: 50;
+    background: repeating-linear-gradient(-45deg, #ffe000, #ffe000 10px, #000 10px, #000 20px);
+  }
+  .bar-bottom {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 24px; z-index: 50;
+    background: repeating-linear-gradient(45deg, #ffe000, #ffe000 10px, #000 10px, #000 20px);
+  }
+
+  .app {
+    position: relative; z-index: 10;
+    max-width: 800px; margin: 0 auto;
+    padding: 44px 16px 60px;
+  }
+
+  .header { text-align: center; margin-bottom: 10px; padding-bottom: 12px; border-bottom: 2px dashed #444; }
+  .header h1 {
+    font-family: 'Press Start 2P', monospace; font-size: 17px;
+    color: #ffe000; text-shadow: 0 0 10px #ffe000, 0 0 24px #cc9900, 3px 3px 0 #332200;
+    line-height: 1.6; animation: flicker 3.8s infinite;
+  }
+  .header .subtitle { font-size: 21px; color: #ffaa00; text-shadow: 0 0 6px #ffaa00; margin-top: 6px; }
+
+  @keyframes flicker {
+    0%,100%{opacity:1} 91%{opacity:1} 92%{opacity:.55} 93%{opacity:1} 96%{opacity:.8} 97%{opacity:1}
+  }
+
+  .marquee-wrapper {
+    width: 100%; overflow: hidden; border: 2px solid #333;
+    background: #111; padding: 4px 0; margin: 12px 0;
+  }
+  .marquee-text {
+    font-size: 18px; color: #ffe000; white-space: nowrap;
+    animation: scroll-left 22s linear infinite;
+  }
+  @keyframes scroll-left { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+
+  /* SECTION HEADERS */
+  .section {
+    background: #0a0a0a; border: 3px inset #555;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .section-title {
+    font-family: 'Press Start 2P', monospace; font-size: 10px;
+    color: #ffe000; text-shadow: 0 0 4px #ffe000;
+    margin-bottom: 14px; letter-spacing: 1px;
+  }
+
+  .controls-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;
+  }
+  .control-group { display: flex; flex-direction: column; gap: 4px; }
+  .control-group label { font-size: 15px; color: #888; }
+  .control-group select,
+  .control-group input[type="number"] {
+    font-family: 'VT323', monospace; font-size: 20px;
+    padding: 5px 8px; background: #000; border: 2px inset #666;
+    color: #0f0; outline: none; width: 100%;
+  }
+  .control-group select:focus,
+  .control-group input:focus { border-color: #ffe000; }
+  .control-group select option { background: #000; color: #0f0; }
+
+  /* ENVELOPE SHAPE SELECTOR */
+  .env-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;
+    margin-bottom: 14px;
+  }
+  .env-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    padding: 8px 6px; cursor: pointer; border: 2px outset #444;
+    background: #111; transition: all 0.1s;
+  }
+  .env-btn:hover { border-color: #ffe000; background: #1a1500; }
+  .env-btn.active { border-style: inset; border-color: #ffe000; background: #1a1500; }
+  .env-btn canvas { display: block; }
+  .env-btn .env-label {
+    font-family: 'Press Start 2P', monospace; font-size: 7px;
+    color: #888; text-align: center; line-height: 1.4;
+  }
+  .env-btn.active .env-label { color: #ffe000; }
+
+  /* ENVELOPE PARAMS */
+  .env-params {
+    background: #060606; border: 2px solid #222;
+    padding: 10px 14px; margin-bottom: 12px;
+  }
+  .env-params-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;
+  }
+
+  /* MODULATION DEPTH DISPLAY */
+  .depth-display {
+    display: flex; align-items: center; gap: 12px; margin-top: 10px;
+    padding-top: 10px; border-top: 1px dashed #333;
+  }
+  .depth-bar-wrap { flex: 1; background: #111; border: 1px solid #333; height: 16px; }
+  .depth-bar { height: 100%; background: linear-gradient(90deg, #003300, #ffe000); transition: width 0.1s; }
+  .depth-val { font-size: 18px; color: #ffe000; min-width: 50px; text-align: right; }
+
+  /* ENVELOPE PREVIEW */
+  .env-preview-wrap {
+    background: #030308; border: 2px inset #333; padding: 6px; margin-bottom: 12px;
+  }
+  .env-preview-wrap canvas { display: block; width: 100%; }
+
+  .info-strip {
+    display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px;
+    padding-top: 10px; border-top: 1px dashed #333; font-size: 17px; color: #888;
+  }
+  .info-strip span { color: #0f0; }
+
+  /* PRESET ROW */
+  .preset-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .preset-btn {
+    font-family: 'VT323', monospace; font-size: 17px;
+    padding: 4px 12px; cursor: pointer; border: 2px outset #444;
+    background: #111; color: #ffe000; transition: filter 0.1s;
+  }
+  .preset-btn:hover { filter: brightness(1.3); border-color: #ffe000; }
+  .preset-btn:active { border-style: inset; }
+
+  .btn-row {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    padding: 14px 16px; background: #0a0a0a;
+    border: 3px inset #555; margin-bottom: 14px;
+  }
+  .btn {
+    font-family: 'Press Start 2P', monospace; font-size: 10px;
+    padding: 10px 18px; cursor: pointer; border: 3px outset;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5); transition: filter 0.1s;
+  }
+  .btn:hover { filter: brightness(1.2); }
+  .btn:active { border-style: inset; }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-generate { background: linear-gradient(180deg, #0c0, #090); color: #fff; border-color: #4f4; }
+  .btn-play     { background: linear-gradient(180deg, #ffe000, #cc9900); color: #000; border-color: #ffe000; }
+  .btn-stop     { background: linear-gradient(180deg, #cc0000, #990000); color: #fff; border-color: #ff4444; }
+  .btn-download { background: linear-gradient(180deg, #cc6600, #994400); color: #fff; border-color: #ff8844; }
+
+  .info-box {
+    background: #060606; border: 2px inset #444;
+    padding: 10px 14px; margin-bottom: 14px; display: none;
+  }
+  .info-text { font-size: 20px; color: #ffe000; text-shadow: 0 0 4px #ffe000; }
+  .info-detail { font-size: 16px; color: #0f0; margin-top: 6px; }
+
+  .viz-box {
+    background: #060606; border: 2px inset #444;
+    margin-bottom: 14px; overflow: hidden; display: none;
+  }
+  .viz-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; border-bottom: 1px solid #222; background: #0a0a0a;
+  }
+  .viz-title { font-family: 'Press Start 2P', monospace; font-size: 9px; color: #ffe000; }
+  .viz-info { font-size: 16px; color: #666; }
+  .viz-canvas-wrap { padding: 6px; background: #030308; }
+  .viz-canvas-wrap canvas { display: block; width: 100%; }
+
+  /* dual canvas — waveform + envelope overlay */
+  .dual-canvas-wrap { position: relative; padding: 6px; background: #030308; }
+  .dual-canvas-wrap canvas { display: block; width: 100%; }
+  .dual-canvas-wrap .env-overlay { position: absolute; top: 6px; left: 6px; pointer-events: none; }
+
+  .status-bar {
+    position: fixed; bottom: 24px; left: 0; right: 0;
+    background: #0a0a0a; border-top: 2px solid #333;
+    padding: 5px 16px; display: flex; align-items: center;
+    gap: 10px; font-size: 16px; color: #666; z-index: 50;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #333; transition: all 0.3s; }
+  .status-dot.active { background: #ffe000; box-shadow: 0 0 6px #ffe000; }
+  .status-bar .right { margin-left: auto; font-size: 14px; }
+
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .badge {
+    font-family: 'Press Start 2P', monospace; font-size: 6px;
+    padding: 5px 8px; border: 2px outset; display: inline-block; line-height: 1.5;
+  }
+  .badge-1 { background: #1a1400; color: #ffe000; border-color: #ffe000; }
+  .badge-2 { background: #004400; color: #0f0; border-color: #44ff44; }
+  .badge-3 { background: #111; color: #888; border-color: #444; }
+
+  .back-link { display: block; text-align: center; margin-top: 14px; }
+  .back-link a { color: #00ccff; text-decoration: none; font-size: 20px; }
+  .back-link a:hover { color: #ff0; text-decoration: underline; }
+
+  @media (max-width: 520px) {
+    .header h1 { font-size: 12px; }
+    .env-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="starfield"></div>
+<div class="scanlines"></div>
+<div class="bar-top"></div>
+<div class="bar-bottom"></div>
+
+<div class="app">
+  <div class="header">
+    <h1>~ * AMPLITUDE MOD GEN * ~</h1>
+    <div class="subtitle">Amplitude Envelope &bull; Any Carrier &bull; LUFS vs Loudness Testing</div>
+  </div>
+
+  <div class="marquee-wrapper">
+    <div class="marquee-text">
+      *** LINEAR RAMP *** TRIANGLE *** SINE LFO *** EXPONENTIAL *** LOGARITHMIC *** STEP *** RANDOM WALK *** SAWTOOTH AM *** GATE *** FREE .WAV DOWNLOAD ***
+    </div>
+  </div>
+
+  <!-- CARRIER -->
+  <div class="section">
+    <div class="section-title">&gt;&gt; CARRIER SIGNAL</div>
+    <div class="controls-grid">
+      <div class="control-group">
+        <label>Type</label>
+        <select id="carrierType">
+          <option value="sine" selected>Sine</option>
+          <option value="square">Square</option>
+          <option value="sawtooth">Sawtooth</option>
+          <option value="triangle">Triangle</option>
+          <option value="white">White Noise</option>
+          <option value="pink">Pink Noise</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Frequency (Hz)</label>
+        <input type="number" id="carrierFreq" value="1000" min="1" max="24000" step="1">
+      </div>
+      <div class="control-group">
+        <label>Duration (s)</label>
+        <input type="number" id="duration" value="2" min="0.05" max="3600" step="0.05">
+      </div>
+      <div class="control-group">
+        <label>Sample Rate</label>
+        <select id="sampleRate">
+          <option value="44100">44,100 Hz</option>
+          <option value="48000" selected>48,000 Hz</option>
+          <option value="96000">96,000 Hz</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Bit Depth</label>
+        <select id="bitDepth">
+          <option value="16" selected>16-bit</option>
+          <option value="24">24-bit</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Peak Amplitude</label>
+        <select id="amplitude">
+          <option value="0">0 dBFS</option>
+          <option value="-3" selected>-3 dBFS</option>
+          <option value="-6">-6 dBFS</option>
+          <option value="-12">-12 dBFS</option>
+          <option value="-20">-20 dBFS</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ENVELOPE SHAPE -->
+  <div class="section">
+    <div class="section-title">&gt;&gt; AMPLITUDE ENVELOPE SHAPE</div>
+
+    <div class="env-grid" id="envGrid"></div>
+
+    <!-- Live envelope preview -->
+    <div class="env-preview-wrap">
+      <canvas id="envPreviewCanvas" height="80"></canvas>
+    </div>
+
+    <!-- Shape-specific params -->
+    <div class="env-params">
+      <div class="section-title" style="font-size:8px;margin-bottom:10px">&gt;&gt; ENVELOPE PARAMETERS</div>
+      <div class="env-params-grid">
+        <div class="control-group">
+          <label>Rate / Period (Hz)</label>
+          <input type="number" id="envRate" value="1" min="0.01" max="100" step="0.01">
+        </div>
+        <div class="control-group">
+          <label>Min level (dB)</label>
+          <input type="number" id="envMin" value="-40" min="-80" max="0" step="1">
+        </div>
+        <div class="control-group">
+          <label>Max level (dB)</label>
+          <input type="number" id="envMax" value="0" min="-80" max="0" step="1">
+        </div>
+        <div class="control-group">
+          <label>Phase offset (°)</label>
+          <input type="number" id="envPhase" value="0" min="0" max="360" step="1">
+        </div>
+        <div class="control-group" id="stepCountWrap">
+          <label>Steps (step env)</label>
+          <input type="number" id="stepCount" value="4" min="2" max="32" step="1">
+        </div>
+        <div class="control-group" id="dutyCycleWrap">
+          <label>Duty % (gate)</label>
+          <input type="number" id="dutyCycle" value="50" min="1" max="99" step="1">
+        </div>
+      </div>
+
+      <div class="depth-display">
+        <div style="font-size:15px;color:#555">Depth:</div>
+        <div class="depth-bar-wrap"><div class="depth-bar" id="depthBar" style="width:60%"></div></div>
+        <div class="depth-val" id="depthVal">40 dB</div>
+      </div>
+    </div>
+
+    <div class="preset-btns">
+      <span style="font-size:15px;color:#555;line-height:2.2;margin-right:4px">PRESETS:</span>
+      <button class="preset-btn" data-preset="slowfade">Slow fade</button>
+      <button class="preset-btn" data-preset="tremolo">Tremolo</button>
+      <button class="preset-btn" data-preset="pump">Pump</button>
+      <button class="preset-btn" data-preset="swell">Swell</button>
+      <button class="preset-btn" data-preset="staircase">Staircase</button>
+      <button class="preset-btn" data-preset="chaos">Chaos</button>
+    </div>
+
+    <div class="info-strip">
+      <div>Mod cycles: <span id="infoModCycles">—</span></div>
+      <div>Samples: <span id="infoSamples">—</span></div>
+      <div>File: <span id="infoFileSize">—</span></div>
+    </div>
+  </div>
+
+  <!-- BUTTONS -->
+  <div class="btn-row">
+    <button class="btn btn-generate" id="generateBtn">GENERATE</button>
+    <button class="btn btn-play" id="playBtn" disabled>&#9654; PLAY</button>
+    <button class="btn btn-stop" id="stopBtn" disabled>&#9632; STOP</button>
+    <button class="btn btn-download" id="downloadBtn" disabled>DOWNLOAD .WAV</button>
+  </div>
+
+  <div class="info-box" id="infoBox">
+    <div class="info-text" id="infoText"></div>
+    <div class="info-detail" id="infoDetail"></div>
+  </div>
+
+  <!-- WAVEFORM + ENVELOPE OVERLAY -->
+  <div class="viz-box" id="waveformBox">
+    <div class="viz-header">
+      <span class="viz-title">WAVEFORM + ENVELOPE</span>
+      <span class="viz-info" id="waveformInfo"></span>
+    </div>
+    <div class="dual-canvas-wrap">
+      <canvas id="waveformCanvas" height="160"></canvas>
+      <canvas id="envOverlayCanvas" height="160" class="env-overlay"></canvas>
+    </div>
+  </div>
+
+  <div class="badge-row">
+    <div class="badge badge-1">AM DEPTH<br>CONTROL</div>
+    <div class="badge badge-2">ANY<br>CARRIER</div>
+    <div class="badge badge-3">LUFS<br>TESTER</div>
+  </div>
+
+  <div class="back-link">
+    <a href="impulse-generator.html">&lt;&lt; IMPULSE GEN &gt;&gt;</a>
+  </div>
+</div>
+
+<div class="status-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span id="statusText">Ready</span>
+  <span class="right">AMP MOD GEN v1.0</span>
+</div>
+
+<script>
+// ============================
+// ENVELOPE SHAPES
+// Returns gain values 0..1 for N samples
+// ============================
+const ENVELOPES = [
+  { id:'ramp_up',    label:'LINEAR\nRAMP UP',   fn: (t) => t },
+  { id:'ramp_down',  label:'LINEAR\nRAMP DOWN', fn: (t) => 1-t },
+  { id:'triangle',   label:'TRIANGLE\nUP/DOWN', fn: (t,r,ph) => { const p=(t*r+ph/360)%1; return p<0.5?p*2:(2-p*2); } },
+  { id:'sine',       label:'SINE\nLFO',         fn: (t,r,ph) => (Math.sin(2*Math.PI*(t*r+ph/360))+1)/2 },
+  { id:'square',     label:'SQUARE\nGATE',      fn: (t,r,ph,d) => { const p=(t*r+ph/360)%1; return p<(d/100)?1:0; } },
+  { id:'saw_up',     label:'SAW\nUP',           fn: (t,r,ph) => ((t*r+ph/360)%1) },
+  { id:'saw_down',   label:'SAW\nDOWN',         fn: (t,r,ph) => 1-((t*r+ph/360)%1) },
+  { id:'exp_up',     label:'EXP\nRISE',         fn: (t) => (Math.exp(t*4)-1)/(Math.exp(4)-1) },
+  { id:'exp_down',   label:'EXP\nFALL',         fn: (t) => 1-(Math.exp(t*4)-1)/(Math.exp(4)-1) },
+  { id:'log_up',     label:'LOG\nRISE',         fn: (t) => Math.log(1+t*9)/Math.log(10) },
+  { id:'log_down',   label:'LOG\nFALL',         fn: (t) => 1-Math.log(1+t*9)/Math.log(10) },
+  { id:'steps',      label:'STEP\nSTAIRS',      fn: (t,r,ph,d,steps) => { const p=(t*r+ph/360)%1; return Math.floor(p*steps)/Math.max(1,steps-1); } },
+  { id:'random',     label:'RANDOM\nWALK',      fn: null }, // special
+  { id:'sin2',       label:'SIN²\nSMOOTH',      fn: (t,r,ph) => { const v=Math.sin(Math.PI*(t*r+ph/360)%1); return v*v; } },
+  { id:'bounce',     label:'BOUNCE\nDECAY',      fn: (t) => { const b=Math.abs(Math.sin(Math.PI*t*4))*Math.pow(1-t,1.5); return b; } },
+  { id:'heartbeat',  label:'HEART\nBEAT',       fn: (t,r,ph) => { const p=(t*r+ph/360)%1; if(p<0.15) return p/0.15; if(p<0.25) return 1-(p-0.15)/0.1; if(p<0.35) return 0.5*(p-0.25)/0.1; if(p<0.5) return 0.5*(1-(p-0.35)/0.15); return 0; } },
+];
+
+let currentEnvId = 'ramp_up';
+
+// Build envelope selector buttons with mini canvas previews
+function buildEnvGrid() {
+  const grid = document.getElementById('envGrid');
+  grid.innerHTML = '';
+  ENVELOPES.forEach(env => {
+    const btn = document.createElement('div');
+    btn.className = 'env-btn' + (env.id===currentEnvId?' active':'');
+    btn.dataset.env = env.id;
+    const cvs = document.createElement('canvas');
+    cvs.width = 80; cvs.height = 40;
+    drawMiniEnv(cvs, env);
+    const lbl = document.createElement('div');
+    lbl.className = 'env-label';
+    lbl.textContent = env.label.replace('\\n','\n');
+    lbl.style.whiteSpace = 'pre';
+    btn.appendChild(cvs);
+    btn.appendChild(lbl);
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.env-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentEnvId = env.id;
+      updateEnvPreview();
+      updateInfo();
+    });
+    grid.appendChild(btn);
+  });
+}
+
+function drawMiniEnv(canvas, env) {
+  const W=canvas.width, H=canvas.height;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle='#0a0a0a'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#ffe000'; ctx.lineWidth=1.5;
+  ctx.shadowColor='#ffe000'; ctx.shadowBlur=3;
+  ctx.beginPath();
+  const pts = 60;
+  const rw = generateEnvCurve(pts, env.id, 1, 0, 50, 4);
+  for(let i=0;i<pts;i++){
+    const x=(i/(pts-1))*W;
+    const y=H-(rw[i]*(H-4)+2);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke(); ctx.shadowBlur=0;
+}
+
+function generateEnvCurve(N, envId, rate, phase, duty, steps) {
+  const env = ENVELOPES.find(e=>e.id===envId);
+  const curve = new Float32Array(N);
+  if(envId==='random'){
+    // random walk seeded to be consistent for preview
+    let val=0.5;
+    for(let i=0;i<N;i++){
+      val+=(Math.random()-0.5)*0.08;
+      val=Math.max(0,Math.min(1,val));
+      curve[i]=val;
+    }
+  } else {
+    for(let i=0;i<N;i++){
+      const t=i/(N-1);
+      curve[i]=Math.max(0,Math.min(1,env.fn(t,rate,phase,duty,steps)));
+    }
+  }
+  return curve;
+}
+
+function applyEnvelope(curve, envMin, envMax) {
+  // curve 0..1, map to dB range, convert to linear gain
+  return curve.map(v => {
+    const db = envMin + v*(envMax-envMin);
+    return Math.pow(10, db/20);
+  });
+}
+
+// ============================
+// ENVELOPE PREVIEW
+// ============================
+function updateEnvPreview() {
+  const canvas = document.getElementById('envPreviewCanvas');
+  const W = canvas.parentElement.clientWidth - 12;
+  const H = canvas.height;
+  canvas.width = W;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle='#030308'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#111'; ctx.lineWidth=1;
+  for(let y=0;y<=4;y++){const yp=(y/4)*H;ctx.beginPath();ctx.moveTo(0,yp);ctx.lineTo(W,yp);ctx.stroke();}
+
+  const rate  = +document.getElementById('envRate').value || 1;
+  const phase = +document.getElementById('envPhase').value || 0;
+  const duty  = +document.getElementById('dutyCycle').value || 50;
+  const steps = +document.getElementById('stepCount').value || 4;
+  const envMin = +document.getElementById('envMin').value;
+  const envMax = +document.getElementById('envMax').value;
+
+  const curve = generateEnvCurve(W, currentEnvId, rate, phase, duty, steps);
+
+  // Draw dB level lines
+  ctx.strokeStyle='#1a1a00'; ctx.lineWidth=1;
+  [-6,-12,-20,-40].forEach(db => {
+    const norm=(db-envMin)/(envMax-envMin);
+    if(norm>=0&&norm<=1){
+      const y=H-(norm*(H-4)+2);
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke();
+    }
+  });
+
+  ctx.strokeStyle='#ffe000'; ctx.lineWidth=2;
+  ctx.shadowColor='#ffe000'; ctx.shadowBlur=5;
+  ctx.beginPath();
+  for(let px=0;px<W;px++){
+    const y=H-(curve[px]*(H-4)+2);
+    if(px===0) ctx.moveTo(px,y); else ctx.lineTo(px,y);
+  }
+  ctx.stroke();
+  ctx.globalAlpha=0.15; ctx.lineWidth=8; ctx.stroke();
+  ctx.globalAlpha=1; ctx.shadowBlur=0;
+
+  updateDepthDisplay();
+}
+
+function updateDepthDisplay() {
+  const envMin = +document.getElementById('envMin').value;
+  const envMax = +document.getElementById('envMax').value;
+  const depth = Math.abs(envMax - envMin);
+  const pct = Math.min(100, (depth/80)*100);
+  document.getElementById('depthBar').style.width = pct+'%';
+  document.getElementById('depthVal').textContent = depth+' dB';
+}
+
+// ============================
+// CARRIER GENERATORS
+// ============================
+function genCarrier(type, freq, N, sr) {
+  const s = new Float32Array(N);
+  if(type==='white'){
+    for(let i=0;i<N;i++) s[i]=Math.random()*2-1;
+  } else if(type==='pink'){
+    const rows=16; const running=new Float32Array(rows); let rs=0;
+    for(let i=0;i<N;i++){
+      const key=i&(-i)||1<<16;
+      for(let j=0;j<rows;j++) if((key>>j)&1){rs-=running[j];running[j]=Math.random()*2-1;rs+=running[j];}
+      s[i]=(rs+(Math.random()*2-1))/(rows+1);
+    }
+    let mx=0; for(let i=0;i<N;i++) mx=Math.max(mx,Math.abs(s[i]));
+    if(mx>0) for(let i=0;i<N;i++) s[i]/=mx;
+  } else {
+    let phase=0; const dp=2*Math.PI*freq/sr;
+    for(let i=0;i<N;i++){
+      switch(type){
+        case 'sine':     s[i]=Math.sin(phase); break;
+        case 'square':   s[i]=Math.sin(phase)>=0?1:-1; break;
+        case 'sawtooth': s[i]=((phase%(2*Math.PI))/(Math.PI))-1; break;
+        case 'triangle': { const t=((phase%(2*Math.PI))/(2*Math.PI)); s[i]=t<0.5?4*t-1:3-4*t; break; }
+      }
+      phase+=dp;
+    }
+  }
+  return s;
+}
+
+// ============================
+// DRAW WAVEFORM + OVERLAY
+// ============================
+function drawWaveformAndEnv(wCanvas, eCanvas, samples, envGain) {
+  const W = wCanvas.parentElement.clientWidth - 12;
+  const H = wCanvas.height;
+  wCanvas.width = W; eCanvas.width = W;
+  eCanvas.style.width = wCanvas.style.width;
+
+  // Waveform
+  const wCtx = wCanvas.getContext('2d');
+  wCtx.fillStyle='#030308'; wCtx.fillRect(0,0,W,H);
+  wCtx.strokeStyle='#111'; wCtx.lineWidth=1;
+  for(let y=0;y<=4;y++){const yp=(y/4)*H;wCtx.beginPath();wCtx.moveTo(0,yp);wCtx.lineTo(W,yp);wCtx.stroke();}
+  wCtx.strokeStyle='#222'; wCtx.lineWidth=1;
+  wCtx.beginPath(); wCtx.moveTo(0,H/2); wCtx.lineTo(W,H/2); wCtx.stroke();
+
+  const N=samples.length;
+  wCtx.strokeStyle='#666'; wCtx.lineWidth=1;
+  wCtx.beginPath(); let first=true;
+  for(let px=0;px<W;px++){
+    const i0=Math.floor((px/W)*N), i1=Math.max(i0+1,Math.floor(((px+1)/W)*N));
+    let mn=0,mx2=0;
+    for(let k=i0;k<i1&&k<N;k++){mn=Math.min(mn,samples[k]);mx2=Math.max(mx2,samples[k]);}
+    const yT=H/2-mx2*H*0.44, yB=H/2-mn*H*0.44;
+    if(first){wCtx.moveTo(px,H/2);first=false;}
+    wCtx.lineTo(px,yT); if(mn!==mx2) wCtx.lineTo(px,yB); wCtx.lineTo(px,H/2);
+  }
+  wCtx.stroke();
+
+  // Envelope overlay
+  const eCtx = eCanvas.getContext('2d');
+  eCtx.clearRect(0,0,W,H);
+  const maxGain = Math.max(...envGain);
+  eCtx.strokeStyle='#ffe000'; eCtx.lineWidth=2;
+  eCtx.shadowColor='#ffe000'; eCtx.shadowBlur=6;
+  eCtx.beginPath(); first=true;
+  for(let px=0;px<W;px++){
+    const idx=Math.floor((px/W)*envGain.length);
+    const norm=maxGain>0?envGain[idx]/maxGain:0;
+    const y=H-(norm*(H-4)+2);
+    if(first){eCtx.moveTo(px,y);first=false;} else eCtx.lineTo(px,y);
+  }
+  eCtx.stroke();
+  eCtx.globalAlpha=0.12; eCtx.lineWidth=10; eCtx.stroke();
+  eCtx.globalAlpha=1; eCtx.shadowBlur=0;
+}
+
+// ============================
+// WAV ENCODER
+// ============================
+function encodeWAV(samples, sr, ampDB, bd) {
+  const amp=Math.pow(10,ampDB/20); const N=samples.length; const bps=bd/8; const ds=N*bps;
+  const buf=new ArrayBuffer(44+ds); const v=new DataView(buf);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  ws(0,'RIFF');v.setUint32(4,36+ds,true);ws(8,'WAVE');ws(12,'fmt ');v.setUint32(16,16,true);
+  v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*bps,true);
+  v.setUint16(32,bps,true);v.setUint16(34,bd,true);ws(36,'data');v.setUint32(40,ds,true);
+  let off=44;
+  for(let i=0;i<N;i++){
+    const val=Math.max(-1,Math.min(1,samples[i]*amp));
+    if(bd===16){v.setInt16(off,val<0?val*32768:val*32767,true);off+=2;}
+    else{const iv=val<0?val*8388608:val*8388607;v.setUint8(off,iv&0xFF);v.setUint8(off+1,(iv>>8)&0xFF);v.setUint8(off+2,(iv>>16)&0xFF);off+=3;}
+  }
+  return buf;
+}
+
+// ============================
+// PRESETS
+// ============================
+const PRESETS = {
+  slowfade:  {env:'ramp_down', rate:0.25, min:-60, max:0,  phase:0,  duty:50, steps:4},
+  tremolo:   {env:'sine',      rate:6,    min:-20, max:0,  phase:0,  duty:50, steps:4},
+  pump:      {env:'square',    rate:2,    min:-40, max:0,  phase:0,  duty:30, steps:4},
+  swell:     {env:'exp_up',    rate:0.5,  min:-60, max:0,  phase:0,  duty:50, steps:4},
+  staircase: {env:'steps',     rate:1,    min:-30, max:0,  phase:0,  duty:50, steps:6},
+  chaos:     {env:'random',    rate:1,    min:-40, max:0,  phase:0,  duty:50, steps:4},
+};
+
+document.querySelectorAll('[data-preset]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const p = PRESETS[btn.dataset.preset];
+    currentEnvId = p.env;
+    document.getElementById('envRate').value  = p.rate;
+    document.getElementById('envMin').value   = p.min;
+    document.getElementById('envMax').value   = p.max;
+    document.getElementById('envPhase').value = p.phase;
+    document.getElementById('dutyCycle').value= p.duty;
+    document.getElementById('stepCount').value= p.steps;
+    buildEnvGrid();
+    updateEnvPreview();
+    updateInfo();
+  });
+});
+
+// ============================
+// INFO UPDATE
+// ============================
+function updateInfo() {
+  const sr=+document.getElementById('sampleRate').value;
+  const dur=+document.getElementById('duration').value;
+  const bd=+document.getElementById('bitDepth').value;
+  const rate=+document.getElementById('envRate').value||1;
+  const N=Math.round(dur*sr);
+  const sz=44+N*(bd/8);
+  document.getElementById('infoModCycles').textContent=(dur*rate).toFixed(1);
+  document.getElementById('infoSamples').textContent=N.toLocaleString();
+  document.getElementById('infoFileSize').textContent=sz>1048576?'~'+(sz/1048576).toFixed(1)+' MB':'~'+Math.round(sz/1024)+' KB';
+}
+
+['envRate','envMin','envMax','envPhase','dutyCycle','stepCount','sampleRate','duration','bitDepth']
+  .forEach(id=>{
+    const el=document.getElementById(id);
+    el.addEventListener('change',()=>{updateEnvPreview();updateInfo();});
+    if(el.type==='number') el.addEventListener('input',()=>{updateEnvPreview();updateInfo();});
+  });
+
+// ============================
+// AUDIO PLAYBACK
+// ============================
+let currentSamples=null, currentEnvGain=null;
+let audioCtx=null, currentSource=null, currentCtxRate=0;
+
+function playBuf(samples, sr, ampDB) {
+  stopBuf();
+  if(!audioCtx||currentCtxRate!==sr){if(audioCtx)audioCtx.close();audioCtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:sr});currentCtxRate=sr;}
+  const amp=Math.pow(10,ampDB/20);
+  const buf=audioCtx.createBuffer(1,samples.length,sr);
+  const ch=buf.getChannelData(0);
+  for(let i=0;i<samples.length;i++) ch[i]=samples[i]*amp;
+  currentSource=audioCtx.createBufferSource();
+  currentSource.buffer=buf; currentSource.connect(audioCtx.destination); currentSource.start();
+  currentSource.onended=()=>setStatus('Playback complete',false);
+  setStatus('Playing...',true);
+}
+function stopBuf(){if(currentSource){try{currentSource.stop();}catch(e){}currentSource=null;}}
+function setStatus(t,active){document.getElementById('statusText').textContent=t;document.getElementById('statusDot').classList.toggle('active',!!active);}
+
+// ============================
+// GENERATE
+// ============================
+document.getElementById('generateBtn').addEventListener('click', ()=>{
+  const sr    = +document.getElementById('sampleRate').value;
+  const dur   = +document.getElementById('duration').value;
+  const amp   = +document.getElementById('amplitude').value;
+  const bd    = +document.getElementById('bitDepth').value;
+  const cType = document.getElementById('carrierType').value;
+  const cFreq = +document.getElementById('carrierFreq').value;
+  const rate  = +document.getElementById('envRate').value||1;
+  const phase = +document.getElementById('envPhase').value||0;
+  const duty  = +document.getElementById('dutyCycle').value||50;
+  const steps = +document.getElementById('stepCount').value||4;
+  const eMin  = +document.getElementById('envMin').value;
+  const eMax  = +document.getElementById('envMax').value;
+  const N     = Math.round(dur*sr);
+
+  setStatus('Generating...', true);
+  setTimeout(()=>{
+    const t0=performance.now();
+
+    // Generate carrier
+    const carrier = genCarrier(cType, cFreq, N, sr);
+
+    // Generate envelope curve (0..1)
+    const curve = generateEnvCurve(N, currentEnvId, rate, phase, duty, steps);
+
+    // Map curve to linear gain
+    const gainArr = applyEnvelope(curve, eMin, eMax);
+
+    // Apply
+    const out = new Float32Array(N);
+    for(let i=0;i<N;i++) out[i]=carrier[i]*gainArr[i];
+
+    currentSamples=out;
+    currentEnvGain=gainArr;
+
+    const ms=(performance.now()-t0).toFixed(0);
+    const sz=44+N*(bd/8);
+    const cycles=(dur*rate).toFixed(1);
+
+    document.getElementById('infoBox').style.display='block';
+    document.getElementById('infoText').textContent=
+      `${cType==='white'?'White noise':cType==='pink'?'Pink noise':cType+' '+cFreq+'Hz'} × ${currentEnvId.replace('_',' ')} envelope`;
+    document.getElementById('infoDetail').textContent=
+      `Rate: ${rate}Hz | Depth: ${Math.abs(eMax-eMin)}dB (${eMin}→${eMax}dBFS) | ${cycles} mod cycles | Generated in ${ms}ms`;
+
+    document.getElementById('waveformBox').style.display='block';
+    document.getElementById('waveformInfo').textContent=N.toLocaleString()+' samples';
+    drawWaveformAndEnv(
+      document.getElementById('waveformCanvas'),
+      document.getElementById('envOverlayCanvas'),
+      out, gainArr
+    );
+
+    document.getElementById('playBtn').disabled=false;
+    document.getElementById('stopBtn').disabled=false;
+    document.getElementById('downloadBtn').disabled=false;
+    setStatus('Generated in '+ms+'ms', false);
+  },30);
+});
+
+document.getElementById('playBtn').addEventListener('click',()=>{
+  if(!currentSamples) return;
+  playBuf(currentSamples,+document.getElementById('sampleRate').value,+document.getElementById('amplitude').value);
+});
+document.getElementById('stopBtn').addEventListener('click',()=>{stopBuf();setStatus('Stopped',false);});
+document.getElementById('downloadBtn').addEventListener('click',()=>{
+  if(!currentSamples) return;
+  const sr=+document.getElementById('sampleRate').value;
+  const amp=+document.getElementById('amplitude').value;
+  const bd=+document.getElementById('bitDepth').value;
+  const dur=+document.getElementById('duration').value;
+  const cType=document.getElementById('carrierType').value;
+  const cFreq=+document.getElementById('carrierFreq').value;
+  const rate=+document.getElementById('envRate').value;
+  setStatus('Encoding WAV...',true);
+  setTimeout(()=>{
+    const wav=encodeWAV(currentSamples,sr,amp,bd);
+    const carrier=(['white','pink'].includes(cType)?cType:cType+'_'+cFreq+'Hz');
+    const fn=`AMPMOD_${carrier}_${currentEnvId}_${rate}Hz_${dur}s_${sr}Hz.wav`;
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([wav],{type:'audio/wav'}));
+    a.download=fn; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setStatus('Downloaded '+fn,false);
+  },20);
+});
+
+window.addEventListener('resize',()=>{
+  updateEnvPreview();
+  if(currentSamples&&currentEnvGain) drawWaveformAndEnv(
+    document.getElementById('waveformCanvas'),
+    document.getElementById('envOverlayCanvas'),
+    currentSamples,currentEnvGain
+  );
+});
+
+// Init
+buildEnvGrid();
+updateEnvPreview();
+updateInfo();
+</script>
+</body>
+</html>

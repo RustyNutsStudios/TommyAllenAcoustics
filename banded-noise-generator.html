@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>~ * NOISE GENERATOR * ~</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000; color: #ccc;
+    font-family: 'VT323', monospace; font-size: 20px;
+    min-height: 100vh; overflow-x: hidden;
+  }
+
+  .starfield {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+      radial-gradient(1px 1px at 40px 70px, #fff, transparent),
+      radial-gradient(1px 1px at 50px 160px, #fff, transparent),
+      radial-gradient(1px 1px at 90px 40px, #faa, transparent),
+      radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+      radial-gradient(1px 1px at 160px 120px, #ffa, transparent),
+      radial-gradient(1px 1px at 200px 50px, #fff, transparent),
+      radial-gradient(1px 1px at 80px 190px, #faf, transparent);
+    background-size: 220px 200px; z-index: 0;
+  }
+  .scanlines {
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px);
+    z-index: 100; pointer-events: none;
+  }
+  .bar-top {
+    position: fixed; top: 0; left: 0; right: 0; height: 24px; z-index: 50;
+    background: repeating-linear-gradient(-45deg, #ff4400, #ff4400 10px, #000 10px, #000 20px);
+  }
+  .bar-bottom {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 24px; z-index: 50;
+    background: repeating-linear-gradient(45deg, #ff4400, #ff4400 10px, #000 10px, #000 20px);
+  }
+
+  .app {
+    position: relative; z-index: 10;
+    max-width: 800px; margin: 0 auto;
+    padding: 44px 16px 60px;
+  }
+
+  .header { text-align: center; margin-bottom: 10px; padding-bottom: 12px; border-bottom: 2px dashed #444; }
+  .header h1 {
+    font-family: 'Press Start 2P', monospace; font-size: 18px;
+    color: #ff4400; text-shadow: 0 0 10px #ff4400, 0 0 24px #cc2200, 3px 3px 0 #440000;
+    line-height: 1.6; animation: flicker 3.5s infinite;
+  }
+  .header .subtitle { font-size: 22px; color: #ffaa00; text-shadow: 0 0 6px #ffaa00; margin-top: 6px; }
+
+  @keyframes flicker {
+    0%,100%{opacity:1} 91%{opacity:1} 92%{opacity:.6} 93%{opacity:1} 96%{opacity:.8} 97%{opacity:1}
+  }
+
+  .marquee-wrapper {
+    width: 100%; overflow: hidden; border: 2px solid #333;
+    background: #111; padding: 4px 0; margin: 12px 0;
+  }
+  .marquee-text {
+    font-size: 18px; color: #ff4400; white-space: nowrap;
+    animation: scroll-left 20s linear infinite;
+  }
+  @keyframes scroll-left { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+
+  .mode-tabs {
+    display: flex; gap: 0; margin-bottom: 14px; border: 3px solid #333;
+  }
+  .mode-tab {
+    font-family: 'Press Start 2P', monospace; font-size: 9px;
+    padding: 10px 14px; cursor: pointer; border: none;
+    background: #111; color: #555; flex: 1; text-align: center;
+    border-right: 2px solid #333; transition: all 0.1s; line-height: 1.6;
+  }
+  .mode-tab:last-child { border-right: none; }
+  .mode-tab:hover { background: #1a0a00; color: #aaa; }
+  .mode-tab.active { background: #1a0500; color: #ff4400; text-shadow: 0 0 6px #ff4400; border-bottom: 3px solid #ff4400; }
+
+  .mode-panel { display: none; }
+  .mode-panel.active { display: block; }
+
+  .panel {
+    background: #0a0a0a; border: 3px inset #555;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .panel-title {
+    font-family: 'Press Start 2P', monospace; font-size: 10px;
+    color: #ffaa00; text-shadow: 0 0 4px #ffaa00;
+    margin-bottom: 12px; letter-spacing: 1px;
+  }
+
+  .controls-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;
+  }
+  .control-group { display: flex; flex-direction: column; gap: 4px; }
+  .control-group label { font-size: 15px; color: #888; }
+  .control-group select,
+  .control-group input[type="number"] {
+    font-family: 'VT323', monospace; font-size: 20px;
+    padding: 5px 8px; background: #000; border: 2px inset #666;
+    color: #0f0; outline: none; width: 100%;
+  }
+  .control-group select:focus,
+  .control-group input:focus { border-color: #ff4400; }
+  .control-group select option { background: #000; color: #0f0; }
+
+  /* Banded noise — band rows */
+  .band-row {
+    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px;
+    align-items: end; padding: 10px 0; border-bottom: 1px dashed #222;
+  }
+  .band-row:last-child { border-bottom: none; }
+  .band-label {
+    font-family: 'Press Start 2P', monospace; font-size: 8px;
+    color: #ffaa00; margin-bottom: 4px;
+  }
+  .band-enable { display: flex; align-items: center; gap: 8px; margin-top: 22px; }
+  .band-enable input[type="checkbox"] { accent-color: #ff4400; width: 18px; height: 18px; cursor: pointer; }
+
+  /* Preset band buttons */
+  .preset-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .preset-btn {
+    font-family: 'VT323', monospace; font-size: 18px;
+    padding: 4px 12px; cursor: pointer; border: 2px outset #555;
+    background: #111; color: #ffaa00; transition: filter 0.1s;
+  }
+  .preset-btn:hover { filter: brightness(1.3); border-color: #ffaa00; }
+  .preset-btn:active { border-style: inset; }
+
+  /* Burst noise */
+  .burst-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px;
+    margin-bottom: 14px;
+  }
+  .burst-preview {
+    background: #060606; border: 2px inset #333;
+    padding: 8px 12px; margin-top: 10px; border-top: 1px dashed #222;
+  }
+  .burst-preview-label { font-size: 14px; color: #555; margin-bottom: 6px; }
+  .burst-diagram {
+    display: flex; gap: 2px; align-items: flex-end; height: 32px;
+  }
+  .burst-block {
+    height: 100%; background: #ff4400; opacity: 0.8;
+    transition: all 0.2s; min-width: 2px;
+  }
+  .burst-gap {
+    height: 100%; background: transparent;
+    min-width: 2px;
+  }
+
+  .info-strip {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px;
+    padding-top: 10px; border-top: 1px dashed #333; font-size: 17px; color: #888;
+  }
+  .info-strip span { color: #0f0; }
+
+  .global-panel {
+    background: #060606; border: 2px solid #222;
+    padding: 12px 16px; margin-bottom: 14px;
+  }
+
+  .btn-row {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    padding: 14px 16px; background: #0a0a0a;
+    border: 3px inset #555; margin-bottom: 14px;
+  }
+  .btn {
+    font-family: 'Press Start 2P', monospace; font-size: 10px;
+    padding: 10px 18px; cursor: pointer; border: 3px outset;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5); transition: filter 0.1s;
+  }
+  .btn:hover { filter: brightness(1.2); }
+  .btn:active { border-style: inset; }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-generate { background: linear-gradient(180deg, #0c0, #090); color: #fff; border-color: #4f4; }
+  .btn-play     { background: linear-gradient(180deg, #ff4400, #cc2200); color: #fff; border-color: #ff8844; }
+  .btn-stop     { background: linear-gradient(180deg, #cc0000, #990000); color: #fff; border-color: #ff4444; }
+  .btn-download { background: linear-gradient(180deg, #cc6600, #994400); color: #fff; border-color: #ff8844; }
+
+  .info-box {
+    background: #060606; border: 2px inset #444;
+    padding: 10px 14px; margin-bottom: 14px; display: none;
+  }
+  .info-text { font-size: 20px; color: #ff4400; text-shadow: 0 0 4px #ff4400; }
+  .info-detail { font-size: 16px; color: #0f0; margin-top: 6px; }
+
+  .viz-box {
+    background: #060606; border: 2px inset #444;
+    margin-bottom: 14px; overflow: hidden; display: none;
+  }
+  .viz-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; border-bottom: 1px solid #222; background: #0a0a0a;
+  }
+  .viz-title { font-family: 'Press Start 2P', monospace; font-size: 9px; color: #ffaa00; }
+  .viz-info { font-size: 16px; color: #666; }
+  .viz-canvas-wrap { padding: 6px; background: #030308; }
+  .viz-canvas-wrap canvas { display: block; width: 100%; }
+
+  .status-bar {
+    position: fixed; bottom: 24px; left: 0; right: 0;
+    background: #0a0a0a; border-top: 2px solid #333;
+    padding: 5px 16px; display: flex; align-items: center;
+    gap: 10px; font-size: 16px; color: #666; z-index: 50;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #333; transition: all 0.3s; }
+  .status-dot.active { background: #ff4400; box-shadow: 0 0 6px #ff4400; }
+  .status-bar .right { margin-left: auto; font-size: 14px; }
+
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .badge {
+    font-family: 'Press Start 2P', monospace; font-size: 6px;
+    padding: 5px 8px; border: 2px outset; display: inline-block; line-height: 1.5;
+  }
+  .badge-1 { background: #220000; color: #ff4400; border-color: #ff4400; }
+  .badge-2 { background: #004400; color: #0f0; border-color: #44ff44; }
+  .badge-3 { background: #443300; color: #ffaa00; border-color: #ffaa00; }
+
+  .back-link { display: block; text-align: center; margin-top: 14px; }
+  .back-link a { color: #00ccff; text-decoration: none; font-size: 20px; }
+  .back-link a:hover { color: #ff0; text-decoration: underline; }
+
+  @media (max-width: 520px) {
+    .header h1 { font-size: 12px; }
+    .band-row { grid-template-columns: 1fr 1fr; }
+    .mode-tab { font-size: 7px; padding: 8px 6px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="starfield"></div>
+<div class="scanlines"></div>
+<div class="bar-top"></div>
+<div class="bar-bottom"></div>
+
+<div class="app">
+  <div class="header">
+    <h1>~ * NOISE GEN * ~</h1>
+    <div class="subtitle">Banded Noise &bull; Burst Noise &bull; White &bull; Pink</div>
+  </div>
+
+  <div class="marquee-wrapper">
+    <div class="marquee-text">
+      *** WHITE NOISE *** PINK NOISE *** NARROWBAND *** BANDPASS FILTERED *** BURST GATE *** RHYTHMIC NOISE *** FREE .WAV DOWNLOAD ***
+    </div>
+  </div>
+
+  <!-- GLOBAL -->
+  <div class="global-panel">
+    <div class="panel-title">&gt;&gt; OUTPUT SETTINGS</div>
+    <div class="controls-grid">
+      <div class="control-group">
+        <label>Duration (s)</label>
+        <input type="number" id="duration" value="2" min="0.05" max="3600" step="0.05">
+      </div>
+      <div class="control-group">
+        <label>Sample Rate</label>
+        <select id="sampleRate">
+          <option value="44100">44,100 Hz</option>
+          <option value="48000" selected>48,000 Hz</option>
+          <option value="96000">96,000 Hz</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Bit Depth</label>
+        <select id="bitDepth">
+          <option value="16" selected>16-bit</option>
+          <option value="24">24-bit</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Amplitude</label>
+        <select id="amplitude">
+          <option value="0">0 dBFS</option>
+          <option value="-3" selected>-3 dBFS</option>
+          <option value="-6">-6 dBFS</option>
+          <option value="-12">-12 dBFS</option>
+          <option value="-20">-20 dBFS</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Fade In/Out</label>
+        <select id="fade">
+          <option value="0">None</option>
+          <option value="0.005" selected>5 ms</option>
+          <option value="0.01">10 ms</option>
+          <option value="0.05">50 ms</option>
+          <option value="0.1">100 ms</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Noise Type</label>
+        <select id="noiseType">
+          <option value="white" selected>White</option>
+          <option value="pink">Pink</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="banded">BANDED NOISE</button>
+    <button class="mode-tab" data-mode="burst">BURST NOISE</button>
+    <button class="mode-tab" data-mode="full">FULL BAND</button>
+  </div>
+
+  <!-- BANDED NOISE -->
+  <div class="mode-panel active" id="panel-banded">
+    <div class="panel">
+      <div class="panel-title">&gt;&gt; BANDED NOISE — BANDPASS FILTERED</div>
+
+      <div class="preset-btns">
+        <span style="font-size:15px;color:#555;line-height:2.2;margin-right:4px">PRESETS:</span>
+        <button class="preset-btn" data-preset="250">250Hz band</button>
+        <button class="preset-btn" data-preset="1k">1kHz band</button>
+        <button class="preset-btn" data-preset="4k">4kHz band</button>
+        <button class="preset-btn" data-preset="low">Low shelf</button>
+        <button class="preset-btn" data-preset="high">High shelf</button>
+        <button class="preset-btn" data-preset="all3">All 3 octave</button>
+      </div>
+
+      <!-- Up to 4 bands -->
+      <div id="band-rows"></div>
+
+      <div class="info-strip">
+        <div>Active bands: <span id="infoBands">1</span></div>
+        <div>Samples: <span id="infoSamples">—</span></div>
+        <div>File: <span id="infoSize">—</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BURST NOISE -->
+  <div class="mode-panel" id="panel-burst">
+    <div class="panel">
+      <div class="panel-title">&gt;&gt; BURST NOISE — GATED ON/OFF</div>
+      <div class="burst-grid">
+        <div class="control-group">
+          <label>Burst On (ms)</label>
+          <input type="number" id="burstOn" value="100" min="1" max="5000" step="1">
+        </div>
+        <div class="control-group">
+          <label>Burst Off (ms)</label>
+          <input type="number" id="burstOff" value="100" min="1" max="5000" step="1">
+        </div>
+        <div class="control-group">
+          <label>Gate Fade (ms)</label>
+          <select id="burstFade">
+            <option value="0">Hard gate</option>
+            <option value="1">1 ms</option>
+            <option value="2" selected>2 ms</option>
+            <option value="5">5 ms</option>
+            <option value="10">10 ms</option>
+            <option value="20">20 ms</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Band Centre</label>
+          <select id="burstBand">
+            <option value="0">Full band</option>
+            <option value="250">250 Hz</option>
+            <option value="500">500 Hz</option>
+            <option value="1000" selected>1 kHz</option>
+            <option value="2000">2 kHz</option>
+            <option value="4000">4 kHz</option>
+            <option value="8000">8 kHz</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Band Width (oct)</label>
+          <select id="burstBW">
+            <option value="0.33">1/3 oct (narrow)</option>
+            <option value="0.5">1/2 oct</option>
+            <option value="1" selected>1 oct</option>
+            <option value="2">2 oct</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Burst pattern preview -->
+      <div class="burst-preview">
+        <div class="burst-preview-label">GATE PATTERN PREVIEW</div>
+        <div class="burst-diagram" id="burstDiagram"></div>
+        <div style="font-size:15px;color:#555;margin-top:6px" id="burstInfo">—</div>
+      </div>
+
+      <div class="preset-btns" style="margin-top:12px">
+        <span style="font-size:15px;color:#555;line-height:2.2;margin-right:4px">PRESETS:</span>
+        <button class="preset-btn" data-burst="slow">Slow (500/500)</button>
+        <button class="preset-btn" data-burst="fast">Fast (50/50)</button>
+        <button class="preset-btn" data-burst="stutter">Stutter (20/80)</button>
+        <button class="preset-btn" data-burst="ping">Ping (10/200)</button>
+        <button class="preset-btn" data-burst="flutter">Flutter (5/5)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- FULL BAND -->
+  <div class="mode-panel" id="panel-full">
+    <div class="panel">
+      <div class="panel-title">&gt;&gt; FULL BAND NOISE</div>
+      <div style="color:#888;font-size:18px;line-height:1.6">
+        Full spectrum noise, no filtering. Use the Noise Type selector above to switch between white and pink.<br><br>
+        <span style="color:#555">White noise — flat spectrum, equal energy per Hz. Sounds bright/hissy.</span><br>
+        <span style="color:#555">Pink noise — 3dB/oct rolloff, equal energy per octave. Sounds more natural/balanced.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUTTONS -->
+  <div class="btn-row">
+    <button class="btn btn-generate" id="generateBtn">GENERATE</button>
+    <button class="btn btn-play" id="playBtn" disabled>&#9654; PLAY</button>
+    <button class="btn btn-stop" id="stopBtn" disabled>&#9632; STOP</button>
+    <button class="btn btn-download" id="downloadBtn" disabled>DOWNLOAD .WAV</button>
+  </div>
+
+  <!-- INFO -->
+  <div class="info-box" id="infoBox">
+    <div class="info-text" id="infoText"></div>
+    <div class="info-detail" id="infoDetail"></div>
+  </div>
+
+  <!-- WAVEFORM -->
+  <div class="viz-box" id="waveformBox">
+    <div class="viz-header">
+      <span class="viz-title">WAVEFORM PREVIEW</span>
+      <span class="viz-info" id="waveformInfo"></span>
+    </div>
+    <div class="viz-canvas-wrap">
+      <canvas id="waveformCanvas" height="140"></canvas>
+    </div>
+  </div>
+
+  <div class="badge-row">
+    <div class="badge badge-1">BIQUAD<br>FILTERS</div>
+    <div class="badge badge-2">NO SERVER<br>REQUIRED</div>
+    <div class="badge badge-3">PINK &amp;<br>WHITE</div>
+  </div>
+
+  <div class="back-link">
+    <a href="tone-generator-advanced.html">&lt;&lt; ADVANCED TONE GEN &gt;&gt;</a>
+  </div>
+</div>
+
+<div class="status-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span id="statusText">Ready</span>
+  <span class="right">NOISE GEN v1.0</span>
+</div>
+
+<script>
+// ============================
+// NOISE GENERATORS
+// ============================
+function genWhite(N) {
+  const s = new Float32Array(N);
+  for (let i = 0; i < N; i++) s[i] = Math.random() * 2 - 1;
+  return s;
+}
+
+function genPink(N) {
+  const s = new Float32Array(N);
+  const rows = 16; const running = new Float32Array(rows);
+  let runSum = 0;
+  for (let i = 0; i < N; i++) {
+    const key = i & (-i);
+    for (let j = 0; j < rows; j++) {
+      if ((key >> j) & 1) { runSum -= running[j]; running[j] = Math.random()*2-1; runSum += running[j]; }
+    }
+    s[i] = (runSum + (Math.random()*2-1)) / (rows + 1);
+  }
+  normalise(s); return s;
+}
+
+function normalise(s) {
+  let mx = 0;
+  for (let i = 0; i < s.length; i++) mx = Math.max(mx, Math.abs(s[i]));
+  if (mx > 0) for (let i = 0; i < s.length; i++) s[i] /= mx;
+}
+
+// ============================
+// BIQUAD BANDPASS FILTER
+// Butterworth 2nd order bandpass via cookbook
+// ============================
+function bandpassFilter(input, sr, centreHz, bwOct) {
+  const output = new Float32Array(input.length);
+  const w0 = 2 * Math.PI * centreHz / sr;
+  // BW in Hz from octave width
+  const bwHz = centreHz * (Math.pow(2, bwOct/2) - Math.pow(2, -bwOct/2));
+  const Q = centreHz / bwHz;
+  const alpha = Math.sin(w0) / (2 * Q);
+  const cosw0 = Math.cos(w0);
+
+  const b0 =  alpha;
+  const b1 =  0;
+  const b2 = -alpha;
+  const a0 =  1 + alpha;
+  const a1 = -2 * cosw0;
+  const a2 =  1 - alpha;
+
+  let x1=0, x2=0, y1=0, y2=0;
+  for (let i = 0; i < input.length; i++) {
+    const x0 = input[i];
+    const y0 = (b0/a0)*x0 + (b1/a0)*x1 + (b2/a0)*x2 - (a1/a0)*y1 - (a2/a0)*y2;
+    x2=x1; x1=x0; y2=y1; y1=y0;
+    output[i] = y0;
+  }
+  normalise(output);
+  return output;
+}
+
+// Multiple bandpass passes for steeper rolloff
+function bandpassSteep(input, sr, centreHz, bwOct, passes=2) {
+  let s = input;
+  for (let p = 0; p < passes; p++) s = bandpassFilter(s, sr, centreHz, bwOct);
+  return s;
+}
+
+// ============================
+// BURST GATE
+// ============================
+function applyBurstGate(samples, sr, onMs, offMs, fadeSamples) {
+  const out = new Float32Array(samples.length);
+  const onN = Math.round(onMs * sr / 1000);
+  const offN = Math.round(offMs * sr / 1000);
+  const period = onN + offN;
+  for (let i = 0; i < samples.length; i++) {
+    const pos = i % period;
+    let gain = 0;
+    if (pos < onN) {
+      gain = 1;
+      // fade in at start of burst
+      if (fadeSamples > 0 && pos < fadeSamples) gain = pos / fadeSamples;
+      // fade out at end of burst
+      if (fadeSamples > 0 && pos > onN - fadeSamples) gain = (onN - pos) / fadeSamples;
+    }
+    out[i] = samples[i] * Math.max(0, gain);
+  }
+  return out;
+}
+
+function applyFade(s, sr, ft) {
+  const fn = Math.min(Math.round(ft * sr), Math.floor(s.length / 2));
+  for (let i = 0; i < fn; i++) { const g = i/fn; s[i]*=g; s[s.length-1-i]*=g; }
+}
+
+// ============================
+// WAV ENCODER
+// ============================
+function encodeWAV(samples, sr, ampDB, bitDepth) {
+  const amp = Math.pow(10, ampDB / 20);
+  const N = samples.length, bps = bitDepth / 8, dataSize = N * bps;
+  const buf = new ArrayBuffer(44 + dataSize);
+  const v = new DataView(buf);
+  const ws = (o,s) => { for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  ws(0,'RIFF'); v.setUint32(4,36+dataSize,true); ws(8,'WAVE');
+  ws(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr*bps,true); v.setUint16(32,bps,true); v.setUint16(34,bitDepth,true);
+  ws(36,'data'); v.setUint32(40,dataSize,true);
+  let off=44;
+  for (let i=0;i<N;i++){
+    const val=Math.max(-1,Math.min(1,samples[i]*amp));
+    if(bitDepth===16){v.setInt16(off,val<0?val*32768:val*32767,true);off+=2;}
+    else{const iv=val<0?val*8388608:val*8388607;v.setUint8(off,iv&0xFF);v.setUint8(off+1,(iv>>8)&0xFF);v.setUint8(off+2,(iv>>16)&0xFF);off+=3;}
+  }
+  return buf;
+}
+
+// ============================
+// DRAW WAVEFORM
+// ============================
+function drawWaveform(canvas, samples) {
+  const W = canvas.parentElement.clientWidth - 12;
+  const H = canvas.height;
+  canvas.width = W;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#030308'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#111'; ctx.lineWidth=1;
+  for(let y=0;y<=4;y++){const yp=(y/4)*H;ctx.beginPath();ctx.moveTo(0,yp);ctx.lineTo(W,yp);ctx.stroke();}
+  for(let x=0;x<=8;x++){const xp=(x/8)*W;ctx.beginPath();ctx.moveTo(xp,0);ctx.lineTo(xp,H);ctx.stroke();}
+  ctx.strokeStyle='#222';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+
+  const preview = Math.min(samples.length, 8192);
+  ctx.strokeStyle='#ff4400'; ctx.lineWidth=1.2;
+  ctx.shadowColor='#ff4400'; ctx.shadowBlur=3;
+  ctx.beginPath();
+  let first=true;
+  for(let px=0;px<W;px++){
+    const i0=Math.floor((px/W)*preview);
+    const i1=Math.max(i0+1,Math.floor(((px+1)/W)*preview));
+    let sum=0,cnt=0;
+    for(let k=i0;k<i1&&k<samples.length;k++){sum+=samples[k];cnt++;}
+    const y=H/2-(sum/(cnt||1))*H*0.44;
+    if(first){ctx.moveTo(px,y);first=false;}else ctx.lineTo(px,y);
+  }
+  ctx.stroke();
+  ctx.globalAlpha=0.1;ctx.lineWidth=7;ctx.stroke();
+  ctx.globalAlpha=1;ctx.shadowBlur=0;
+}
+
+// ============================
+// BAND ROWS UI
+// ============================
+const BAND_DEFAULTS = [
+  { centre: 250,  bw: 1, label: 'BAND 1' },
+  { centre: 1000, bw: 1, label: 'BAND 2' },
+  { centre: 4000, bw: 1, label: 'BAND 3' },
+  { centre: 8000, bw: 1, label: 'BAND 4' },
+];
+
+function buildBandRows() {
+  const container = document.getElementById('band-rows');
+  container.innerHTML = '';
+  BAND_DEFAULTS.forEach((b, i) => {
+    const row = document.createElement('div');
+    row.className = 'band-row';
+    row.id = `band-row-${i}`;
+    row.innerHTML = `
+      <div class="control-group">
+        <div class="band-label">${b.label}</div>
+        <label>Centre (Hz)</label>
+        <input type="number" id="band-centre-${i}" value="${b.centre}" min="20" max="20000" step="1">
+      </div>
+      <div class="control-group">
+        <label>Width (oct)</label>
+        <select id="band-bw-${i}">
+          <option value="0.17">1/6 oct</option>
+          <option value="0.33">1/3 oct</option>
+          <option value="0.5">1/2 oct</option>
+          <option value="1" selected>1 oct</option>
+          <option value="2">2 oct</option>
+          <option value="3">3 oct</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Level (dB)</label>
+        <input type="number" id="band-level-${i}" value="0" min="-40" max="0" step="1">
+      </div>
+      <div class="band-enable">
+        <input type="checkbox" id="band-on-${i}" ${i < 1 ? 'checked' : ''}>
+        <label for="band-on-${i}" style="font-size:16px;color:#888;cursor:pointer">ON</label>
+      </div>`;
+    container.appendChild(row);
+    row.querySelector(`#band-on-${i}`).addEventListener('change', updateBandInfo);
+  });
+}
+
+function updateBandInfo() {
+  let active = 0;
+  for(let i=0;i<4;i++) if(document.getElementById(`band-on-${i}`)?.checked) active++;
+  document.getElementById('infoBands').textContent = active;
+  const sr = +document.getElementById('sampleRate').value;
+  const dur = +document.getElementById('duration').value;
+  const bd = +document.getElementById('bitDepth').value;
+  const N = Math.round(dur * sr);
+  const sz = 44 + N * (bd/8);
+  document.getElementById('infoSamples').textContent = N.toLocaleString();
+  document.getElementById('infoSize').textContent = sz > 1048576 ? '~'+(sz/1048576).toFixed(1)+' MB' : '~'+Math.round(sz/1024)+' KB';
+}
+
+// Preset loaders
+const BAND_PRESETS = {
+  '250':  [{i:0,c:250,bw:'1',on:true},{i:1,c:1000,bw:'1',on:false},{i:2,c:4000,bw:'1',on:false},{i:3,c:8000,bw:'1',on:false}],
+  '1k':   [{i:0,c:250,bw:'1',on:false},{i:1,c:1000,bw:'1',on:true},{i:2,c:4000,bw:'1',on:false},{i:3,c:8000,bw:'1',on:false}],
+  '4k':   [{i:0,c:250,bw:'1',on:false},{i:1,c:1000,bw:'1',on:false},{i:2,c:4000,bw:'1',on:true},{i:3,c:8000,bw:'1',on:false}],
+  'low':  [{i:0,c:125,bw:'2',on:true},{i:1,c:500,bw:'2',on:true},{i:2,c:4000,bw:'1',on:false},{i:3,c:8000,bw:'1',on:false}],
+  'high': [{i:0,c:250,bw:'1',on:false},{i:1,c:1000,bw:'1',on:false},{i:2,c:4000,bw:'2',on:true},{i:3,c:8000,bw:'2',on:true}],
+  'all3': [{i:0,c:250,bw:'0.33',on:true},{i:1,c:1000,bw:'0.33',on:true},{i:2,c:4000,bw:'0.33',on:true},{i:3,c:8000,bw:'1',on:false}],
+};
+
+document.querySelectorAll('[data-preset]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const p = BAND_PRESETS[btn.dataset.preset];
+    if (!p) return;
+    p.forEach(b => {
+      document.getElementById(`band-centre-${b.i}`).value = b.c;
+      document.getElementById(`band-bw-${b.i}`).value = b.bw;
+      document.getElementById(`band-on-${b.i}`).checked = b.on;
+    });
+    updateBandInfo();
+  });
+});
+
+// Burst presets
+const BURST_PRESETS = {
+  slow:    {on:500,  off:500},
+  fast:    {on:50,   off:50},
+  stutter: {on:20,   off:80},
+  ping:    {on:10,   off:200},
+  flutter: {on:5,    off:5},
+};
+document.querySelectorAll('[data-burst]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const p = BURST_PRESETS[btn.dataset.burst];
+    document.getElementById('burstOn').value = p.on;
+    document.getElementById('burstOff').value = p.off;
+    updateBurstPreview();
+  });
+});
+
+// ============================
+// BURST PREVIEW DIAGRAM
+// ============================
+function updateBurstPreview() {
+  const onMs  = +document.getElementById('burstOn').value  || 100;
+  const offMs = +document.getElementById('burstOff').value || 100;
+  const period = onMs + offMs;
+  const duty = onMs / period;
+  const diagram = document.getElementById('burstDiagram');
+  diagram.innerHTML = '';
+  const totalW = 300;
+  const cyclesShown = Math.min(8, Math.ceil(2000 / period));
+  const pxPerPeriod = Math.max(6, Math.floor(totalW / cyclesShown));
+  const pxOn  = Math.max(2, Math.round(pxPerPeriod * duty));
+  const pxOff = Math.max(2, pxPerPeriod - pxOn);
+  for (let c = 0; c < cyclesShown; c++) {
+    const on = document.createElement('div');
+    on.className = 'burst-block';
+    on.style.width = pxOn + 'px';
+    diagram.appendChild(on);
+    const off = document.createElement('div');
+    off.className = 'burst-gap';
+    off.style.width = pxOff + 'px';
+    off.style.borderBottom = '1px solid #222';
+    diagram.appendChild(off);
+  }
+  const rateHz = (1000 / period).toFixed(1);
+  document.getElementById('burstInfo').textContent =
+    `${onMs}ms ON / ${offMs}ms OFF — ${rateHz} Hz gate rate — ${Math.round(duty*100)}% duty cycle`;
+}
+
+['burstOn','burstOff'].forEach(id =>
+  document.getElementById(id).addEventListener('input', updateBurstPreview));
+
+// ============================
+// MODE TABS
+// ============================
+let currentMode = 'banded';
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.mode-panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    document.getElementById('panel-'+currentMode).classList.add('active');
+  });
+});
+
+// ============================
+// AUDIO PLAYBACK
+// ============================
+let currentSamples = null;
+let audioCtx = null, currentSource = null, currentCtxRate = 0;
+
+function playBuf(samples, sr, ampDB) {
+  stopBuf();
+  if (!audioCtx || currentCtxRate !== sr) {
+    if (audioCtx) audioCtx.close();
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: sr });
+    currentCtxRate = sr;
+  }
+  const amp = Math.pow(10, ampDB/20);
+  const buf = audioCtx.createBuffer(1, samples.length, sr);
+  const ch = buf.getChannelData(0);
+  for (let i = 0; i < samples.length; i++) ch[i] = samples[i] * amp;
+  currentSource = audioCtx.createBufferSource();
+  currentSource.buffer = buf;
+  currentSource.connect(audioCtx.destination);
+  currentSource.start();
+  currentSource.onended = () => setStatus('Playback complete', false);
+  setStatus('Playing...', true);
+}
+function stopBuf() { if(currentSource){try{currentSource.stop();}catch(e){}currentSource=null;} }
+function setStatus(t, active) {
+  document.getElementById('statusText').textContent = t;
+  document.getElementById('statusDot').classList.toggle('active', !!active);
+}
+
+// ============================
+// GENERATE
+// ============================
+document.getElementById('generateBtn').addEventListener('click', () => {
+  const sr   = +document.getElementById('sampleRate').value;
+  const dur  = +document.getElementById('duration').value;
+  const fade = +document.getElementById('fade').value;
+  const amp  = +document.getElementById('amplitude').value;
+  const bd   = +document.getElementById('bitDepth').value;
+  const nt   = document.getElementById('noiseType').value;
+  const N    = Math.round(dur * sr);
+
+  setStatus('Generating noise...', true);
+
+  setTimeout(() => {
+    const t0 = performance.now();
+    let samples, desc, detail;
+
+    // Base noise
+    const base = nt === 'pink' ? genPink(N) : genWhite(N);
+
+    if (currentMode === 'banded') {
+      // Collect active bands
+      const bands = [];
+      for (let i = 0; i < 4; i++) {
+        if (!document.getElementById(`band-on-${i}`)?.checked) continue;
+        bands.push({
+          centre: +document.getElementById(`band-centre-${i}`).value,
+          bw:     +document.getElementById(`band-bw-${i}`).value,
+          level:  +document.getElementById(`band-level-${i}`).value,
+        });
+      }
+      if (!bands.length) { setStatus('No bands active', false); return; }
+
+      // Sum filtered bands
+      const out = new Float32Array(N);
+      for (const b of bands) {
+        const filtered = bandpassSteep(new Float32Array(base), sr, b.centre, b.bw, 2);
+        const gain = Math.pow(10, b.level/20);
+        for (let i = 0; i < N; i++) out[i] += filtered[i] * gain;
+      }
+      normalise(out);
+      samples = out;
+      desc = `Banded ${nt} noise — ${bands.length} band${bands.length>1?'s':''}`;
+      detail = bands.map(b=>`${b.centre}Hz/${b.bw}oct`).join(' + ');
+
+    } else if (currentMode === 'burst') {
+      const onMs    = +document.getElementById('burstOn').value;
+      const offMs   = +document.getElementById('burstOff').value;
+      const gFadeMs = +document.getElementById('burstFade').value;
+      const centre  = +document.getElementById('burstBand').value;
+      const bw      = +document.getElementById('burstBW').value;
+      const fadeSmp = Math.round(gFadeMs * sr / 1000);
+
+      let noise = new Float32Array(base);
+      if (centre > 0) noise = bandpassSteep(noise, sr, centre, bw, 2);
+      samples = applyBurstGate(noise, sr, onMs, offMs, fadeSmp);
+      normalise(samples);
+      desc = `Burst ${nt} noise — ${onMs}ms on / ${offMs}ms off`;
+      detail = centre > 0 ? `Band: ${centre}Hz / ${bw}oct` : 'Full band';
+
+    } else {
+      // Full band
+      samples = base;
+      desc = `Full band ${nt} noise`;
+      detail = `${sr.toLocaleString()} Hz / ${bd}-bit`;
+    }
+
+    applyFade(samples, sr, fade);
+    currentSamples = samples;
+
+    const ms = (performance.now() - t0).toFixed(0);
+    const sz = 44 + N * (bd/8);
+
+    document.getElementById('infoBox').style.display = 'block';
+    document.getElementById('infoText').textContent  = desc;
+    document.getElementById('infoDetail').textContent = detail + ' | ' + N.toLocaleString() + ' samples | ' +
+      (sz>1048576?'~'+(sz/1048576).toFixed(1)+' MB':'~'+Math.round(sz/1024)+' KB') + ' | Generated in ' + ms + 'ms';
+
+    document.getElementById('waveformBox').style.display = 'block';
+    document.getElementById('waveformInfo').textContent = N.toLocaleString() + ' samples';
+    drawWaveform(document.getElementById('waveformCanvas'), samples);
+
+    document.getElementById('playBtn').disabled    = false;
+    document.getElementById('stopBtn').disabled    = false;
+    document.getElementById('downloadBtn').disabled = false;
+
+    setStatus('Generated in ' + ms + 'ms', false);
+  }, 30);
+});
+
+document.getElementById('playBtn').addEventListener('click', () => {
+  if (!currentSamples) return;
+  playBuf(currentSamples, +document.getElementById('sampleRate').value, +document.getElementById('amplitude').value);
+});
+document.getElementById('stopBtn').addEventListener('click', () => { stopBuf(); setStatus('Stopped', false); });
+document.getElementById('downloadBtn').addEventListener('click', () => {
+  if (!currentSamples) return;
+  const sr  = +document.getElementById('sampleRate').value;
+  const amp = +document.getElementById('amplitude').value;
+  const bd  = +document.getElementById('bitDepth').value;
+  const dur = +document.getElementById('duration').value;
+  const nt  = document.getElementById('noiseType').value;
+  setStatus('Encoding WAV...', true);
+  setTimeout(() => {
+    const wav = encodeWAV(currentSamples, sr, amp, bd);
+    const fn  = `noise_${currentMode}_${nt}_${dur}s_${sr}Hz.wav`;
+    const a   = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([wav], {type:'audio/wav'}));
+    a.download = fn;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setStatus('Downloaded ' + fn, false);
+  }, 20);
+});
+
+window.addEventListener('resize', () => {
+  if (currentSamples) drawWaveform(document.getElementById('waveformCanvas'), currentSamples);
+});
+
+[document.getElementById('duration'), document.getElementById('sampleRate'), document.getElementById('bitDepth')]
+  .forEach(el => el.addEventListener('change', updateBandInfo));
+
+// Init
+buildBandRows();
+updateBandInfo();
+updateBurstPreview();
+</script>
+</body>
+</html>

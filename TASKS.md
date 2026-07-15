@@ -17,3 +17,8 @@ Format: `[ ]` = to do, `[~]` = in progress, `[x]` = done & pushed live.
 
 ## Done (live)
 - [x] Initial setup: local edit → push → GitHub Pages deploy pipeline working
+- [x] Added 6 new pages: tone-generator, tone-generator-advanced, banded-noise-generator,
+      impulse-generator, amplitude-mod-generator, click-clicker
+- [x] Reorganized home.html into 3 sections: Signal Generators, Sound Design Tools, Mini Games
+      (Babel placed in Signal Generators; Click Factory + Shot Forge = Sound Design Tools)
+- [x] Updated the RANDOM button page list to include all new pages

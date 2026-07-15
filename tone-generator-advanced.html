@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>~ * ADVANCED TONE GEN * ~</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    color: #ccc;
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .starfield {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+      radial-gradient(1px 1px at 40px 70px, #fff, transparent),
+      radial-gradient(1px 1px at 50px 160px, #fff, transparent),
+      radial-gradient(1px 1px at 90px 40px, #aaf, transparent),
+      radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+      radial-gradient(1px 1px at 160px 120px, #ffa, transparent),
+      radial-gradient(1px 1px at 200px 50px, #fff, transparent),
+      radial-gradient(1px 1px at 80px 190px, #aff, transparent);
+    background-size: 220px 200px;
+    z-index: 0;
+  }
+  .scanlines {
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px);
+    z-index: 100; pointer-events: none;
+  }
+  .bar-top {
+    position: fixed; top: 0; left: 0; right: 0; height: 24px; z-index: 50;
+    background: repeating-linear-gradient(-45deg, #00ff88, #00ff88 10px, #000 10px, #000 20px);
+  }
+  .bar-bottom {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 24px; z-index: 50;
+    background: repeating-linear-gradient(45deg, #00ff88, #00ff88 10px, #000 10px, #000 20px);
+  }
+
+  .app {
+    position: relative; z-index: 10;
+    max-width: 800px; margin: 0 auto;
+    padding: 44px 16px 60px;
+  }
+
+  .header { text-align: center; margin-bottom: 10px; padding-bottom: 12px; border-bottom: 2px dashed #444; }
+  .header h1 {
+    font-family: 'Press Start 2P', monospace; font-size: 18px;
+    color: #00ff88; text-shadow: 0 0 10px #00ff88, 0 0 20px #00cc66, 3px 3px 0 #004422;
+    line-height: 1.6; animation: flicker 4s infinite;
+  }
+  .header .subtitle { font-size: 22px; color: #ffcc00; text-shadow: 0 0 6px #ffcc00; margin-top: 6px; }
+
+  @keyframes flicker {
+    0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:.6} 94%{opacity:1} 97%{opacity:.8} 98%{opacity:1}
+  }
+
+  .marquee-wrapper {
+    width: 100%; overflow: hidden; border: 2px solid #333;
+    background: #111; padding: 4px 0; margin: 12px 0;
+  }
+  .marquee-text {
+    font-size: 18px; color: #00ff88; white-space: nowrap;
+    animation: scroll-left 20s linear infinite;
+  }
+  @keyframes scroll-left { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+
+  /* MODE TABS */
+  .mode-tabs {
+    display: flex; gap: 0; margin-bottom: 14px;
+    border: 3px solid #333;
+  }
+  .mode-tab {
+    font-family: 'Press Start 2P', monospace; font-size: 9px;
+    padding: 10px 14px; cursor: pointer; border: none;
+    background: #111; color: #555; flex: 1; text-align: center;
+    border-right: 2px solid #333; transition: all 0.1s; line-height: 1.6;
+  }
+  .mode-tab:last-child { border-right: none; }
+  .mode-tab:hover { background: #1a1a1a; color: #aaa; }
+  .mode-tab.active { background: #001a0d; color: #00ff88; text-shadow: 0 0 6px #00ff88; border-bottom: 3px solid #00ff88; }
+
+  /* PANELS */
+  .mode-panel { display: none; }
+  .mode-panel.active { display: block; }
+
+  .panel {
+    background: #0a0a0a; border: 3px inset #555;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .panel-title {
+    font-family: 'Press Start 2P', monospace; font-size: 10px;
+    color: #ffcc00; text-shadow: 0 0 4px #ffcc00;
+    margin-bottom: 12px; letter-spacing: 1px;
+  }
+
+  .controls-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;
+  }
+  .control-group { display: flex; flex-direction: column; gap: 4px; }
+  .control-group label { font-size: 15px; color: #888; }
+  .control-group select,
+  .control-group input[type="number"],
+  .control-group input[type="range"] {
+    font-family: 'VT323', monospace; font-size: 20px;
+    padding: 5px 8px; background: #000; border: 2px inset #666;
+    color: #0f0; outline: none; width: 100%;
+  }
+  .control-group select:focus,
+  .control-group input:focus { border-color: #00ff88; }
+  .control-group select option { background: #000; color: #0f0; }
+  .control-group .val-display { font-size: 16px; color: #00ff88; text-align: right; }
+
+  /* TONE ROWS for dual/tri */
+  .tone-row {
+    display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px;
+    align-items: end; padding: 10px 0;
+    border-bottom: 1px dashed #222;
+  }
+  .tone-row:last-child { border-bottom: none; }
+  .tone-row-label {
+    font-family: 'Press Start 2P', monospace; font-size: 8px;
+    color: #ffcc00; margin-bottom: 4px;
+  }
+
+  /* HARMONIC TABLE */
+  .harmonic-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .harmonic-table th {
+    font-family: 'Press Start 2P', monospace; font-size: 8px;
+    color: #888; padding: 6px 8px; text-align: left;
+    border-bottom: 1px solid #333;
+  }
+  .harmonic-table td { padding: 5px 8px; font-size: 18px; border-bottom: 1px dashed #1a1a1a; }
+  .harmonic-table tr:hover td { background: #0d1a0d; }
+  .harmonic-table .freq-col { color: #00ff88; }
+  .harmonic-table .name-col { color: #ffcc00; font-size: 16px; }
+  .harmonic-table .ratio-col { color: #888; font-size: 16px; }
+  .harmonic-table input[type="checkbox"] { accent-color: #00ff88; width: 16px; height: 16px; cursor: pointer; }
+  .harmonic-table input[type="range"] {
+    width: 80px; padding: 0; border: none; background: transparent;
+    accent-color: #00ff88;
+  }
+  .harmonic-table .amp-val { color: #0f0; font-size: 16px; min-width: 36px; display: inline-block; }
+
+  .fundamental-row {
+    display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin-bottom: 12px;
+  }
+  .fundamental-row .control-group { flex: 1; min-width: 120px; }
+
+  /* PRESET SERIES BUTTONS */
+  .series-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .series-btn {
+    font-family: 'VT323', monospace; font-size: 17px;
+    padding: 4px 12px; cursor: pointer; border: 2px outset #444;
+    background: #111; color: #ffcc00; transition: filter 0.1s;
+  }
+  .series-btn:hover { filter: brightness(1.3); border-color: #ffcc00; }
+  .series-btn:active { border-style: inset; }
+
+  /* GLOBAL SETTINGS */
+  .global-panel {
+    background: #060606; border: 2px solid #222;
+    padding: 12px 16px; margin-bottom: 14px;
+  }
+  .global-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px;
+  }
+
+  /* BUTTONS */
+  .btn-row {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    padding: 14px 16px; background: #0a0a0a;
+    border: 3px inset #555; margin-bottom: 14px;
+  }
+  .btn {
+    font-family: 'Press Start 2P', monospace; font-size: 10px;
+    padding: 10px 18px; cursor: pointer; border: 3px outset;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5); transition: filter 0.1s;
+  }
+  .btn:hover { filter: brightness(1.2); }
+  .btn:active { border-style: inset; }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-generate { background: linear-gradient(180deg, #0c0, #090); color: #fff; border-color: #4f4; }
+  .btn-play     { background: linear-gradient(180deg, #006688, #004466); color: #fff; border-color: #44aacc; }
+  .btn-stop     { background: linear-gradient(180deg, #cc0000, #990000); color: #fff; border-color: #ff4444; }
+  .btn-download { background: linear-gradient(180deg, #cc6600, #994400); color: #fff; border-color: #ff8844; }
+
+  /* VIZ */
+  .viz-box {
+    background: #060606; border: 2px inset #444;
+    margin-bottom: 14px; overflow: hidden; display: none;
+  }
+  .viz-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; border-bottom: 1px solid #222; background: #0a0a0a;
+  }
+  .viz-title { font-family: 'Press Start 2P', monospace; font-size: 9px; color: #ffcc00; }
+  .viz-info { font-size: 16px; color: #666; }
+  .viz-canvas-wrap { padding: 6px; background: #030308; }
+  .viz-canvas-wrap canvas { display: block; width: 100%; }
+
+  /* INFO BOX */
+  .info-box {
+    background: #060606; border: 2px inset #444;
+    padding: 10px 14px; margin-bottom: 14px; display: none;
+  }
+  .info-text { font-size: 20px; color: #00ff88; text-shadow: 0 0 4px #00ff88; }
+  .info-detail { font-size: 16px; color: #0f0; margin-top: 6px; }
+
+  .info-strip {
+    display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px;
+    padding-top: 10px; border-top: 1px dashed #333; font-size: 17px; color: #888;
+  }
+  .info-strip span { color: #0f0; }
+
+  .status-bar {
+    position: fixed; bottom: 24px; left: 0; right: 0;
+    background: #0a0a0a; border-top: 2px solid #333;
+    padding: 5px 16px; display: flex; align-items: center;
+    gap: 10px; font-size: 16px; color: #666; z-index: 50;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #333; transition: all 0.3s; }
+  .status-dot.active { background: #00ff88; box-shadow: 0 0 6px #00ff88; }
+  .status-bar .right { margin-left: auto; font-size: 14px; }
+
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .badge {
+    font-family: 'Press Start 2P', monospace; font-size: 6px;
+    padding: 5px 8px; border: 2px outset; display: inline-block; line-height: 1.5;
+  }
+  .badge-1 { background: #0000aa; color: #fff; border-color: #4444ff; }
+  .badge-2 { background: #004400; color: #0f0; border-color: #44ff44; }
+  .badge-3 { background: #443300; color: #ffcc00; border-color: #ffaa00; }
+
+  .back-link { display: block; text-align: center; margin-top: 14px; }
+  .back-link a { color: #00ccff; text-decoration: none; font-size: 20px; }
+  .back-link a:hover { color: #ff0; text-decoration: underline; }
+
+  @media (max-width: 520px) {
+    .header h1 { font-size: 12px; }
+    .tone-row { grid-template-columns: 1fr 1fr; }
+    .mode-tab { font-size: 7px; padding: 8px 6px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="starfield"></div>
+<div class="scanlines"></div>
+<div class="bar-top"></div>
+<div class="bar-bottom"></div>
+
+<div class="app">
+  <div class="header">
+    <h1>~ * ADVANCED TONE GEN * ~</h1>
+    <div class="subtitle">Dual / Tri Tone &bull; Harmonic Series &bull; Custom Mix</div>
+  </div>
+
+  <div class="marquee-wrapper">
+    <div class="marquee-text">
+      *** DUAL TONE *** TRI TONE *** HARMONIC SERIES *** FUNDAMENTAL + OVERTONES *** CUSTOM AMPLITUDE PER PARTIAL *** FREE .WAV DOWNLOAD *** 48kHz / 96kHz ***
+    </div>
+  </div>
+
+  <!-- GLOBAL SETTINGS -->
+  <div class="global-panel">
+    <div class="panel-title">&gt;&gt; OUTPUT SETTINGS</div>
+    <div class="global-grid">
+      <div class="control-group">
+        <label>Duration (s)</label>
+        <input type="number" id="duration" value="2" min="0.05" max="3600" step="0.05">
+      </div>
+      <div class="control-group">
+        <label>Sample Rate</label>
+        <select id="sampleRate">
+          <option value="44100">44,100 Hz</option>
+          <option value="48000" selected>48,000 Hz</option>
+          <option value="96000">96,000 Hz</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Bit Depth</label>
+        <select id="bitDepth">
+          <option value="16" selected>16-bit</option>
+          <option value="24">24-bit</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Master Amp</label>
+        <select id="amplitude">
+          <option value="0">0 dBFS</option>
+          <option value="-3" selected>-3 dBFS</option>
+          <option value="-6">-6 dBFS</option>
+          <option value="-12">-12 dBFS</option>
+          <option value="-20">-20 dBFS</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Fade In/Out</label>
+        <select id="fade">
+          <option value="0">None</option>
+          <option value="0.005" selected>5 ms</option>
+          <option value="0.01">10 ms</option>
+          <option value="0.05">50 ms</option>
+          <option value="0.1">100 ms</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Waveform</label>
+        <select id="waveform">
+          <option value="sine" selected>Sine</option>
+          <option value="square">Square</option>
+          <option value="sawtooth">Sawtooth</option>
+          <option value="triangle">Triangle</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODE TABS -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="dual">DUAL TONE</button>
+    <button class="mode-tab" data-mode="tri">TRI TONE</button>
+    <button class="mode-tab" data-mode="harmonic">HARMONIC SERIES</button>
+    <button class="mode-tab" data-mode="custom">CUSTOM MIX</button>
+  </div>
+
+  <!-- DUAL TONE -->
+  <div class="mode-panel active" id="panel-dual">
+    <div class="panel">
+      <div class="panel-title">&gt;&gt; DUAL TONE — TWO FREQUENCIES</div>
+      <div class="tone-row">
+        <div class="control-group">
+          <div class="tone-row-label">TONE A</div>
+          <label>Frequency (Hz)</label>
+          <input type="number" id="dual-f1" value="1000" min="1" max="24000" step="1">
+        </div>
+        <div class="control-group">
+          <label>Level (dB)</label>
+          <input type="number" id="dual-l1" value="0" min="-40" max="0" step="1">
+        </div>
+        <div class="control-group">
+          <label>Waveform Override</label>
+          <select id="dual-w1">
+            <option value="">— use global —</option>
+            <option value="sine">Sine</option>
+            <option value="square">Square</option>
+            <option value="sawtooth">Sawtooth</option>
+            <option value="triangle">Triangle</option>
+          </select>
+        </div>
+        <div></div>
+      </div>
+      <div class="tone-row">
+        <div class="control-group">
+          <div class="tone-row-label">TONE B</div>
+          <label>Frequency (Hz)</label>
+          <input type="number" id="dual-f2" value="1100" min="1" max="24000" step="1">
+        </div>
+        <div class="control-group">
+          <label>Level (dB)</label>
+          <input type="number" id="dual-l2" value="0" min="-40" max="0" step="1">
+        </div>
+        <div class="control-group">
+          <label>Waveform Override</label>
+          <select id="dual-w2">
+            <option value="">— use global —</option>
+            <option value="sine">Sine</option>
+            <option value="square">Square</option>
+            <option value="sawtooth">Sawtooth</option>
+            <option value="triangle">Triangle</option>
+          </select>
+        </div>
+        <div class="control-group" style="justify-content:flex-end">
+          <label style="color:#555;font-size:14px">Beat freq</label>
+          <div style="color:#00ff88;font-size:22px" id="dual-beat">100 Hz</div>
+        </div>
+      </div>
+      <!-- Quick interval presets -->
+      <div style="margin-top:12px">
+        <div style="font-size:15px;color:#555;margin-bottom:6px">QUICK INTERVALS from Tone A:</div>
+        <div class="series-btns" id="interval-presets"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRI TONE -->
+  <div class="mode-panel" id="panel-tri">
+    <div class="panel">
+      <div class="panel-title">&gt;&gt; TRI TONE — THREE FREQUENCIES</div>
+      <div id="tri-rows"></div>
+      <div style="margin-top:12px">
+        <div style="font-size:15px;color:#555;margin-bottom:6px">QUICK CHORDS:</div>
+        <div class="series-btns" id="chord-presets"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HARMONIC SERIES -->
+  <div class="mode-panel" id="panel-harmonic">
+    <div class="panel">
+      <div class="panel-title">&gt;&gt; HARMONIC SERIES — FUNDAMENTAL + OVERTONES</div>
+      <div class="fundamental-row">
+        <div class="control-group">
+          <label>Fundamental (Hz)</label>
+          <input type="number" id="harm-fund" value="100" min="1" max="2000" step="1">
+        </div>
+        <div class="control-group">
+          <label>Max Harmonics</label>
+          <select id="harm-count">
+            <option value="4">4</option>
+            <option value="8" selected>8</option>
+            <option value="12">12</option>
+            <option value="16">16</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Rolloff</label>
+          <select id="harm-rolloff">
+            <option value="flat">Flat (all equal)</option>
+            <option value="1n" selected>1/n (natural)</option>
+            <option value="1n2">1/n² (steep)</option>
+            <option value="custom">Custom (sliders)</option>
+          </select>
+        </div>
+      </div>
+      <div class="series-btns">
+        <div style="font-size:15px;color:#555;margin-right:4px;line-height:2">PRESETS:</div>
+        <button class="series-btn" data-series="natural">Natural</button>
+        <button class="series-btn" data-series="odd">Odd only (Square)</button>
+        <button class="series-btn" data-series="even">Even only</button>
+        <button class="series-btn" data-series="bright">Bright (flat)</button>
+        <button class="series-btn" data-series="sub">Sub + Fund</button>
+      </div>
+      <table class="harmonic-table">
+        <thead>
+          <tr>
+            <th>ON</th>
+            <th>#</th>
+            <th class="freq-col">FREQ</th>
+            <th class="name-col">NAME</th>
+            <th class="ratio-col">RATIO</th>
+            <th>AMPLITUDE</th>
+          </tr>
+        </thead>
+        <tbody id="harmonic-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CUSTOM MIX -->
+  <div class="mode-panel" id="panel-custom">
+    <div class="panel">
+      <div class="panel-title">&gt;&gt; CUSTOM MIX — UP TO 8 PARTIALS</div>
+      <div id="custom-rows"></div>
+      <button class="series-btn" id="add-partial-btn" style="margin-top:10px">+ ADD PARTIAL</button>
+    </div>
+  </div>
+
+  <!-- BUTTONS -->
+  <div class="btn-row">
+    <button class="btn btn-generate" id="generateBtn">GENERATE</button>
+    <button class="btn btn-play" id="playBtn" disabled>&#9654; PLAY</button>
+    <button class="btn btn-stop" id="stopBtn" disabled>&#9632; STOP</button>
+    <button class="btn btn-download" id="downloadBtn" disabled>DOWNLOAD .WAV</button>
+  </div>
+
+  <!-- INFO -->
+  <div class="info-box" id="infoBox">
+    <div class="info-text" id="infoText"></div>
+    <div class="info-detail" id="infoDetail"></div>
+    <div class="info-strip">
+      <div>Samples: <span id="infoSamples">—</span></div>
+      <div>File: <span id="infoSize">—</span></div>
+      <div>Partials: <span id="infoPartials">—</span></div>
+    </div>
+  </div>
+
+  <!-- WAVEFORM -->
+  <div class="viz-box" id="waveformBox">
+    <div class="viz-header">
+      <span class="viz-title">COMPOSITE WAVEFORM</span>
+      <span class="viz-info" id="waveformInfo"></span>
+    </div>
+    <div class="viz-canvas-wrap">
+      <canvas id="waveformCanvas" height="140"></canvas>
+    </div>
+  </div>
+
+  <div class="badge-row">
+    <div class="badge badge-1">MULTI<br>PARTIAL</div>
+    <div class="badge badge-2">NO SERVER<br>REQUIRED</div>
+    <div class="badge badge-3">ADDITIVE<br>SYNTHESIS</div>
+  </div>
+
+  <div class="back-link">
+    <a href="tone-generator.html">&lt;&lt; BASIC TONE GEN &gt;&gt;</a>
+  </div>
+</div>
+
+<div class="status-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span id="statusText">Ready</span>
+  <span class="right">ADV TONE GEN v1.0</span>
+</div>
+
+<script>
+// ============================
+// WAVEFORM GENERATORS (single partial)
+// ============================
+function makeSample(wave, phase) {
+  switch(wave) {
+    case 'sine':     return Math.sin(phase);
+    case 'square':   return Math.sin(phase) >= 0 ? 1 : -1;
+    case 'sawtooth': return ((phase % (2*Math.PI)) / Math.PI) - 1;
+    case 'triangle': { const t = ((phase % (2*Math.PI)) / (2*Math.PI)); return t < 0.5 ? 4*t-1 : 3-4*t; }
+    default:         return Math.sin(phase);
+  }
+}
+
+function generatePartials(partials, duration, sr) {
+  // partials: [{freq, amp, wave}]
+  const N = Math.round(duration * sr);
+  const out = new Float32Array(N);
+  for (const p of partials) {
+    if (!p.freq || p.amp <= 0) continue;
+    const dp = 2 * Math.PI * p.freq / sr;
+    let phase = 0;
+    const a = p.amp;
+    for (let i = 0; i < N; i++) {
+      out[i] += makeSample(p.wave, phase) * a;
+      phase += dp;
+    }
+  }
+  // Normalize to ±1
+  let mx = 0;
+  for (let i = 0; i < N; i++) mx = Math.max(mx, Math.abs(out[i]));
+  if (mx > 0) for (let i = 0; i < N; i++) out[i] /= mx;
+  return out;
+}
+
+function applyFade(s, sr, ft) {
+  const fn = Math.min(Math.round(ft * sr), Math.floor(s.length / 2));
+  for (let i = 0; i < fn; i++) { const g = i/fn; s[i]*=g; s[s.length-1-i]*=g; }
+}
+
+// ============================
+// WAV ENCODER
+// ============================
+function encodeWAV(samples, sr, ampDB, bitDepth) {
+  const amp = Math.pow(10, ampDB / 20);
+  const N = samples.length, bps = bitDepth / 8;
+  const dataSize = N * bps;
+  const buf = new ArrayBuffer(44 + dataSize);
+  const v = new DataView(buf);
+  const ws = (o, s) => { for (let i=0;i<s.length;i++) v.setUint8(o+i, s.charCodeAt(i)); };
+  ws(0,'RIFF'); v.setUint32(4, 36+dataSize, true); ws(8,'WAVE');
+  ws(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr*bps,true); v.setUint16(32,bps,true); v.setUint16(34,bitDepth,true);
+  ws(36,'data'); v.setUint32(40,dataSize,true);
+  let off = 44;
+  for (let i=0;i<N;i++) {
+    const val = Math.max(-1, Math.min(1, samples[i]*amp));
+    if (bitDepth===16) { v.setInt16(off, val<0?val*32768:val*32767, true); off+=2; }
+    else { const iv=val<0?val*8388608:val*8388607; v.setUint8(off,iv&0xFF); v.setUint8(off+1,(iv>>8)&0xFF); v.setUint8(off+2,(iv>>16)&0xFF); off+=3; }
+  }
+  return buf;
+}
+
+// ============================
+// DRAW WAVEFORM
+// ============================
+function drawWaveform(canvas, samples, lowestFreq, sr) {
+  const W = canvas.parentElement.clientWidth - 12;
+  const H = canvas.height;
+  canvas.width = W;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#030308'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#111'; ctx.lineWidth=1;
+  for(let y=0;y<=4;y++){const yp=(y/4)*H; ctx.beginPath();ctx.moveTo(0,yp);ctx.lineTo(W,yp);ctx.stroke();}
+  for(let x=0;x<=8;x++){const xp=(x/8)*W; ctx.beginPath();ctx.moveTo(xp,0);ctx.lineTo(xp,H);ctx.stroke();}
+  ctx.strokeStyle='#222'; ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+
+  const cyclesWanted = 10;
+  const spc = sr / Math.max(1, lowestFreq);
+  const previewSamples = Math.max(W, Math.min(samples.length, Math.round(spc * cyclesWanted)));
+
+  ctx.strokeStyle='#00ff88'; ctx.lineWidth=1.5;
+  ctx.shadowColor='#00ff88'; ctx.shadowBlur=4;
+  ctx.beginPath();
+  let first=true;
+  for(let px=0;px<W;px++){
+    const i0=Math.floor((px/W)*previewSamples);
+    const i1=Math.max(i0+1,Math.floor(((px+1)/W)*previewSamples));
+    let sum=0,cnt=0;
+    for(let k=i0;k<i1&&k<samples.length;k++){sum+=samples[k];cnt++;}
+    const y=H/2-(sum/(cnt||1))*H*0.44;
+    if(first){ctx.moveTo(px,y);first=false;}else ctx.lineTo(px,y);
+  }
+  ctx.stroke();
+  ctx.globalAlpha=0.12; ctx.lineWidth=7; ctx.stroke();
+  ctx.globalAlpha=1; ctx.shadowBlur=0;
+}
+
+// ============================
+// INTERVAL / CHORD PRESETS
+// ============================
+const INTERVALS = [
+  {name:'Oct↑',  ratio:2},
+  {name:'5th',   ratio:3/2},
+  {name:'4th',   ratio:4/3},
+  {name:'M3',    ratio:5/4},
+  {name:'m3',    ratio:6/5},
+  {name:'M2',    ratio:9/8},
+  {name:'TT',    ratio:Math.pow(2,6/12)},
+  {name:'Oct↓',  ratio:0.5},
+];
+
+const CHORDS = [
+  {name:'Major',   ratios:[1, 5/4, 3/2]},
+  {name:'Minor',   ratios:[1, 6/5, 3/2]},
+  {name:'Dom7',    ratios:[1, 5/4, 3/2, 7/4]},
+  {name:'Dim',     ratios:[1, 6/5, Math.pow(2,6/12)]},
+  {name:'5th',     ratios:[1, 3/2, 2]},
+  {name:'Oct+5th', ratios:[1, 2, 3]},
+];
+
+// Build interval preset buttons
+const intervalPresets = document.getElementById('interval-presets');
+INTERVALS.forEach(iv => {
+  const btn = document.createElement('button');
+  btn.className = 'series-btn';
+  btn.textContent = iv.name;
+  btn.addEventListener('click', () => {
+    const f1 = Math.max(1, +document.getElementById('dual-f1').value);
+    document.getElementById('dual-f2').value = Math.round(f1 * iv.ratio);
+    updateBeat();
+  });
+  intervalPresets.appendChild(btn);
+});
+
+// Beat frequency display
+function updateBeat() {
+  const f1 = +document.getElementById('dual-f1').value || 0;
+  const f2 = +document.getElementById('dual-f2').value || 0;
+  document.getElementById('dual-beat').textContent = Math.abs(f2-f1).toFixed(1) + ' Hz';
+}
+document.getElementById('dual-f1').addEventListener('input', updateBeat);
+document.getElementById('dual-f2').addEventListener('input', updateBeat);
+
+// Build tri tone rows
+const triFreqs = [500, 1000, 1500];
+const triDiv = document.getElementById('tri-rows');
+for(let i=0;i<3;i++){
+  const row = document.createElement('div');
+  row.className = 'tone-row';
+  row.innerHTML = `
+    <div class="control-group">
+      <div class="tone-row-label">TONE ${['A','B','C'][i]}</div>
+      <label>Frequency (Hz)</label>
+      <input type="number" id="tri-f${i+1}" value="${triFreqs[i]}" min="1" max="24000" step="1">
+    </div>
+    <div class="control-group">
+      <label>Level (dB)</label>
+      <input type="number" id="tri-l${i+1}" value="0" min="-40" max="0" step="1">
+    </div>
+    <div class="control-group">
+      <label>Waveform Override</label>
+      <select id="tri-w${i+1}">
+        <option value="">— use global —</option>
+        <option value="sine">Sine</option>
+        <option value="square">Square</option>
+        <option value="sawtooth">Sawtooth</option>
+        <option value="triangle">Triangle</option>
+      </select>
+    </div>
+    <div></div>`;
+  triDiv.appendChild(row);
+}
+
+// Chord presets for tri
+const chordDiv = document.getElementById('chord-presets');
+CHORDS.forEach(ch => {
+  const btn = document.createElement('button');
+  btn.className = 'series-btn';
+  btn.textContent = ch.name;
+  btn.addEventListener('click', () => {
+    const fund = +document.getElementById('tri-f1').value || 440;
+    const ids = ['tri-f1','tri-f2','tri-f3'];
+    ch.ratios.slice(0,3).forEach((r,i) => {
+      document.getElementById(ids[i]).value = Math.round(fund * r);
+    });
+  });
+  chordDiv.appendChild(btn);
+});
+
+// ============================
+// HARMONIC SERIES
+// ============================
+const HARMONIC_NAMES = ['Fundamental','2nd (Octave)','3rd (P5+Oct)','4th (2nd Oct)','5th (M3+2Oct)','6th (P5+2Oct)','7th (m7+2Oct)','8th (3rd Oct)','9th','10th','11th','12th','13th','14th','15th','16th'];
+
+function buildHarmonicTable() {
+  const fund = +document.getElementById('harm-fund').value || 100;
+  const count = +document.getElementById('harm-count').value || 8;
+  const rolloff = document.getElementById('harm-rolloff').value;
+  const tbody = document.getElementById('harmonic-tbody');
+  tbody.innerHTML = '';
+  for(let n=1;n<=count;n++){
+    const freq = fund * n;
+    let amp = 1;
+    if(rolloff==='1n') amp = 1/n;
+    else if(rolloff==='1n2') amp = 1/(n*n);
+    const ampPct = Math.round(amp * 100);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="checkbox" class="harm-check" data-n="${n}" ${n<=8?'checked':''}></td>
+      <td style="color:#555">${n}</td>
+      <td class="freq-col">${freq >= 1000 ? (freq/1000).toFixed(2).replace(/\.?0+$/,'')+'k' : freq} Hz</td>
+      <td class="name-col">${HARMONIC_NAMES[n-1]||('H'+n)}</td>
+      <td class="ratio-col">${n}:1</td>
+      <td>
+        <input type="range" class="harm-amp" data-n="${n}" min="0" max="100" value="${ampPct}" style="width:90px">
+        <span class="amp-val" id="harm-ampval-${n}">${ampPct}%</span>
+      </td>`;
+    tbody.appendChild(tr);
+    tr.querySelector('.harm-amp').addEventListener('input', function(){
+      document.getElementById('harm-ampval-'+this.dataset.n).textContent = this.value+'%';
+    });
+  }
+}
+
+document.getElementById('harm-fund').addEventListener('input', buildHarmonicTable);
+document.getElementById('harm-count').addEventListener('change', buildHarmonicTable);
+document.getElementById('harm-rolloff').addEventListener('change', buildHarmonicTable);
+
+// Series presets
+document.querySelectorAll('[data-series]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const type = btn.dataset.series;
+    const count = +document.getElementById('harm-count').value || 8;
+    for(let n=1;n<=count;n++){
+      const chk = document.querySelector(`.harm-check[data-n="${n}"]`);
+      const amp = document.querySelector(`.harm-amp[data-n="${n}"]`);
+      if(!chk||!amp) continue;
+      let on=true, val=0;
+      switch(type){
+        case 'natural': on=true; val=Math.round(100/n); break;
+        case 'odd':     on=(n%2===1); val=Math.round(100/n); break;
+        case 'even':    on=(n%2===0||n===1); val=Math.round(100/n); break;
+        case 'bright':  on=true; val=100; break;
+        case 'sub':     on=(n===1); val=100; break;
+      }
+      chk.checked=on; amp.value=val;
+      document.getElementById('harm-ampval-'+n).textContent=val+'%';
+    }
+  });
+});
+
+// ============================
+// CUSTOM MIX
+// ============================
+let customCount = 0;
+function addCustomRow(freq=440, amp=100, wave='') {
+  if(customCount >= 8) return;
+  customCount++;
+  const id = customCount;
+  const div = document.createElement('div');
+  div.className = 'tone-row';
+  div.id = `custom-row-${id}`;
+  div.innerHTML = `
+    <div class="control-group">
+      <div class="tone-row-label">PARTIAL ${id}</div>
+      <label>Freq (Hz)</label>
+      <input type="number" class="custom-freq" value="${freq}" min="1" max="24000" step="1">
+    </div>
+    <div class="control-group">
+      <label>Level %</label>
+      <input type="number" class="custom-amp" value="${amp}" min="0" max="100" step="1">
+    </div>
+    <div class="control-group">
+      <label>Waveform</label>
+      <select class="custom-wave">
+        <option value="">— global —</option>
+        <option value="sine" ${wave==='sine'?'selected':''}>Sine</option>
+        <option value="square" ${wave==='square'?'selected':''}>Square</option>
+        <option value="sawtooth" ${wave==='sawtooth'?'selected':''}>Sawtooth</option>
+        <option value="triangle" ${wave==='triangle'?'selected':''}>Triangle</option>
+      </select>
+    </div>
+    <div class="control-group" style="justify-content:flex-end">
+      <button class="series-btn" style="color:#ff4444;border-color:#ff4444" onclick="removeCustomRow(${id})">REMOVE</button>
+    </div>`;
+  document.getElementById('custom-rows').appendChild(div);
+}
+function removeCustomRow(id) {
+  const el = document.getElementById(`custom-row-${id}`);
+  if(el) { el.remove(); customCount--; }
+}
+
+document.getElementById('add-partial-btn').addEventListener('click', () => addCustomRow());
+addCustomRow(200, 100);
+addCustomRow(400, 70);
+addCustomRow(600, 50);
+
+// ============================
+// MODE TABS
+// ============================
+let currentMode = 'dual';
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.mode-panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    document.getElementById('panel-'+currentMode).classList.add('active');
+  });
+});
+
+// ============================
+// BUILD PARTIALS FROM UI
+// ============================
+function getGlobalWave() { return document.getElementById('waveform').value; }
+
+function dbToLin(db) { return Math.pow(10, db/20); }
+
+function buildPartials() {
+  const gw = getGlobalWave();
+  switch(currentMode) {
+    case 'dual': {
+      return [
+        { freq:+document.getElementById('dual-f1').value, amp:dbToLin(+document.getElementById('dual-l1').value), wave:document.getElementById('dual-w1').value||gw },
+        { freq:+document.getElementById('dual-f2').value, amp:dbToLin(+document.getElementById('dual-l2').value), wave:document.getElementById('dual-w2').value||gw },
+      ];
+    }
+    case 'tri': {
+      return [1,2,3].map(i=>({
+        freq:+document.getElementById(`tri-f${i}`).value,
+        amp:dbToLin(+document.getElementById(`tri-l${i}`).value),
+        wave:document.getElementById(`tri-w${i}`).value||gw,
+      }));
+    }
+    case 'harmonic': {
+      const fund = +document.getElementById('harm-fund').value;
+      const count = +document.getElementById('harm-count').value;
+      const partials = [];
+      for(let n=1;n<=count;n++){
+        const chk = document.querySelector(`.harm-check[data-n="${n}"]`);
+        const amp = document.querySelector(`.harm-amp[data-n="${n}"]`);
+        if(chk&&chk.checked&&amp) {
+          partials.push({ freq:fund*n, amp:+amp.value/100, wave:gw });
+        }
+      }
+      return partials;
+    }
+    case 'custom': {
+      const rows = document.querySelectorAll('#custom-rows .tone-row');
+      return Array.from(rows).map(row=>({
+        freq:+row.querySelector('.custom-freq').value,
+        amp:+row.querySelector('.custom-amp').value/100,
+        wave:row.querySelector('.custom-wave').value||gw,
+      })).filter(p=>p.freq>0&&p.amp>0);
+    }
+  }
+  return [];
+}
+
+function lowestFreq(partials) {
+  return Math.min(...partials.map(p=>p.freq).filter(f=>f>0));
+}
+
+// ============================
+// AUDIO / UI
+// ============================
+let currentSamples = null, currentPartials = [];
+let audioCtx = null, currentSource = null, currentCtxRate = 0;
+let totalGens = 0;
+
+function playBuf(samples, sr, ampDB) {
+  stopBuf();
+  if(!audioCtx||currentCtxRate!==sr){if(audioCtx)audioCtx.close();audioCtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:sr});currentCtxRate=sr;}
+  const amp=Math.pow(10,ampDB/20);
+  const buf=audioCtx.createBuffer(1,samples.length,sr);
+  const ch=buf.getChannelData(0);
+  for(let i=0;i<samples.length;i++) ch[i]=samples[i]*amp;
+  currentSource=audioCtx.createBufferSource();
+  currentSource.buffer=buf;
+  currentSource.connect(audioCtx.destination);
+  currentSource.start();
+  currentSource.onended=()=>setStatus('Playback complete',false);
+  setStatus('Playing...',true);
+}
+function stopBuf(){if(currentSource){try{currentSource.stop();}catch(e){}currentSource=null;}}
+
+function setStatus(t,active){
+  document.getElementById('statusText').textContent=t;
+  document.getElementById('statusDot').classList.toggle('active',!!active);
+}
+
+function modeLabel(){
+  return {dual:'Dual Tone',tri:'Tri Tone',harmonic:'Harmonic Series',custom:'Custom Mix'}[currentMode];
+}
+
+document.getElementById('generateBtn').addEventListener('click', ()=>{
+  const partials = buildPartials();
+  if(!partials.length){setStatus('No active partials',false);return;}
+  const sr=+document.getElementById('sampleRate').value;
+  const dur=+document.getElementById('duration').value;
+  const fade=+document.getElementById('fade').value;
+  const amp=+document.getElementById('amplitude').value;
+  const bd=+document.getElementById('bitDepth').value;
+
+  setStatus('Generating '+modeLabel()+'...',true);
+  setTimeout(()=>{
+    const t0=performance.now();
+    currentSamples=generatePartials(partials,dur,sr);
+    applyFade(currentSamples,sr,fade);
+    currentPartials=partials;
+    const ms=(performance.now()-t0).toFixed(0);
+
+    const N=currentSamples.length;
+    const sz=44+N*(bd/8);
+    document.getElementById('infoBox').style.display='block';
+    document.getElementById('infoText').textContent=modeLabel()+' — '+partials.length+' partials';
+    document.getElementById('infoDetail').textContent=
+      partials.map(p=>`${p.freq}Hz@${Math.round(p.amp*100)}%`).join(' + ');
+    document.getElementById('infoSamples').textContent=N.toLocaleString();
+    document.getElementById('infoSize').textContent=sz>1048576?'~'+(sz/1048576).toFixed(1)+' MB':'~'+Math.round(sz/1024)+' KB';
+    document.getElementById('infoPartials').textContent=partials.length;
+
+    document.getElementById('waveformBox').style.display='block';
+    document.getElementById('waveformInfo').textContent=partials.map(p=>p.freq+'Hz').join(' + ');
+    drawWaveform(document.getElementById('waveformCanvas'),currentSamples,lowestFreq(partials),sr);
+
+    document.getElementById('playBtn').disabled=false;
+    document.getElementById('stopBtn').disabled=false;
+    document.getElementById('downloadBtn').disabled=false;
+    setStatus('Generated in '+ms+'ms',false);
+  },30);
+});
+
+document.getElementById('playBtn').addEventListener('click',()=>{
+  if(!currentSamples) return;
+  playBuf(currentSamples,+document.getElementById('sampleRate').value,+document.getElementById('amplitude').value);
+});
+document.getElementById('stopBtn').addEventListener('click',()=>{stopBuf();setStatus('Stopped',false);});
+document.getElementById('downloadBtn').addEventListener('click',()=>{
+  if(!currentSamples) return;
+  const sr=+document.getElementById('sampleRate').value;
+  const amp=+document.getElementById('amplitude').value;
+  const bd=+document.getElementById('bitDepth').value;
+  const dur=+document.getElementById('duration').value;
+  setStatus('Encoding WAV...',true);
+  setTimeout(()=>{
+    const wav=encodeWAV(currentSamples,sr,amp,bd);
+    const freqStr=currentPartials.map(p=>p.freq+'Hz').join('-');
+    const fn=`tone_${currentMode}_${freqStr}_${dur}s_${sr}Hz.wav`;
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([wav],{type:'audio/wav'}));
+    a.download=fn;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setStatus('Downloaded '+fn,false);
+  },20);
+});
+
+window.addEventListener('resize',()=>{
+  if(currentSamples&&currentPartials.length){
+    drawWaveform(document.getElementById('waveformCanvas'),currentSamples,lowestFreq(currentPartials),+document.getElementById('sampleRate').value);
+  }
+});
+
+// Init
+buildHarmonicTable();
+</script>
+</body>
+</html>

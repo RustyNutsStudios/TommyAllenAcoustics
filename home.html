@@ -87,14 +87,33 @@
   <div class="construction">&#128679; &#128679; &#128679;</div>
 
   <div class="nav-section">
-    <h2>&gt;&gt; AUDIO TOOLS</h2>
+    <h2>&gt;&gt; SIGNAL GENERATORS</h2>
     <div class="nav-grid">
+      <a href="tone-generator.html" class="nav-card"><span class="card-icon">&#8767;</span><span class="card-title">TONE GEN</span><span class="card-desc">Sine / square / saw / tri</span></a>
+      <a href="tone-generator-advanced.html" class="nav-card"><span class="card-icon">&#9834;&#9835;</span><span class="card-title">ADV TONE GEN</span><span class="card-desc">Dual/tri tone &amp; harmonics</span></a>
       <a href="noise-generator.html" class="nav-card"><span class="card-icon">&#9618;&#9618;&#9618;</span><span class="card-title">NOISE GEN</span><span class="card-desc">White, pink, brown &amp; more</span></a>
+      <a href="banded-noise-generator.html" class="nav-card"><span class="card-icon">&#9613;&#9615;&#9613;</span><span class="card-title">BANDED NOISE</span><span class="card-desc">Bandpass &amp; burst-gated</span></a>
       <a href="sweep-generator.html" class="nav-card"><span class="card-icon">&#8767;&#8767;&#8767;</span><span class="card-title">SWEEP GEN</span><span class="card-desc">Sine sweeps &amp; chirps</span></a>
       <a href="mls-generator.html" class="nav-card"><span class="card-icon">&#9121;&#9124;&#9121;</span><span class="card-title">MLS GEN</span><span class="card-desc">Maximum length sequences</span></a>
-      <a href="click-factory.html" class="nav-card"><span class="card-icon">&#9731; &#9731;</span><span class="card-title">CLICK FACTORY</span><span class="card-desc">UI sound generator</span></a>
-      <a href="shot-forge.html" class="nav-card"><span class="card-icon">&#9733;&#9733;&#9733;</span><span class="card-title">SHOT FORGE</span><span class="card-desc">Blast &amp; crack synthesizer</span></a>
+      <a href="impulse-generator.html" class="nav-card"><span class="card-icon">&#8942; |</span><span class="card-title">IMPULSE GEN</span><span class="card-desc">Dirac, trains &amp; shaped</span></a>
+      <a href="amplitude-mod-generator.html" class="nav-card"><span class="card-icon">&#8768;</span><span class="card-title">AMP MOD GEN</span><span class="card-desc">AM envelopes &amp; tremolo</span></a>
       <a href="babel.html" class="nav-card"><span class="card-icon">&#8734;</span><span class="card-title">BABEL</span><span class="card-desc">Every sound that ever was</span></a>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <h2>&gt;&gt; SOUND DESIGN TOOLS</h2>
+    <div class="nav-grid">
+      <a href="shot-forge.html" class="nav-card"><span class="card-icon">&#9733;&#9733;&#9733;</span><span class="card-title">SHOT FORGE</span><span class="card-desc">Blast &amp; crack synthesizer</span></a>
+      <a href="click-factory.html" class="nav-card"><span class="card-icon">&#9731; &#9731;</span><span class="card-title">CLICK FACTORY</span><span class="card-desc">UI sound generator</span></a>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <h2>&gt;&gt; MINI GAMES</h2>
+    <div class="nav-grid">
+      <a href="click-clicker.html" class="nav-card"><span class="card-icon">&#128070;</span><span class="card-title">CLICK CLICKER</span><span class="card-desc">Idle clicker, synth clicks</span></a>
+      <a href="games.html" class="nav-card"><span class="card-icon">&#129472;</span><span class="card-title">CATCH THE NUT</span><span class="card-desc">Rusty Nuts mini game</span></a>
     </div>
   </div>
 
@@ -102,7 +121,7 @@
     <h2>&gt;&gt; OTHER STUFF</h2>
     <div class="nav-grid">
       <a href="about.html" class="nav-card"><span class="card-icon">&#9786;</span><span class="card-title">ABOUT ME</span><span class="card-desc">Who is this person</span></a>
-      <a href="games.html" class="nav-card"><span class="card-icon">&#9670;&#9670;&#9670;</span><span class="card-title">MY GAMES</span><span class="card-desc">Rusty Nuts Studios</span></a>
+      <a href="https://rustynutsstudios.com" target="_blank" class="nav-card"><span class="card-icon">&#9760;</span><span class="card-title">RUSTY NUTS</span><span class="card-desc">My game studio</span></a>
     </div>
   </div>
 
@@ -136,7 +155,7 @@
 const c=document.getElementById('visitorNum');
 const base=4891+Math.floor((Date.now()-new Date('2025-01-01').getTime())/3600000);
 c.textContent=String(base).padStart(7,'0').replace(/(\d)(?=(\d{3})+$)/g,'$1,');
-const pages=['noise-generator.html','sweep-generator.html','mls-generator.html','click-factory.html','shot-forge.html','babel.html','about.html','games.html','itch.html'];
+const pages=['tone-generator.html','tone-generator-advanced.html','noise-generator.html','banded-noise-generator.html','sweep-generator.html','mls-generator.html','impulse-generator.html','amplitude-mod-generator.html','babel.html','shot-forge.html','click-factory.html','click-clicker.html','about.html','games.html','itch.html'];
 document.getElementById('randomBtn').addEventListener('click',()=>{window.location.href=pages[Math.floor(Math.random()*pages.length)];});
 </script>
 </body>

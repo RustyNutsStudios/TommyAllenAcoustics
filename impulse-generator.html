@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>~ * IMPULSE GENERATOR * ~</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000; color: #ccc;
+    font-family: 'VT323', monospace; font-size: 20px;
+    min-height: 100vh; overflow-x: hidden;
+  }
+
+  .starfield {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(1px 1px at 20px 30px, #fff, transparent),
+      radial-gradient(1px 1px at 40px 70px, #fff, transparent),
+      radial-gradient(1px 1px at 55px 160px, #aff, transparent),
+      radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+      radial-gradient(1px 1px at 130px 80px, #ccf, transparent),
+      radial-gradient(1px 1px at 160px 120px, #fff, transparent),
+      radial-gradient(1px 1px at 200px 50px, #aaf, transparent),
+      radial-gradient(1px 1px at 80px 190px, #fff, transparent);
+    background-size: 220px 200px; z-index: 0;
+  }
+  .scanlines {
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 4px);
+    z-index: 100; pointer-events: none;
+  }
+  .bar-top {
+    position: fixed; top: 0; left: 0; right: 0; height: 24px; z-index: 50;
+    background: repeating-linear-gradient(-45deg, #00ccff, #00ccff 10px, #000 10px, #000 20px);
+  }
+  .bar-bottom {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 24px; z-index: 50;
+    background: repeating-linear-gradient(45deg, #00ccff, #00ccff 10px, #000 10px, #000 20px);
+  }
+
+  .app {
+    position: relative; z-index: 10;
+    max-width: 800px; margin: 0 auto;
+    padding: 44px 16px 60px;
+  }
+
+  .header { text-align: center; margin-bottom: 10px; padding-bottom: 12px; border-bottom: 2px dashed #444; }
+  .header h1 {
+    font-family: 'Press Start 2P', monospace; font-size: 18px;
+    color: #00ccff; text-shadow: 0 0 10px #00ccff, 0 0 24px #0088cc, 3px 3px 0 #003344;
+    line-height: 1.6; animation: flicker 4s infinite;
+  }
+  .header .subtitle { font-size: 22px; color: #ffffff; text-shadow: 0 0 6px #aaddff; margin-top: 6px; }
+
+  @keyframes flicker {
+    0%,100%{opacity:1} 92%{opacity:1} 93%{opacity:.5} 94%{opacity:1} 97%{opacity:.8} 98%{opacity:1}
+  }
+
+  .marquee-wrapper {
+    width: 100%; overflow: hidden; border: 2px solid #333;
+    background: #111; padding: 4px 0; margin: 12px 0;
+  }
+  .marquee-text {
+    font-size: 18px; color: #00ccff; white-space: nowrap;
+    animation: scroll-left 22s linear infinite;
+  }
+  @keyframes scroll-left { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+
+  .mode-tabs {
+    display: flex; gap: 0; margin-bottom: 14px; border: 3px solid #333;
+  }
+  .mode-tab {
+    font-family: 'Press Start 2P', monospace; font-size: 8px;
+    padding: 10px 10px; cursor: pointer; border: none;
+    background: #111; color: #555; flex: 1; text-align: center;
+    border-right: 2px solid #333; transition: all 0.1s; line-height: 1.6;
+  }
+  .mode-tab:last-child { border-right: none; }
+  .mode-tab:hover { background: #001a22; color: #aaa; }
+  .mode-tab.active { background: #001422; color: #00ccff; text-shadow: 0 0 6px #00ccff; border-bottom: 3px solid #00ccff; }
+
+  .mode-panel { display: none; }
+  .mode-panel.active { display: block; }
+
+  .panel {
+    background: #0a0a0a; border: 3px inset #555;
+    padding: 16px; margin-bottom: 14px;
+  }
+  .panel-title {
+    font-family: 'Press Start 2P', monospace; font-size: 10px;
+    color: #00ccff; text-shadow: 0 0 4px #00ccff;
+    margin-bottom: 12px; letter-spacing: 1px;
+  }
+
+  .controls-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px;
+  }
+  .control-group { display: flex; flex-direction: column; gap: 4px; }
+  .control-group label { font-size: 15px; color: #888; }
+  .control-group select,
+  .control-group input[type="number"] {
+    font-family: 'VT323', monospace; font-size: 20px;
+    padding: 5px 8px; background: #000; border: 2px inset #666;
+    color: #0f0; outline: none; width: 100%;
+  }
+  .control-group select:focus,
+  .control-group input:focus { border-color: #00ccff; }
+  .control-group select option { background: #000; color: #0f0; }
+
+  .global-panel {
+    background: #060606; border: 2px solid #222;
+    padding: 12px 16px; margin-bottom: 14px;
+  }
+
+  /* impulse position display */
+  .position-display {
+    background: #060606; border: 2px inset #333;
+    padding: 8px 14px; margin-top: 10px;
+    font-size: 17px; color: #555; line-height: 1.8;
+  }
+  .position-display span { color: #00ccff; }
+
+  /* train preview */
+  .train-preview {
+    background: #060606; border: 2px inset #333;
+    padding: 8px 12px; margin-top: 12px;
+  }
+  .train-preview-label { font-size: 14px; color: #555; margin-bottom: 6px; }
+  .train-diagram { display: flex; gap: 3px; align-items: flex-end; height: 40px; overflow: hidden; }
+  .train-spike {
+    width: 3px; background: #00ccff;
+    box-shadow: 0 0 4px #00ccff;
+  }
+  .train-gap { flex: 1; border-bottom: 1px solid #1a1a1a; height: 100%; }
+  .train-info { font-size: 15px; color: #555; margin-top: 6px; }
+
+  /* shape preview mini canvas */
+  .shape-canvas-wrap { margin-top: 10px; background: #030308; border: 1px solid #1a1a1a; }
+  .shape-canvas-wrap canvas { display: block; width: 100%; }
+
+  .preset-btns { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  .preset-btn {
+    font-family: 'VT323', monospace; font-size: 18px;
+    padding: 4px 12px; cursor: pointer; border: 2px outset #444;
+    background: #111; color: #00ccff; transition: filter 0.1s;
+  }
+  .preset-btn:hover { filter: brightness(1.3); border-color: #00ccff; }
+  .preset-btn:active { border-style: inset; }
+
+  .info-strip {
+    display: flex; gap: 14px; flex-wrap: wrap; margin-top: 10px;
+    padding-top: 10px; border-top: 1px dashed #333; font-size: 17px; color: #888;
+  }
+  .info-strip span { color: #0f0; }
+
+  .btn-row {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    padding: 14px 16px; background: #0a0a0a;
+    border: 3px inset #555; margin-bottom: 14px;
+  }
+  .btn {
+    font-family: 'Press Start 2P', monospace; font-size: 10px;
+    padding: 10px 18px; cursor: pointer; border: 3px outset;
+    text-shadow: 1px 1px 0 rgba(0,0,0,0.5); transition: filter 0.1s;
+  }
+  .btn:hover { filter: brightness(1.2); }
+  .btn:active { border-style: inset; }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .btn-generate { background: linear-gradient(180deg, #0c0, #090); color: #fff; border-color: #4f4; }
+  .btn-play     { background: linear-gradient(180deg, #0088cc, #005588); color: #fff; border-color: #00ccff; }
+  .btn-stop     { background: linear-gradient(180deg, #cc0000, #990000); color: #fff; border-color: #ff4444; }
+  .btn-download { background: linear-gradient(180deg, #cc6600, #994400); color: #fff; border-color: #ff8844; }
+
+  .info-box {
+    background: #060606; border: 2px inset #444;
+    padding: 10px 14px; margin-bottom: 14px; display: none;
+  }
+  .info-text { font-size: 20px; color: #00ccff; text-shadow: 0 0 4px #00ccff; }
+  .info-detail { font-size: 16px; color: #0f0; margin-top: 6px; }
+
+  .viz-box {
+    background: #060606; border: 2px inset #444;
+    margin-bottom: 14px; overflow: hidden; display: none;
+  }
+  .viz-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; border-bottom: 1px solid #222; background: #0a0a0a;
+  }
+  .viz-title { font-family: 'Press Start 2P', monospace; font-size: 9px; color: #00ccff; }
+  .viz-info { font-size: 16px; color: #666; }
+  .viz-canvas-wrap { padding: 6px; background: #030308; }
+  .viz-canvas-wrap canvas { display: block; width: 100%; }
+
+  .status-bar {
+    position: fixed; bottom: 24px; left: 0; right: 0;
+    background: #0a0a0a; border-top: 2px solid #333;
+    padding: 5px 16px; display: flex; align-items: center;
+    gap: 10px; font-size: 16px; color: #666; z-index: 50;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #333; transition: all 0.3s; }
+  .status-dot.active { background: #00ccff; box-shadow: 0 0 6px #00ccff; }
+  .status-bar .right { margin-left: auto; font-size: 14px; }
+
+  .badge-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .badge {
+    font-family: 'Press Start 2P', monospace; font-size: 6px;
+    padding: 5px 8px; border: 2px outset; display: inline-block; line-height: 1.5;
+  }
+  .badge-1 { background: #001a22; color: #00ccff; border-color: #00ccff; }
+  .badge-2 { background: #004400; color: #0f0; border-color: #44ff44; }
+  .badge-3 { background: #111; color: #aaa; border-color: #555; }
+
+  .back-link { display: block; text-align: center; margin-top: 14px; }
+  .back-link a { color: #ff00ff; text-decoration: none; font-size: 20px; }
+  .back-link a:hover { color: #ff0; text-decoration: underline; }
+
+  @media (max-width: 520px) {
+    .header h1 { font-size: 12px; }
+    .mode-tab { font-size: 6px; padding: 8px 4px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="starfield"></div>
+<div class="scanlines"></div>
+<div class="bar-top"></div>
+<div class="bar-bottom"></div>
+
+<div class="app">
+  <div class="header">
+    <h1>~ * IMPULSE GEN * ~</h1>
+    <div class="subtitle">Single &bull; Train &bull; Shaped &bull; Polarity</div>
+  </div>
+
+  <div class="marquee-wrapper">
+    <div class="marquee-text">
+      *** DIRAC DELTA *** SINGLE IMPULSE *** IMPULSE TRAIN *** GAUSSIAN PULSE *** SINC PULSE *** POSITIVE *** NEGATIVE *** BIPOLAR *** FREE .WAV DOWNLOAD ***
+    </div>
+  </div>
+
+  <!-- GLOBAL -->
+  <div class="global-panel">
+    <div class="panel-title">&gt;&gt; OUTPUT SETTINGS</div>
+    <div class="controls-grid">
+      <div class="control-group">
+        <label>Duration (s)</label>
+        <input type="number" id="duration" value="1" min="0.05" max="3600" step="0.05">
+      </div>
+      <div class="control-group">
+        <label>Sample Rate</label>
+        <select id="sampleRate">
+          <option value="44100">44,100 Hz</option>
+          <option value="48000" selected>48,000 Hz</option>
+          <option value="96000">96,000 Hz</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Bit Depth</label>
+        <select id="bitDepth">
+          <option value="16" selected>16-bit</option>
+          <option value="24">24-bit</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <label>Amplitude</label>
+        <select id="amplitude">
+          <option value="0">0 dBFS</option>
+          <option value="-3" selected>-3 dBFS</option>
+          <option value="-6">-6 dBFS</option>
+          <option value="-12">-12 dBFS</option>
+          <option value="-20">-20 dBFS</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" data-mode="single">SINGLE IMPULSE</button>
+    <button class="mode-tab" data-mode="train">IMPULSE TRAIN</button>
+    <button class="mode-tab" data-mode="shaped">SHAPED PULSE</button>
+    <button class="mode-tab" data-mode="polarity">POLARITY PAIR</button>
+  </div>
+
+  <!-- SINGLE IMPULSE -->
+  <div class="mode-panel active" id="panel-single">
+    <div class="panel">
+      <div class="panel-title">&gt;&gt; SINGLE IMPULSE — ONE SAMPLE WIDE</div>
+      <div class="controls-grid">
+        <div class="control-group">
+          <label>Position</label>
+          <select id="single-pos">
+            <option value="start">Start (sample 1)</option>
+            <option value="10ms">10 ms in</option>
+            <option value="centre" selected>Centre</option>
+            <option value="custom">Custom (ms)</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Custom offset (ms)</label>
+          <input type="number" id="single-custom-ms" value="50" min="0" max="60000" step="1">
+        </div>
+        <div class="control-group">
+          <label>Polarity</label>
+          <select id="single-polarity">
+            <option value="positive" selected>Positive (+1)</option>
+            <option value="negative">Negative (-1)</option>
+            <option value="bipolar">Bipolar (±1, 2 samples)</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Pre-silence fade</label>
+          <select id="single-prefade">
+            <option value="0" selected>None</option>
+            <option value="0.005">5 ms</option>
+            <option value="0.01">10 ms</option>
+          </select>
+        </div>
+      </div>
+      <div class="position-display" id="single-pos-display">
+        Position: <span>—</span> &nbsp;|&nbsp; Sample: <span>—</span> &nbsp;|&nbsp; File length: <span>—</span> samples
+      </div>
+    </div>
+  </div>
+
+  <!-- IMPULSE TRAIN -->
+  <div class="mode-panel" id="panel-train">
+    <div class="panel">
+      <div class="panel-title">&gt;&gt; IMPULSE TRAIN — PERIODIC IMPULSES</div>
+      <div class="controls-grid">
+        <div class="control-group">
+          <label>Rate (Hz)</label>
+          <input type="number" id="train-rate" value="10" min="0.1" max="1000" step="0.1">
+        </div>
+        <div class="control-group">
+          <label>Polarity</label>
+          <select id="train-polarity">
+            <option value="positive" selected>All positive</option>
+            <option value="negative">All negative</option>
+            <option value="alternating">Alternating ±</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Width (samples)</label>
+          <select id="train-width">
+            <option value="1" selected>1 sample (Dirac)</option>
+            <option value="2">2 samples</option>
+            <option value="4">4 samples</option>
+            <option value="8">8 samples</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Decay envelope</label>
+          <select id="train-decay">
+            <option value="none" selected>None (flat)</option>
+            <option value="exp">Exponential decay</option>
+            <option value="lin">Linear decay</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="preset-btns" style="margin-top:12px">
+        <span style="font-size:15px;color:#555;line-height:2.2;margin-right:4px">PRESETS:</span>
+        <button class="preset-btn" data-train="1hz">1 Hz</button>
+        <button class="preset-btn" data-train="5hz">5 Hz</button>
+        <button class="preset-btn" data-train="10hz">10 Hz</button>
+        <button class="preset-btn" data-train="50hz">50 Hz</button>
+        <button class="preset-btn" data-train="100hz">100 Hz</button>
+        <button class="preset-btn" data-train="1khz">1 kHz</button>
+      </div>
+
+      <div class="train-preview">
+        <div class="train-preview-label">TRAIN PATTERN PREVIEW</div>
+        <div class="train-diagram" id="trainDiagram"></div>
+        <div class="train-info" id="trainInfo">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHAPED PULSE -->
+  <div class="mode-panel" id="panel-shaped">
+    <div class="panel">
+      <div class="panel-title">&gt;&gt; SHAPED PULSE — BANDWIDTH-LIMITED IMPULSE</div>
+      <p style="color:#666;font-size:17px;margin-bottom:12px">A true 1-sample impulse has infinite bandwidth. Shaped pulses bandlimit the energy — useful for testing without aliasing artifacts.</p>
+      <div class="controls-grid">
+        <div class="control-group">
+          <label>Shape</label>
+          <select id="shape-type">
+            <option value="gaussian" selected>Gaussian</option>
+            <option value="sinc">Sinc (bandlimited)</option>
+            <option value="hann">Hann windowed sinc</option>
+            <option value="exponential">Exponential decay</option>
+            <option value="triangle">Triangle pulse</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Width (ms)</label>
+          <input type="number" id="shape-width-ms" value="1" min="0.02" max="100" step="0.01">
+        </div>
+        <div class="control-group">
+          <label>Position</label>
+          <select id="shape-pos">
+            <option value="centre" selected>Centre</option>
+            <option value="start">10 ms from start</option>
+            <option value="custom">Custom (ms)</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Custom offset (ms)</label>
+          <input type="number" id="shape-custom-ms" value="50" min="0" max="60000" step="1">
+        </div>
+        <div class="control-group">
+          <label>Polarity</label>
+          <select id="shape-polarity">
+            <option value="positive" selected>Positive</option>
+            <option value="negative">Negative</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Count</label>
+          <input type="number" id="shape-count" value="1" min="1" max="100" step="1">
+        </div>
+        <div class="control-group">
+          <label>Repeat interval (ms)</label>
+          <input type="number" id="shape-interval" value="100" min="1" max="10000" step="1">
+        </div>
+      </div>
+      <div class="shape-canvas-wrap">
+        <canvas id="shapePreviewCanvas" height="80"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- POLARITY PAIR -->
+  <div class="mode-panel" id="panel-polarity">
+    <div class="panel">
+      <div class="panel-title">&gt;&gt; POLARITY PAIR — + THEN - WITH GAP</div>
+      <p style="color:#666;font-size:17px;margin-bottom:12px">Positive impulse followed by negative impulse. Useful for testing polarity response and transient asymmetry.</p>
+      <div class="controls-grid">
+        <div class="control-group">
+          <label>Gap between (ms)</label>
+          <input type="number" id="pair-gap" value="10" min="0.02" max="1000" step="0.1">
+        </div>
+        <div class="control-group">
+          <label>Pulse shape</label>
+          <select id="pair-shape">
+            <option value="dirac" selected>Dirac (1 sample)</option>
+            <option value="gaussian">Gaussian 1ms</option>
+            <option value="gaussian5">Gaussian 5ms</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>First impulse at</label>
+          <select id="pair-start">
+            <option value="10ms" selected>10 ms</option>
+            <option value="centre">Centre</option>
+            <option value="quarter">Quarter point</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label>Repeats</label>
+          <input type="number" id="pair-repeats" value="1" min="1" max="50" step="1">
+        </div>
+        <div class="control-group">
+          <label>Repeat interval (ms)</label>
+          <input type="number" id="pair-interval" value="200" min="1" max="10000" step="1">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUTTONS -->
+  <div class="btn-row">
+    <button class="btn btn-generate" id="generateBtn">GENERATE</button>
+    <button class="btn btn-play" id="playBtn" disabled>&#9654; PLAY</button>
+    <button class="btn btn-stop" id="stopBtn" disabled>&#9632; STOP</button>
+    <button class="btn btn-download" id="downloadBtn" disabled>DOWNLOAD .WAV</button>
+  </div>
+
+  <div class="info-box" id="infoBox">
+    <div class="info-text" id="infoText"></div>
+    <div class="info-detail" id="infoDetail"></div>
+    <div class="info-strip">
+      <div>Samples: <span id="infoSamples">—</span></div>
+      <div>File: <span id="infoSize">—</span></div>
+      <div>Impulse at: <span id="infoAt">—</span></div>
+    </div>
+  </div>
+
+  <div class="viz-box" id="waveformBox">
+    <div class="viz-header">
+      <span class="viz-title">WAVEFORM</span>
+      <span class="viz-info" id="waveformInfo"></span>
+    </div>
+    <div class="viz-canvas-wrap">
+      <canvas id="waveformCanvas" height="160"></canvas>
+    </div>
+  </div>
+
+  <div class="badge-row">
+    <div class="badge badge-1">DIRAC<br>DELTA</div>
+    <div class="badge badge-2">FLAT<br>SPECTRUM</div>
+    <div class="badge badge-3">IR<br>TESTING</div>
+  </div>
+
+  <div class="back-link">
+    <a href="noise-generator.html">&lt;&lt; NOISE GEN &gt;&gt;</a>
+  </div>
+</div>
+
+<div class="status-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span id="statusText">Ready</span>
+  <span class="right">IMPULSE GEN v1.0</span>
+</div>
+
+<script>
+// ============================
+// PULSE SHAPES
+// ============================
+function gaussianPulse(N, centreIdx, widthSamples, polarity) {
+  const s = new Float32Array(N);
+  const sigma = widthSamples / 4;
+  const sign = polarity === 'negative' ? -1 : 1;
+  for (let i = 0; i < N; i++) {
+    const d = i - centreIdx;
+    s[i] = sign * Math.exp(-(d*d) / (2*sigma*sigma));
+  }
+  return s;
+}
+
+function sincPulse(N, centreIdx, widthSamples, windowed) {
+  const s = new Float32Array(N);
+  const halfW = widthSamples / 2;
+  for (let i = 0; i < N; i++) {
+    const d = i - centreIdx;
+    if (Math.abs(d) > halfW * 3) continue;
+    const x = Math.PI * d / halfW;
+    const sinc = x === 0 ? 1 : Math.sin(x) / x;
+    let win = 1;
+    if (windowed) {
+      const t = d / (halfW * 3);
+      if (Math.abs(t) < 1) win = 0.5 * (1 + Math.cos(Math.PI * t));
+      else win = 0;
+    }
+    s[i] = sinc * win;
+  }
+  return s;
+}
+
+function exponentialPulse(N, centreIdx, widthSamples, polarity) {
+  const s = new Float32Array(N);
+  const sign = polarity === 'negative' ? -1 : 1;
+  const decay = widthSamples * 2;
+  for (let i = centreIdx; i < N; i++) {
+    s[i] = sign * Math.exp(-(i - centreIdx) / decay);
+  }
+  return s;
+}
+
+function trianglePulse(N, centreIdx, widthSamples, polarity) {
+  const s = new Float32Array(N);
+  const sign = polarity === 'negative' ? -1 : 1;
+  const half = widthSamples / 2;
+  for (let i = 0; i < N; i++) {
+    const d = Math.abs(i - centreIdx);
+    if (d < half) s[i] = sign * (1 - d / half);
+  }
+  return s;
+}
+
+function normalise(s) {
+  let mx = 0;
+  for (let i = 0; i < s.length; i++) mx = Math.max(mx, Math.abs(s[i]));
+  if (mx > 0) for (let i = 0; i < s.length; i++) s[i] /= mx;
+  return s;
+}
+
+function applyFade(s, sr, ft) {
+  const fn = Math.min(Math.round(ft * sr), Math.floor(s.length / 2));
+  for (let i = 0; i < fn; i++) { const g = i/fn; s[i]*=g; s[s.length-1-i]*=g; }
+}
+
+// ============================
+// WAV ENCODER
+// ============================
+function encodeWAV(samples, sr, ampDB, bitDepth) {
+  const amp = Math.pow(10, ampDB/20);
+  const N = samples.length, bps = bitDepth/8, dataSize = N*bps;
+  const buf = new ArrayBuffer(44+dataSize);
+  const v = new DataView(buf);
+  const ws = (o,s) => { for(let i=0;i<s.length;i++) v.setUint8(o+i,s.charCodeAt(i)); };
+  ws(0,'RIFF'); v.setUint32(4,36+dataSize,true); ws(8,'WAVE');
+  ws(12,'fmt '); v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr*bps,true); v.setUint16(32,bps,true); v.setUint16(34,bitDepth,true);
+  ws(36,'data'); v.setUint32(40,dataSize,true);
+  let off=44;
+  for (let i=0;i<N;i++) {
+    const val=Math.max(-1,Math.min(1,samples[i]*amp));
+    if(bitDepth===16){v.setInt16(off,val<0?val*32768:val*32767,true);off+=2;}
+    else{const iv=val<0?val*8388608:val*8388607;v.setUint8(off,iv&0xFF);v.setUint8(off+1,(iv>>8)&0xFF);v.setUint8(off+2,(iv>>16)&0xFF);off+=3;}
+  }
+  return buf;
+}
+
+// ============================
+// DRAW WAVEFORM
+// ============================
+function drawWaveform(canvas, samples) {
+  const W = canvas.parentElement.clientWidth - 12;
+  const H = canvas.height;
+  canvas.width = W;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#030308'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#0a0a18'; ctx.lineWidth=1;
+  for(let y=0;y<=4;y++){const yp=(y/4)*H;ctx.beginPath();ctx.moveTo(0,yp);ctx.lineTo(W,yp);ctx.stroke();}
+  for(let x=0;x<=8;x++){const xp=(x/8)*W;ctx.beginPath();ctx.moveTo(xp,0);ctx.lineTo(xp,H);ctx.stroke();}
+  ctx.strokeStyle='#111';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+
+  // For impulses, always show full file but use envelope plotting
+  const N = samples.length;
+  ctx.strokeStyle='#00ccff'; ctx.lineWidth=1.2;
+  ctx.shadowColor='#00ccff'; ctx.shadowBlur=4;
+  ctx.beginPath();
+  let first=true;
+  for(let px=0;px<W;px++){
+    const i0=Math.floor((px/W)*N);
+    const i1=Math.max(i0+1,Math.floor(((px+1)/W)*N));
+    let mn=0,mx=0;
+    for(let k=i0;k<i1&&k<N;k++){mn=Math.min(mn,samples[k]);mx=Math.max(mx,samples[k]);}
+    // Draw from min to max within bucket — shows impulse spikes clearly
+    const yMx=H/2-mx*H*0.44;
+    if(first){ctx.moveTo(px,H/2);first=false;}
+    ctx.lineTo(px,yMx);
+    if(mn !== mx){const yMn=H/2-mn*H*0.44; ctx.lineTo(px,yMn);}
+    ctx.lineTo(px,H/2);
+  }
+  ctx.stroke();
+  ctx.globalAlpha=0.1; ctx.lineWidth=6; ctx.stroke();
+  ctx.globalAlpha=1; ctx.shadowBlur=0;
+}
+
+function drawShapePreview(canvas, samples) {
+  const W = canvas.parentElement.clientWidth;
+  const H = canvas.height;
+  canvas.width = W;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle='#030308'; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,H/2); ctx.lineTo(W,H/2); ctx.stroke();
+
+  // Find non-zero region
+  let lo=samples.length, hi=0;
+  for(let i=0;i<samples.length;i++) if(Math.abs(samples[i])>0.001){lo=Math.min(lo,i);hi=Math.max(hi,i);}
+  if(hi<=lo){return;}
+  const pad=Math.max(10, Math.round((hi-lo)*0.3));
+  lo=Math.max(0,lo-pad); hi=Math.min(samples.length-1,hi+pad);
+  const span=hi-lo;
+
+  ctx.strokeStyle='#00ccff'; ctx.lineWidth=2;
+  ctx.shadowColor='#00ccff'; ctx.shadowBlur=6;
+  ctx.beginPath();
+  for(let px=0;px<W;px++){
+    const i=lo+Math.floor((px/W)*span);
+    if(i>=samples.length) break;
+    const y=H/2-samples[i]*H*0.4;
+    if(px===0) ctx.moveTo(px,y); else ctx.lineTo(px,y);
+  }
+  ctx.stroke();
+  ctx.shadowBlur=0;
+}
+
+// ============================
+// TRAIN PREVIEW
+// ============================
+function updateTrainPreview() {
+  const rate = +document.getElementById('train-rate').value || 10;
+  const periodMs = 1000 / rate;
+  const dur = +document.getElementById('duration').value || 1;
+  const totalCycles = dur * rate;
+  const show = Math.min(20, Math.ceil(totalCycles));
+  const diagram = document.getElementById('trainDiagram');
+  diagram.innerHTML = '';
+  const totalW = 340;
+  const pxPerCycle = Math.max(4, Math.floor(totalW / show));
+  for (let i=0; i<show; i++) {
+    const spike = document.createElement('div');
+    spike.className = 'train-spike';
+    spike.style.height = (i%2===0&&document.getElementById('train-polarity').value==='alternating')?'60%':'100%';
+    diagram.appendChild(spike);
+    if(i < show-1){
+      const gap = document.createElement('div');
+      gap.className = 'train-gap';
+      gap.style.width = Math.max(2, pxPerCycle-3)+'px';
+      diagram.appendChild(gap);
+    }
+  }
+  document.getElementById('trainInfo').textContent =
+    `${rate} Hz — ${periodMs.toFixed(1)}ms period — ${Math.round(totalCycles)} impulses in ${dur}s`;
+}
+
+document.getElementById('train-rate').addEventListener('input', updateTrainPreview);
+document.getElementById('train-polarity').addEventListener('change', updateTrainPreview);
+document.getElementById('duration').addEventListener('change', updateTrainPreview);
+
+// Train presets
+const TRAIN_PRESETS = {
+  '1hz':1, '5hz':5, '10hz':10, '50hz':50, '100hz':100, '1khz':1000
+};
+document.querySelectorAll('[data-train]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('train-rate').value = TRAIN_PRESETS[btn.dataset.train];
+    updateTrainPreview();
+  });
+});
+
+// Single position display
+function updateSingleDisplay() {
+  const sr = +document.getElementById('sampleRate').value;
+  const dur = +document.getElementById('duration').value;
+  const N = Math.round(dur * sr);
+  const pos = document.getElementById('single-pos').value;
+  const customMs = +document.getElementById('single-custom-ms').value;
+  let sampleIdx = 0;
+  if(pos==='start') sampleIdx=0;
+  else if(pos==='10ms') sampleIdx=Math.round(0.01*sr);
+  else if(pos==='centre') sampleIdx=Math.floor(N/2);
+  else sampleIdx=Math.round(customMs*sr/1000);
+  sampleIdx=Math.max(0,Math.min(N-1,sampleIdx));
+  const ms=(sampleIdx/sr*1000).toFixed(2);
+  document.getElementById('single-pos-display').innerHTML =
+    `Position: <span>${ms} ms</span> &nbsp;|&nbsp; Sample: <span>${sampleIdx.toLocaleString()}</span> &nbsp;|&nbsp; File: <span>${N.toLocaleString()}</span> samples`;
+}
+['single-pos','single-custom-ms','sampleRate','duration'].forEach(id =>
+  document.getElementById(id).addEventListener('change', updateSingleDisplay));
+document.getElementById('single-custom-ms').addEventListener('input', updateSingleDisplay);
+
+// Shape preview update
+function updateShapePreview() {
+  const sr = +document.getElementById('sampleRate').value;
+  const shape = document.getElementById('shape-type').value;
+  const widthMs = +document.getElementById('shape-width-ms').value || 1;
+  const widthSamples = Math.max(1, Math.round(widthMs * sr / 1000));
+  const polarity = document.getElementById('shape-polarity').value;
+  const previewN = Math.max(512, widthSamples * 20);
+  const centre = Math.floor(previewN / 2);
+  let s;
+  switch(shape){
+    case 'gaussian':    s=gaussianPulse(previewN,centre,widthSamples,polarity); break;
+    case 'sinc':        s=sincPulse(previewN,centre,widthSamples,false); break;
+    case 'hann':        s=sincPulse(previewN,centre,widthSamples,true); break;
+    case 'exponential': s=exponentialPulse(previewN,centre,widthSamples,polarity); break;
+    case 'triangle':    s=trianglePulse(previewN,centre,widthSamples,polarity); break;
+    default:            s=gaussianPulse(previewN,centre,widthSamples,polarity);
+  }
+  normalise(s);
+  drawShapePreview(document.getElementById('shapePreviewCanvas'), s);
+}
+['shape-type','shape-width-ms','shape-polarity','sampleRate'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('change', updateShapePreview);
+  if(el.type==='number') el.addEventListener('input', updateShapePreview);
+});
+
+// ============================
+// MODE TABS
+// ============================
+let currentMode = 'single';
+document.querySelectorAll('.mode-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.mode-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.mode-panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    currentMode = tab.dataset.mode;
+    document.getElementById('panel-'+currentMode).classList.add('active');
+  });
+});
+
+// ============================
+// AUDIO PLAYBACK
+// ============================
+let currentSamples=null, audioCtx=null, currentSource=null, currentCtxRate=0;
+
+function playBuf(samples, sr, ampDB) {
+  stopBuf();
+  if(!audioCtx||currentCtxRate!==sr){if(audioCtx)audioCtx.close();audioCtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:sr});currentCtxRate=sr;}
+  const amp=Math.pow(10,ampDB/20);
+  const buf=audioCtx.createBuffer(1,samples.length,sr);
+  const ch=buf.getChannelData(0);
+  for(let i=0;i<samples.length;i++) ch[i]=samples[i]*amp;
+  currentSource=audioCtx.createBufferSource();
+  currentSource.buffer=buf; currentSource.connect(audioCtx.destination); currentSource.start();
+  currentSource.onended=()=>setStatus('Playback complete',false);
+  setStatus('Playing...',true);
+}
+function stopBuf(){if(currentSource){try{currentSource.stop();}catch(e){}currentSource=null;}}
+function setStatus(t,active){document.getElementById('statusText').textContent=t;document.getElementById('statusDot').classList.toggle('active',!!active);}
+
+// ============================
+// GENERATE
+// ============================
+document.getElementById('generateBtn').addEventListener('click', ()=>{
+  const sr  = +document.getElementById('sampleRate').value;
+  const dur = +document.getElementById('duration').value;
+  const amp = +document.getElementById('amplitude').value;
+  const bd  = +document.getElementById('bitDepth').value;
+  const N   = Math.round(dur * sr);
+  let s, desc, detail, atStr;
+
+  setStatus('Generating...', true);
+  setTimeout(()=>{
+
+    if(currentMode==='single'){
+      s = new Float32Array(N);
+      const pos = document.getElementById('single-pos').value;
+      const customMs = +document.getElementById('single-custom-ms').value;
+      const polarity = document.getElementById('single-polarity').value;
+      const prefade = +document.getElementById('single-prefade').value;
+      let idx=0;
+      if(pos==='start') idx=0;
+      else if(pos==='10ms') idx=Math.round(0.01*sr);
+      else if(pos==='centre') idx=Math.floor(N/2);
+      else idx=Math.round(customMs*sr/1000);
+      idx=Math.max(0,Math.min(N-1,idx));
+      if(polarity==='positive'||polarity==='bipolar') s[idx]=1.0;
+      if(polarity==='negative') s[idx]=-1.0;
+      if(polarity==='bipolar'&&idx+1<N) s[idx+1]=-1.0;
+      if(prefade>0) applyFade(s, sr, prefade);
+      desc='Single '+(polarity==='bipolar'?'bipolar ':'')+' impulse';
+      detail=`1${polarity==='bipolar'?' (2)':''} sample${polarity==='bipolar'?'s':''} at ${(idx/sr*1000).toFixed(2)}ms`;
+      atStr=(idx/sr*1000).toFixed(2)+' ms';
+
+    } else if(currentMode==='train'){
+      s = new Float32Array(N);
+      const rate = +document.getElementById('train-rate').value;
+      const polarity = document.getElementById('train-polarity').value;
+      const width = +document.getElementById('train-width').value;
+      const decay = document.getElementById('train-decay').value;
+      const period = sr / rate;
+      let count=0;
+      for(let i=0;i<N;i++){
+        const pos = i % period;
+        if(pos < width){
+          let amp=1.0;
+          if(decay==='exp') amp=Math.exp(-Math.floor(i/period)*0.3);
+          else if(decay==='lin') amp=Math.max(0,1-Math.floor(i/period)/(N/period));
+          const sign = (polarity==='alternating'&&Math.floor(i/period)%2===1)?-1:
+                       (polarity==='negative'?-1:1);
+          s[i]=sign*amp;
+        }
+        if(pos===0) count++;
+      }
+      desc=`Impulse train @ ${rate} Hz`;
+      detail=`${count} impulses | ${(1000/rate).toFixed(1)}ms period | ${width}px wide | ${polarity}`;
+      atStr=count+' impulses';
+
+    } else if(currentMode==='shaped'){
+      const shape = document.getElementById('shape-type').value;
+      const widthMs = +document.getElementById('shape-width-ms').value;
+      const widthSmp = Math.max(1, Math.round(widthMs*sr/1000));
+      const polarity = document.getElementById('shape-polarity').value;
+      const pos = document.getElementById('shape-pos').value;
+      const customMs = +document.getElementById('shape-custom-ms').value;
+      const count = +document.getElementById('shape-count').value;
+      const intervalMs = +document.getElementById('shape-interval').value;
+      let firstIdx;
+      if(pos==='centre') firstIdx=Math.floor(N/2);
+      else if(pos==='start') firstIdx=Math.round(0.01*sr);
+      else firstIdx=Math.round(customMs*sr/1000);
+
+      s = new Float32Array(N);
+      for(let c=0;c<count;c++){
+        const centre=firstIdx+Math.round(c*intervalMs*sr/1000);
+        if(centre>=N) break;
+        let pulse;
+        switch(shape){
+          case 'gaussian':    pulse=gaussianPulse(N,centre,widthSmp,polarity); break;
+          case 'sinc':        pulse=sincPulse(N,centre,widthSmp,false); break;
+          case 'hann':        pulse=sincPulse(N,centre,widthSmp,true); break;
+          case 'exponential': pulse=exponentialPulse(N,centre,widthSmp,polarity); break;
+          case 'triangle':    pulse=trianglePulse(N,centre,widthSmp,polarity); break;
+          default:            pulse=gaussianPulse(N,centre,widthSmp,polarity);
+        }
+        for(let i=0;i<N;i++) s[i]+=pulse[i];
+      }
+      normalise(s);
+      desc=`${shape.charAt(0).toUpperCase()+shape.slice(1)} pulse — ${widthMs}ms wide`;
+      detail=`${count} pulse${count>1?'s':''} | ${polarity}`;
+      atStr=(firstIdx/sr*1000).toFixed(1)+' ms';
+
+    } else if(currentMode==='polarity'){
+      s = new Float32Array(N);
+      const gapMs = +document.getElementById('pair-gap').value;
+      const shape = document.getElementById('pair-shape').value;
+      const startPos = document.getElementById('pair-start').value;
+      const repeats = +document.getElementById('pair-repeats').value;
+      const intervalMs = +document.getElementById('pair-interval').value;
+      let firstIdx;
+      if(startPos==='10ms') firstIdx=Math.round(0.01*sr);
+      else if(startPos==='centre') firstIdx=Math.floor(N/2);
+      else firstIdx=Math.floor(N/4);
+      const gapSmp=Math.round(gapMs*sr/1000);
+
+      for(let r=0;r<repeats;r++){
+        const base=firstIdx+Math.round(r*intervalMs*sr/1000);
+        const posIdx=base, negIdx=base+gapSmp;
+        if(posIdx>=N||negIdx>=N) break;
+        if(shape==='dirac'){
+          if(posIdx<N) s[posIdx]+=1.0;
+          if(negIdx<N) s[negIdx]+=-1.0;
+        } else {
+          const wMs=shape==='gaussian'?1:5;
+          const wSmp=Math.max(1,Math.round(wMs*sr/1000));
+          const pos=gaussianPulse(N,posIdx,wSmp,'positive');
+          const neg=gaussianPulse(N,negIdx,wSmp,'negative');
+          for(let i=0;i<N;i++){s[i]+=pos[i];s[i]+=neg[i];}
+        }
+      }
+      normalise(s);
+      desc=`Polarity pair — ${shape}`;
+      detail=`${repeats} pair${repeats>1?'s':''} | gap: ${gapMs}ms`;
+      atStr=(firstIdx/sr*1000).toFixed(1)+' ms';
+    }
+
+    currentSamples=s;
+    const sz=44+N*(bd/8);
+    document.getElementById('infoBox').style.display='block';
+    document.getElementById('infoText').textContent=desc;
+    document.getElementById('infoDetail').textContent=detail+' | '+N.toLocaleString()+' samples | '+(sz>1048576?'~'+(sz/1048576).toFixed(1)+' MB':'~'+Math.round(sz/1024)+' KB');
+    document.getElementById('infoSamples').textContent=N.toLocaleString();
+    document.getElementById('infoSize').textContent=sz>1048576?'~'+(sz/1048576).toFixed(1)+' MB':'~'+Math.round(sz/1024)+' KB';
+    document.getElementById('infoAt').textContent=atStr;
+    document.getElementById('waveformBox').style.display='block';
+    document.getElementById('waveformInfo').textContent=N.toLocaleString()+' samples';
+    drawWaveform(document.getElementById('waveformCanvas'),s);
+    document.getElementById('playBtn').disabled=false;
+    document.getElementById('stopBtn').disabled=false;
+    document.getElementById('downloadBtn').disabled=false;
+    setStatus('Generated',false);
+  },30);
+});
+
+document.getElementById('playBtn').addEventListener('click',()=>{
+  if(!currentSamples) return;
+  playBuf(currentSamples,+document.getElementById('sampleRate').value,+document.getElementById('amplitude').value);
+});
+document.getElementById('stopBtn').addEventListener('click',()=>{stopBuf();setStatus('Stopped',false);});
+document.getElementById('downloadBtn').addEventListener('click',()=>{
+  if(!currentSamples) return;
+  const sr=+document.getElementById('sampleRate').value;
+  const amp=+document.getElementById('amplitude').value;
+  const bd=+document.getElementById('bitDepth').value;
+  const dur=+document.getElementById('duration').value;
+  setStatus('Encoding WAV...',true);
+  setTimeout(()=>{
+    const wav=encodeWAV(currentSamples,sr,amp,bd);
+    const fn=`impulse_${currentMode}_${dur}s_${sr}Hz.wav`;
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([wav],{type:'audio/wav'}));
+    a.download=fn; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setStatus('Downloaded '+fn,false);
+  },20);
+});
+
+window.addEventListener('resize',()=>{
+  if(currentSamples) drawWaveform(document.getElementById('waveformCanvas'),currentSamples);
+  updateShapePreview();
+});
+
+// Init
+updateSingleDisplay();
+updateTrainPreview();
+updateShapePreview();
+</script>
+</body>
+</html>
