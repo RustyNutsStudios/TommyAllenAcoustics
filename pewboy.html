@@ -1,0 +1,2050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>*~PEW BOY~* — 8-BIT SCI-FI SFX CREATOR</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Bungee+Shade&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#071a10;color:#9bbc0f;font-family:'VT323',monospace;font-size:20px;min-height:100vh;overflow-x:hidden}
+.bg{position:fixed;inset:0;z-index:0;background:radial-gradient(circle at 25% 25%,#14381c 0%,transparent 50%),radial-gradient(circle at 75% 75%,#0f380f 0%,transparent 50%),radial-gradient(circle at 50% 50%,#0a2012 0%,#040d08 100%)}
+.bg-grid{position:fixed;inset:0;z-index:1;opacity:0.06;background-image:linear-gradient(#8bac0f 1px,transparent 1px),linear-gradient(90deg,#8bac0f 1px,transparent 1px);background-size:40px 40px}
+.scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.10) 3px,rgba(0,0,0,0.10) 6px);z-index:100;pointer-events:none}
+.bar-top{position:fixed;top:0;left:0;right:0;height:16px;z-index:50;background:repeating-linear-gradient(-45deg,#8bac0f,#8bac0f 10px,#071a10 10px,#071a10 20px);border-bottom:3px solid #9bbc0f}
+.bar-bottom{position:fixed;bottom:0;left:0;right:0;height:16px;z-index:50;background:repeating-linear-gradient(45deg,#9bbc0f,#9bbc0f 10px,#071a10 10px,#071a10 20px);border-top:3px solid #8bac0f}
+.app{position:relative;z-index:10;max-width:780px;margin:0 auto;padding:28px 12px 50px}
+.header{text-align:center;margin-bottom:8px;padding-bottom:8px;border-bottom:3px double #8bac0f}
+.header h1{font-family:'Bungee Shade',cursive;font-size:22px;color:#8bac0f;text-shadow:3px 3px 0 #306230,0 0 20px rgba(34,211,238,0.35);line-height:1.4}
+.header .sub{font-size:18px;color:#9bbc0f;margin-top:4px}
+.marquee-wrapper{width:100%;overflow:hidden;border:2px ridge #8bac0f;background:#0c2418;padding:2px 0;margin:6px 0}
+.marquee-text{font-size:14px;color:#8bac0f;white-space:nowrap;animation:sl 14s linear infinite}
+@keyframes sl{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+.mode-row{display:flex;gap:0;margin-bottom:10px}
+.mode-btn{flex:1;font-family:'Press Start 2P',monospace;font-size:9px;padding:12px 6px;cursor:pointer;border:3px outset #8bac0f;background:#071a10;color:#8bac0f;text-align:center;transition:all 0.1s}
+.mode-btn:hover{background:#14381c}
+.mode-btn.active{background:linear-gradient(180deg,#306230,#306230);color:#fff;border-style:inset}
+.fire-params{display:none;gap:14px;padding:12px 14px;background:rgba(4,10,30,0.92);border:3px ridge #8bac0f;margin-bottom:10px}
+.fire-params.show{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.layers{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
+.layer{background:rgba(4,10,30,0.92);border:2px solid #14381c;overflow:hidden}
+.layer.off{opacity:0.35}
+.layer.off .lc{display:none}
+.lh{display:flex;align-items:center;gap:8px;padding:4px 8px;border-bottom:1px solid #071a10;min-height:28px}
+.lt{font-family:'Press Start 2P',monospace;font-size:8px;padding:3px 8px;cursor:pointer;border:2px outset #8bac0f;background:#306230;color:#fff;user-select:none;white-space:nowrap}
+.lt:hover{filter:brightness(1.25)}
+.lt.off{background:#071a10;border-style:inset;opacity:0.6}
+.ll{font-size:13px;color:#306230}
+.lc{display:grid;grid-template-columns:repeat(4,1fr);gap:6px 10px;padding:6px 8px}
+.lc-6{grid-template-columns:repeat(6,1fr)}
+.cg{display:flex;flex-direction:column;gap:3px}
+.cg label{font-size:14px;color:#8bac0f;letter-spacing:1px}
+input[type="range"]{-webkit-appearance:none;height:6px;border-radius:0;background:linear-gradient(90deg,#8bac0f,#9bbc0f);border:2px ridge #306230;padding:0;width:100%;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:16px;background:#9bbc0f;border:2px outset #8bac0f;cursor:pointer}
+.rv{font-size:15px;color:#8bac0f;text-align:center}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px;background:rgba(4,10,30,0.92);border:3px ridge #8bac0f;margin-bottom:14px;align-items:center}
+.btn{font-family:'Press Start 2P',monospace;font-size:9px;padding:8px 14px;cursor:pointer;border:3px outset;text-shadow:1px 1px 0 rgba(0,0,0,0.5);transition:all 0.1s}
+.btn:hover{filter:brightness(1.3)}.btn:active{border-style:inset}.btn:disabled{opacity:0.3;cursor:not-allowed}
+.btn-g{background:linear-gradient(180deg,#8bac0f,#306230);color:#fff;border-color:#8bac0f}
+.btn-t{background:linear-gradient(180deg,#9bbc0f,#306230);color:#fff;border-color:#9bbc0f}
+.btn-r{background:linear-gradient(180deg,#9bbc0f,#306230);color:#04140a;border-color:#9bbc0f}
+.btn-d{background:linear-gradient(180deg,#444,#222);color:#ccc;border-color:#666}
+.btn-select{font-family:'Press Start 2P',monospace;font-size:8px;padding:8px 5px;background:#0c2418;border:3px ridge #9bbc0f;color:#9bbc0f;cursor:pointer;outline:none}
+.btn-select:disabled{opacity:0.3;cursor:not-allowed}
+.btn-input{font-family:'Press Start 2P',monospace;font-size:8px;padding:8px 6px;background:#0c2418;border:3px ridge #9bbc0f;color:#9bbc0f;outline:none;min-width:0}
+.btn-input::placeholder{color:#306230}
+.viz-box{background:rgba(2,5,14,0.95);border:3px ridge #8bac0f;margin-bottom:14px;overflow:hidden;display:none}
+.viz-header{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:2px solid #14381c}
+.viz-title{font-family:'Press Start 2P',monospace;font-size:9px;color:#8bac0f}
+.viz-info{font-size:14px;color:#306230}
+.viz-cw{padding:6px}
+.status-row{display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(4,10,30,0.92);border:2px ridge #306230;margin-bottom:14px}
+.status-dot{width:10px;height:10px;background:#0f380f;border:1px solid #8bac0f}
+.status-dot.active{background:#9bbc0f;box-shadow:0 0 8px #9bbc0f}
+#statusText{font-size:15px;color:#8bac0f}
+.cnt-btn.active{background:linear-gradient(180deg,#8bac0f,#306230)!important;color:#0f380f!important}
+.solo-active{background:linear-gradient(180deg,#9bbc0f,#306230)!important;color:#04140a!important}
+.mute-active{background:linear-gradient(180deg,#9bbc0f,#306230)!important;color:#fff!important}
+/* section title colours */
+.sec-t{color:#8bac0f}.sec-e{color:#9bbc0f}.sec-s{color:#9bbc0f}.sec-m{color:#9bbc0f}.sec-v{color:#9bbc0f}
+/* layer accent borders + toggles */
+.layer-zap{border-color:#8bac0f}   .lt-zap{background:#306230;border-color:#8bac0f}
+.layer-pew{border-color:#9bbc0f}   .lt-pew{background:#306230;border-color:#9bbc0f}
+.layer-crack{border-color:#8bac0f} .lt-crack{background:#306230;border-color:#8bac0f}
+.layer-zorp{border-color:#9bbc0f}  .lt-zorp{background:#306230;border-color:#9bbc0f}
+.layer-sizzle{border-color:#9bbc0f}.lt-sizzle{background:#306230;border-color:#9bbc0f}
+.layer-charge{border-color:#9bbc0f}.lt-charge{background:#306230;border-color:#9bbc0f}
+.layer-beam{border-color:#9bbc0f}  .lt-beam{background:#306230;border-color:#9bbc0f}
+.layer-arc{border-color:#8bac0f}   .lt-arc{background:#306230;border-color:#8bac0f}
+.layer-goo{border-color:#8bac0f}   .lt-goo{background:#306230;border-color:#8bac0f}
+.layer-ice{border-color:#8bac0f}   .lt-ice{background:#306230;border-color:#8bac0f}
+.layer-thwomp{border-color:#9bbc0f}.lt-thwomp{background:#306230;border-color:#9bbc0f}
+.layer-wobble{border-color:#9bbc0f}.lt-wobble{background:#306230;border-color:#9bbc0f}
+.layer-pulse{border-color:#9bbc0f} .lt-pulse{background:#306230;border-color:#9bbc0f}
+.layer-servo{border-color:#9bbc0f} .lt-servo{background:#306230;border-color:#9bbc0f}
+.layer-vent{border-color:#8bac0f}  .lt-vent{background:#306230;border-color:#8bac0f}
+.layer-clunk{border-color:#8bac0f} .lt-clunk{background:#306230;border-color:#8bac0f}
+.layer-coil{border-color:#9bbc0f}  .lt-coil{background:#306230;border-color:#9bbc0f}
+.layer-room{border-color:#8bac0f}  .lt-room{background:#306230;border-color:#8bac0f}
+.layer-ping{border-color:#9bbc0f}  .lt-ping{background:#306230;border-color:#9bbc0f}
+.layer-warp{border-color:#9bbc0f}  .lt-warp{background:#306230;border-color:#9bbc0f}
+.layer-tail{border-color:#8bac0f}  .lt-tail{background:#306230;border-color:#8bac0f}
+.layer-flange{border-color:#9bbc0f}.lt-flange{background:#306230;border-color:#9bbc0f}
+.layer-drive{border-color:#9bbc0f} .lt-drive{background:#306230;border-color:#9bbc0f}
+.layer-crush{border-color:#9bbc0f} .lt-crush{background:#306230;border-color:#9bbc0f}
+.layer-clip{border-color:#9bbc0f}  .lt-clip{background:#306230;border-color:#9bbc0f}
+.out-layer{border-color:#8bac0f}
+.out-layer .lc{grid-template-columns:repeat(3,1fr)}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="bg-grid"></div><div class="scanlines"></div>
+<div class="bar-top"></div><div class="bar-bottom"></div>
+<div class="app">
+<div class="header">
+  <h1>*~PEW BOY~*</h1>
+  <div class="sub">8-Bit Sci-Fi SFX Creator_</div>
+</div>
+<div class="marquee-wrapper">
+  <div class="marquee-text">*** LFSR NOISE CHANNEL *** ARPEGGIO CHIRP *** 5-BIT CRUSH *** KARPLUS PLUCK *** GATED SUB *** PEW ZAP BZZT ***</div>
+</div>
+
+<div class="mode-row">
+  <div class="mode-btn active" data-mode="single">SINGLE</div>
+  <div class="mode-btn" data-mode="burst">BURST</div>
+</div>
+<div class="fire-params show" id="fireParams">
+  <div class="cg" id="cntGroup" style="display:none"><label>Count</label>
+    <div style="display:flex;gap:4px">
+      <button class="btn btn-d cnt-btn" data-cnt="2" style="flex:1;padding:6px 2px;font-size:8px">2</button>
+      <button class="btn btn-d cnt-btn active" data-cnt="3" style="flex:1;padding:6px 2px;font-size:8px">3</button>
+      <button class="btn btn-d cnt-btn" data-cnt="5" style="flex:1;padding:6px 2px;font-size:8px">5</button>
+      <button class="btn btn-d cnt-btn" data-cnt="10" style="flex:1;padding:6px 2px;font-size:8px">10</button>
+      <button class="btn btn-d cnt-btn" data-cnt="20" style="flex:1;padding:6px 2px;font-size:8px">20</button>
+    </div>
+  </div>
+  <div class="cg" id="rpmGroup" style="display:none"><label>RPM</label><input type="range" id="pRPM" min="120" max="1500" value="700" step="10"><div class="rv" id="vRPM">700 RPM</div></div>
+  <div class="cg"><label>Time</label><input type="range" id="pTimeAll" min="10" max="300" value="100"><div class="rv" id="vTimeAll">100%</div></div>
+  <div class="cg"><label>Variation</label><input type="range" id="pVariation" min="0" max="50" value="10"><div class="rv" id="vVariation">10%</div></div>
+</div>
+
+<!-- PRESETS -->
+<div class="btn-row" style="margin-bottom:10px">
+  <select class="btn-select" id="presetSel" style="flex:1;min-width:110px">
+    <option value="">&mdash; PRESET &mdash;</option>
+  </select>
+  <input type="text" class="btn-input" id="presetName" placeholder="NAME" style="flex:1;min-width:90px">
+  <button class="btn btn-t" id="presetSave">SAVE</button>
+  <button class="btn btn-d" id="presetDel">DEL</button>
+</div>
+
+<!-- TAB NAV -->
+<div class="mode-row" id="sectionTabs">
+  <div class="mode-btn active" data-tab="transient" style="border-color:#8bac0f;color:#8bac0f">TRANSIENT</div>
+  <div class="mode-btn" data-tab="energy" style="border-color:#9bbc0f;color:#9bbc0f">ENERGY</div>
+  <div class="mode-btn" data-tab="subs" style="border-color:#9bbc0f;color:#9bbc0f">SUBS</div>
+  <div class="mode-btn" data-tab="mechs" style="border-color:#9bbc0f;color:#9bbc0f">MECHS</div>
+  <div class="mode-btn" data-tab="verb" style="border-color:#9bbc0f;color:#9bbc0f">VERB</div>
+  <div class="mode-btn" data-tab="mix" style="border-color:#8bac0f;color:#8bac0f">MIX</div>
+</div>
+
+<!-- GENERATE / TEST BAR -->
+<div class="btn-row" style="position:sticky;top:16px;z-index:40">
+  <button class="btn btn-g" id="generateBtn">GENERATE</button>
+  <button class="btn btn-t" id="testBtn" disabled>&#9654; TEST</button>
+  <button class="btn btn-d" id="downloadBtn" disabled>DOWNLOAD</button>
+  <select class="btn-select" id="pScope" title="One file, or one file + the five layer stems">
+    <option value="full" selected>FULL</option>
+    <option value="layers">+ LAYERS</option>
+  </select>
+  <select class="btn-select" id="pPack" title="ZIP = one archive. FILES = separate downloads">
+    <option value="zip" selected>ZIP</option>
+    <option value="files">FILES</option>
+  </select>
+  <button class="btn btn-r" id="randomBtn">RANDOMISE ALL</button>
+</div>
+
+<div class="layers">
+
+<!-- ═══ TRANSIENT ═══ -->
+<div class="tab-panel" data-panel="transient" style="display:flex;flex-direction:column;gap:3px">
+<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;margin-bottom:2px">
+  <button class="btn btn-r" style="font-size:7px;padding:5px 8px" data-rand-section="transient">RAND</button>
+  <span class="sec-t" style="font-family:'Press Start 2P',monospace;font-size:8px">ATTACK</span>
+  <div class="cg" style="margin-left:auto;min-width:110px;max-width:140px"><label>Time</label><input type="range" class="sp" data-p="timeTransient" min="10" max="300" value="100"><div class="rv">100%</div></div>
+  <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-solo="transient">S</button>
+  <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-mute="transient">M</button>
+</div>
+
+<div class="layer layer-zap" data-layer="zap">
+  <div class="lh"><span class="lt lt-zap" data-toggle="zap">ZAP</span>
+    <span class="ll">Karplus-Strong plucked wire — the Star Wars guy-wire blaster</span></div>
+  <div class="lc">
+    <div class="cg"><label>Pitch</label><input type="range" class="sp" data-p="zapFreq" min="80" max="1500" value="440"><div class="rv">440Hz</div></div>
+    <div class="cg"><label>Fall</label><input type="range" class="sp" data-p="zapBend" min="0" max="100" value="45"><div class="rv">45%</div></div>
+    <div class="cg"><label>Decay</label><input type="range" class="sp" data-p="zapDecay" min="20" max="500" value="120"><div class="rv">220ms</div></div>
+    <div class="cg"><label>Damp</label><input type="range" class="sp" data-p="zapDamp" min="0" max="100" value="35"><div class="rv">35%</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="zapLvl" min="0" max="150" value="90"><div class="rv">90%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-pew" data-layer="pew">
+  <div class="lh"><span class="lt lt-pew" data-toggle="pew">PEW</span>
+    <span class="ll">Classic laser — exponential pitch dive, sine&rarr;buzz morph</span></div>
+  <div class="lc">
+    <div class="cg"><label>From</label><input type="range" class="sp" data-p="pewFrom" min="200" max="6000" value="2600"><div class="rv">2600Hz</div></div>
+    <div class="cg"><label>To</label><input type="range" class="sp" data-p="pewTo" min="30" max="2000" value="140"><div class="rv">140Hz</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="pewLen" min="10" max="250" value="70"><div class="rv">120ms</div></div>
+    <div class="cg"><label>Buzz</label><input type="range" class="sp" data-p="pewBuzz" min="0" max="100" value="55"><div class="rv">40%</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="pewLvl" min="0" max="150" value="85"><div class="rv">85%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-crack" data-layer="crack">
+  <div class="lh"><span class="lt lt-crack" data-toggle="crack">CRACK</span>
+    <span class="ll">Discharge snap — resonant LP dive over noise, plasma bark</span></div>
+  <div class="lc">
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="crackLen" min="5" max="120" value="35"><div class="rv">60ms</div></div>
+    <div class="cg"><label>Res</label><input type="range" class="sp" data-p="crackRes" min="0" max="100" value="55"><div class="rv">55%</div></div>
+    <div class="cg"><label>Sweep</label><input type="range" class="sp" data-p="crackSweep" min="0" max="100" value="70"><div class="rv">70%</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="crackLvl" min="0" max="150" value="70"><div class="rv">70%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-zorp" data-layer="zorp">
+  <div class="lh"><span class="lt lt-zorp" data-toggle="zorp">ZORP</span>
+    <span class="ll">FM hit — falling modulator pitch, ripping metallic zap</span></div>
+  <div class="lc">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="zorpFreq" min="60" max="1200" value="320"><div class="rv">320Hz</div></div>
+    <div class="cg"><label>Ratio</label><input type="range" class="sp" data-p="zorpRatio" min="25" max="800" value="275"><div class="rv">2.75x</div></div>
+    <div class="cg"><label>Index</label><input type="range" class="sp" data-p="zorpIndex" min="0" max="100" value="60"><div class="rv">60%</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="zorpLen" min="10" max="250" value="70"><div class="rv">140ms</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="zorpLvl" min="0" max="150" value="60"><div class="rv">60%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-sizzle" data-layer="sizzle">
+  <div class="lh"><span class="lt lt-sizzle" data-toggle="sizzle">SIZZLE</span>
+    <span class="ll">Plasma crackle — random micro-arcs, high frying static</span></div>
+  <div class="lc">
+    <div class="cg"><label>Dens</label><input type="range" class="sp" data-p="sizzleDens" min="1" max="100" value="40"><div class="rv">40</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="sizzleLen" min="20" max="300" value="120"><div class="rv">220ms</div></div>
+    <div class="cg"><label>Bright</label><input type="range" class="sp" data-p="sizzleBright" min="0" max="100" value="60"><div class="rv">60%</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="sizzleLvl" min="0" max="150" value="45"><div class="rv">45%</div></div>
+  </div>
+</div>
+<div class="layer layer-sizzle" data-layer="noise">
+  <div class="lh"><span class="lt lt-sizzle" data-toggle="noise">NOISE</span>
+    <span class="ll">GB noise channel — LFSR burst, Metal morphs to the short ringy register</span></div>
+  <div class="lc">
+    <div class="cg"><label>Clk</label><input type="range" class="sp" data-p="noiseClk" min="500" max="16000" value="9000"><div class="rv">9000Hz</div></div>
+    <div class="cg"><label>Metal</label><input type="range" class="sp" data-p="noiseMetal" min="0" max="100" value="25"><div class="rv">25%</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="noiseLen" min="5" max="250" value="90"><div class="rv">90ms</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="noiseLvl" min="0" max="150" value="85"><div class="rv">85%</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ ENERGY ═══ -->
+<div class="tab-panel" data-panel="energy" style="display:none;flex-direction:column;gap:3px">
+<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;margin-bottom:2px">
+  <button class="btn btn-r" style="font-size:7px;padding:5px 8px" data-rand-section="energy">RAND</button>
+  <span class="sec-e" style="font-family:'Press Start 2P',monospace;font-size:8px">ENERGY FX</span>
+  <div class="cg" style="margin-left:auto;min-width:110px;max-width:140px"><label>Time</label><input type="range" class="sp" data-p="timeEnergy" min="10" max="300" value="100"><div class="rv">100%</div></div>
+  <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-solo="energy">S</button>
+  <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-mute="energy">M</button>
+</div>
+
+<div class="layer layer-charge" data-layer="charge">
+  <div class="lh"><span class="lt lt-charge" data-toggle="charge">CHARGE</span>
+    <span class="ll">Pre-fire riser — pitch + noise swell INTO the shot; shifts the hit later</span></div>
+  <div class="lc">
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="chargeLen" min="20" max="300" value="90"><div class="rv">160ms</div></div>
+    <div class="cg"><label>From</label><input type="range" class="sp" data-p="chargeFrom" min="80" max="2000" value="180"><div class="rv">180Hz</div></div>
+    <div class="cg"><label>To</label><input type="range" class="sp" data-p="chargeTo" min="400" max="8000" value="2400"><div class="rv">2400Hz</div></div>
+    <div class="cg"><label>Buzz</label><input type="range" class="sp" data-p="chargeBuzz" min="0" max="100" value="50"><div class="rv">50%</div></div>
+    <div class="cg"><label>Noise</label><input type="range" class="sp" data-p="chargeNoise" min="0" max="100" value="40"><div class="rv">40%</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="chargeLvl" min="0" max="150" value="70"><div class="rv">70%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-beam" data-layer="beam">
+  <div class="lh"><span class="lt lt-beam" data-toggle="beam">BEAM</span>
+    <span class="ll">Ring-mod hum — Star Trek phaser family, the ZZZZ after the hit</span></div>
+  <div class="lc">
+    <div class="cg"><label>F1</label><input type="range" class="sp" data-p="beamF1" min="60" max="1200" value="220"><div class="rv">220Hz</div></div>
+    <div class="cg"><label>F2</label><input type="range" class="sp" data-p="beamF2" min="80" max="2000" value="470"><div class="rv">470Hz</div></div>
+    <div class="cg"><label>Vib</label><input type="range" class="sp" data-p="beamVib" min="5" max="300" value="70"><div class="rv">7Hz</div></div>
+    <div class="cg"><label>VibAmt</label><input type="range" class="sp" data-p="beamVibAmt" min="0" max="100" value="35"><div class="rv">35%</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="beamLen" min="40" max="500" value="180"><div class="rv">420ms</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="beamLvl" min="0" max="150" value="65"><div class="rv">65%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-arc" data-layer="arc">
+  <div class="lh"><span class="lt lt-arc" data-toggle="arc">ARC</span>
+    <span class="ll">Tesla discharge — discrete electric cracks, Jacob's ladder</span></div>
+  <div class="lc">
+    <div class="cg"><label>Hits</label><input type="range" class="sp" data-p="arcHits" min="1" max="30" value="7"><div class="rv">7</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="arcLen" min="20" max="250" value="100"><div class="rv">180ms</div></div>
+    <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="arcTone" min="800" max="5000" value="2200"><div class="rv">2200Hz</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="arcLvl" min="0" max="150" value="55"><div class="rv">55%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-goo" data-layer="goo">
+  <div class="lh"><span class="lt lt-goo" data-toggle="goo">GOO</span>
+    <span class="ll">Bio-plasma blorp — formant filters wobbling over a saturated drone</span></div>
+  <div class="lc">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="gooFreq" min="40" max="300" value="110"><div class="rv">110Hz</div></div>
+    <div class="cg"><label>Wob</label><input type="range" class="sp" data-p="gooWob" min="10" max="200" value="45"><div class="rv">4.5Hz</div></div>
+    <div class="cg"><label>Wet</label><input type="range" class="sp" data-p="gooWet" min="0" max="100" value="65"><div class="rv">65%</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="gooLen" min="40" max="400" value="180"><div class="rv">380ms</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="gooLvl" min="0" max="150" value="55"><div class="rv">55%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-ice" data-layer="ice">
+  <div class="lh"><span class="lt lt-ice" data-toggle="ice">ICE</span>
+    <span class="ll">Cryo shatter — glassy inharmonic partials with detune shimmer</span></div>
+  <div class="lc">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="iceFreq" min="800" max="6000" value="2600"><div class="rv">2600Hz</div></div>
+    <div class="cg"><label>Shimmer</label><input type="range" class="sp" data-p="iceShimmer" min="0" max="100" value="40"><div class="rv">40%</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="iceLen" min="50" max="500" value="220"><div class="rv">500ms</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="iceLvl" min="0" max="150" value="50"><div class="rv">50%</div></div>
+  </div>
+</div>
+<div class="layer layer-ice" data-layer="arp">
+  <div class="lh"><span class="lt lt-ice" data-toggle="arp">ARP</span>
+    <span class="ll">Arpeggio chirp — square wave stepping a chord, item-get energy</span></div>
+  <div class="lc">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="arpFreq" min="120" max="3000" value="880"><div class="rv">880Hz</div></div>
+    <div class="cg"><label>Span</label><input type="range" class="sp" data-p="arpSpan" min="1" max="24" value="12"><div class="rv">12st</div></div>
+    <div class="cg"><label>Speed</label><input type="range" class="sp" data-p="arpSpeed" min="4" max="60" value="28"><div class="rv">28/s</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="arpLen" min="20" max="300" value="160"><div class="rv">160ms</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="arpLvl" min="0" max="150" value="55"><div class="rv">55%</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ SUBS ═══ -->
+<div class="tab-panel" data-panel="subs" style="display:none;flex-direction:column;gap:3px">
+<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;margin-bottom:2px">
+  <button class="btn btn-r" style="font-size:7px;padding:5px 8px" data-rand-section="subs">RAND</button>
+  <span class="sec-s" style="font-family:'Press Start 2P',monospace;font-size:8px">LOWS</span>
+  <div class="cg" style="margin-left:auto;min-width:110px;max-width:140px"><label>Time</label><input type="range" class="sp" data-p="timeSubs" min="10" max="300" value="100"><div class="rv">100%</div></div>
+  <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-solo="subs">S</button>
+  <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-mute="subs">M</button>
+</div>
+
+<div class="layer layer-thwomp" data-layer="thwomp">
+  <div class="lh"><span class="lt lt-thwomp" data-toggle="thwomp">THWOMP</span>
+    <span class="ll">Diving boom — long pitch fall into the floor, the SHHRVUMP</span></div>
+  <div class="lc">
+    <div class="cg"><label>From</label><input type="range" class="sp" data-p="thwompFrom" min="60" max="500" value="180"><div class="rv">180Hz</div></div>
+    <div class="cg"><label>To</label><input type="range" class="sp" data-p="thwompTo" min="20" max="120" value="38"><div class="rv">38Hz</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="thwompLen" min="60" max="800" value="260"><div class="rv">700ms</div></div>
+    <div class="cg"><label>Girth</label><input type="range" class="sp" data-p="thwompGirth" min="0" max="100" value="45"><div class="rv">45%</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="thwompLvl" min="0" max="150" value="80"><div class="rv">80%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-wobble" data-layer="wobble">
+  <div class="lh"><span class="lt lt-wobble" data-toggle="wobble">WOBBLE</span>
+    <span class="ll">LFO sub — pitch + amp wobbling low drone, dubby energy core</span></div>
+  <div class="lc">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="wobbleFreq" min="25" max="120" value="52"><div class="rv">52Hz</div></div>
+    <div class="cg"><label>Rate</label><input type="range" class="sp" data-p="wobbleRate" min="5" max="300" value="60"><div class="rv">6Hz</div></div>
+    <div class="cg"><label>Depth</label><input type="range" class="sp" data-p="wobbleDepth" min="0" max="100" value="60"><div class="rv">60%</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="wobbleLen" min="60" max="900" value="300"><div class="rv">900ms</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="wobbleLvl" min="0" max="150" value="55"><div class="rv">55%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-pulse" data-layer="pulse">
+  <div class="lh"><span class="lt lt-pulse" data-toggle="pulse">PULSE</span>
+    <span class="ll">Gated sub — reactor stutter, UNF UNF UNF</span></div>
+  <div class="lc">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="pulseFreq" min="30" max="100" value="45"><div class="rv">45Hz</div></div>
+    <div class="cg"><label>Gate</label><input type="range" class="sp" data-p="pulseGate" min="2" max="40" value="12"><div class="rv">12</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="pulseLen" min="60" max="800" value="260"><div class="rv">650ms</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="pulseLvl" min="0" max="150" value="60"><div class="rv">60%</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ MECHS ═══ -->
+<div class="tab-panel" data-panel="mechs" style="display:none;flex-direction:column;gap:3px">
+<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;margin-bottom:2px">
+  <button class="btn btn-r" style="font-size:7px;padding:5px 8px" data-rand-section="mechs">RAND</button>
+  <span class="sec-m" style="font-family:'Press Start 2P',monospace;font-size:8px">MACHINERY</span>
+  <div class="cg" style="margin-left:auto;min-width:110px;max-width:140px"><label>Time</label><input type="range" class="sp" data-p="timeMechs" min="10" max="300" value="100"><div class="rv">100%</div></div>
+  <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-solo="mechs">S</button>
+  <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-mute="mechs">M</button>
+</div>
+
+<div class="layer layer-servo" data-layer="servo">
+  <div class="lh"><span class="lt lt-servo" data-toggle="servo">SERVO</span>
+    <span class="ll">Actuator whine — gliding motor, the weapon re-arming itself</span></div>
+  <div class="lc">
+    <div class="cg"><label>From</label><input type="range" class="sp" data-p="servoFrom" min="200" max="4000" value="1400"><div class="rv">1400Hz</div></div>
+    <div class="cg"><label>To</label><input type="range" class="sp" data-p="servoTo" min="100" max="3000" value="420"><div class="rv">420Hz</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="servoLen" min="10" max="200" value="70"><div class="rv">110ms</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="servoDelay" min="0" max="300" value="25"><div class="rv">25ms</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="servoLvl" min="0" max="150" value="50"><div class="rv">50%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-vent" data-layer="vent">
+  <div class="lh"><span class="lt lt-vent" data-toggle="vent">VENT</span>
+    <span class="ll">Gas purge — pressurised hiss dump after the shot</span></div>
+  <div class="lc">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="ventFreq" min="300" max="6000" value="1800"><div class="rv">1800Hz</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="ventLen" min="20" max="400" value="120"><div class="rv">260ms</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="ventDelay" min="0" max="300" value="40"><div class="rv">40ms</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="ventLvl" min="0" max="150" value="45"><div class="rv">45%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-clunk" data-layer="clunk">
+  <div class="lh"><span class="lt lt-clunk" data-toggle="clunk">CLUNK</span>
+    <span class="ll">Heavy bolt — modal impact, oversized sci-fi action cycling</span></div>
+  <div class="lc">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="clunkFreq" min="80" max="500" value="170"><div class="rv">170Hz</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="clunkLen" min="20" max="250" value="90"><div class="rv">140ms</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="clunkDelay" min="0" max="300" value="15"><div class="rv">15ms</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="clunkLvl" min="0" max="150" value="55"><div class="rv">55%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-coil" data-layer="coil">
+  <div class="lh"><span class="lt lt-coil" data-toggle="coil">COIL</span>
+    <span class="ll">Ring-modded zing — alien metal, capacitor bank complaining</span></div>
+  <div class="lc">
+    <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="coilFreq" min="200" max="2500" value="760"><div class="rv">760Hz</div></div>
+    <div class="cg"><label>Carrier</label><input type="range" class="sp" data-p="coilCarrier" min="50" max="2000" value="310"><div class="rv">310Hz</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="coilLen" min="20" max="300" value="120"><div class="rv">240ms</div></div>
+    <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="coilDelay" min="0" max="300" value="60"><div class="rv">60ms</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="coilLvl" min="0" max="150" value="50"><div class="rv">50%</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ VERB ═══ -->
+<div class="tab-panel" data-panel="verb" style="display:none;flex-direction:column;gap:3px">
+<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;margin-bottom:2px">
+  <button class="btn btn-r" style="font-size:7px;padding:5px 8px" data-rand-section="verb">RAND</button>
+  <span class="sec-v" style="font-family:'Press Start 2P',monospace;font-size:8px">SPACE</span>
+  <div class="cg" style="margin-left:auto;min-width:110px;max-width:140px"><label>Time</label><input type="range" class="sp" data-p="timeVerb" min="10" max="300" value="100"><div class="rv">100%</div></div>
+  <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-solo="verb">S</button>
+  <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-mute="verb">M</button>
+</div>
+
+<div class="layer layer-room" data-layer="room">
+  <div class="lh"><span class="lt lt-room" data-toggle="room">ROOM</span>
+    <span class="ll">Early reflections — hangar slapback off the direct sound</span></div>
+  <div class="lc">
+    <div class="cg"><label>Size</label><input type="range" class="sp" data-p="roomSize" min="10" max="140" value="45"><div class="rv">70ms</div></div>
+    <div class="cg"><label>Cut</label><input type="range" class="sp" data-p="roomCut" min="500" max="8000" value="3800"><div class="rv">3800Hz</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="roomLvl" min="0" max="150" value="45"><div class="rv">45%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-ping" data-layer="ping">
+  <div class="lh"><span class="lt lt-ping" data-toggle="ping">PING</span>
+    <span class="ll">Echo repeats — pew&hellip;pew&hellip;pew canyon delay</span></div>
+  <div class="lc">
+    <div class="cg"><label>Time</label><input type="range" class="sp" data-p="pingTime" min="30" max="350" value="110"><div class="rv">140ms</div></div>
+    <div class="cg"><label>FB</label><input type="range" class="sp" data-p="pingFB" min="0" max="95" value="45"><div class="rv">45%</div></div>
+    <div class="cg"><label>Cut</label><input type="range" class="sp" data-p="pingCut" min="500" max="8000" value="3000"><div class="rv">3000Hz</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="pingLvl" min="0" max="150" value="50"><div class="rv">50%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-warp" data-layer="warp">
+  <div class="lh"><span class="lt lt-warp" data-toggle="warp">WARP</span>
+    <span class="ll">Modulated smear — detuned comb tail, space that isn't real</span></div>
+  <div class="lc">
+    <div class="cg"><label>Rate</label><input type="range" class="sp" data-p="warpRate" min="1" max="100" value="25"><div class="rv">2.5Hz</div></div>
+    <div class="cg"><label>Depth</label><input type="range" class="sp" data-p="warpDepth" min="0" max="100" value="45"><div class="rv">45%</div></div>
+    <div class="cg"><label>FB</label><input type="range" class="sp" data-p="warpFB" min="0" max="95" value="60"><div class="rv">60%</div></div>
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="warpLen" min="60" max="800" value="320"><div class="rv">700ms</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="warpLvl" min="0" max="150" value="50"><div class="rv">50%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-tail" data-layer="tail">
+  <div class="lh"><span class="lt lt-tail" data-toggle="tail">TAIL</span>
+    <span class="ll">Dark wash — darkening LP decay excited by the shot</span></div>
+  <div class="lc">
+    <div class="cg"><label>Len</label><input type="range" class="sp" data-p="tailLen" min="60" max="1000" value="380"><div class="rv">900ms</div></div>
+    <div class="cg"><label>Cut</label><input type="range" class="sp" data-p="tailCut" min="500" max="8000" value="4200"><div class="rv">4200Hz</div></div>
+    <div class="cg"><label>Lvl</label><input type="range" class="sp" data-p="tailLvl" min="0" max="150" value="50"><div class="rv">50%</div></div>
+  </div>
+</div>
+</div>
+
+<!-- ═══ MIX ═══ -->
+<div class="tab-panel" data-panel="mix" style="display:none;flex-direction:column;gap:3px">
+
+<div style="padding:6px 8px;font-family:'Press Start 2P',monospace;font-size:8px;color:#8bac0f;margin-bottom:6px">SECTION MIX</div>
+
+<div class="layer" style="border-color:#8bac0f">
+  <div class="lh"><span style="font-family:'Press Start 2P',monospace;font-size:8px;color:#8bac0f">TRANSIENT</span>
+    <button class="btn btn-d" style="font-size:6px;padding:3px 6px;margin-left:auto" data-solo="transient">S</button>
+    <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-mute="transient">M</button></div>
+  <div class="lc"><div class="cg"><label>Vol</label><input type="range" class="sp" data-p="secTransient" min="0" max="150" value="100"><div class="rv">100%</div></div></div>
+</div>
+
+<div class="layer" style="border-color:#9bbc0f">
+  <div class="lh"><span style="font-family:'Press Start 2P',monospace;font-size:8px;color:#9bbc0f">ENERGY</span>
+    <button class="btn btn-d" style="font-size:6px;padding:3px 6px;margin-left:auto" data-solo="energy">S</button>
+    <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-mute="energy">M</button></div>
+  <div class="lc"><div class="cg"><label>Vol</label><input type="range" class="sp" data-p="secEnergy" min="0" max="150" value="100"><div class="rv">100%</div></div></div>
+</div>
+
+<div class="layer" style="border-color:#9bbc0f">
+  <div class="lh"><span style="font-family:'Press Start 2P',monospace;font-size:8px;color:#9bbc0f">SUBS</span>
+    <button class="btn btn-d" style="font-size:6px;padding:3px 6px;margin-left:auto" data-solo="subs">S</button>
+    <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-mute="subs">M</button></div>
+  <div class="lc"><div class="cg"><label>Vol</label><input type="range" class="sp" data-p="secSubs" min="0" max="150" value="100"><div class="rv">100%</div></div></div>
+</div>
+
+<div class="layer" style="border-color:#9bbc0f">
+  <div class="lh"><span style="font-family:'Press Start 2P',monospace;font-size:8px;color:#9bbc0f">MECHS</span>
+    <button class="btn btn-d" style="font-size:6px;padding:3px 6px;margin-left:auto" data-solo="mechs">S</button>
+    <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-mute="mechs">M</button></div>
+  <div class="lc"><div class="cg"><label>Vol</label><input type="range" class="sp" data-p="secMechs" min="0" max="150" value="100"><div class="rv">100%</div></div></div>
+</div>
+
+<div class="layer" style="border-color:#9bbc0f">
+  <div class="lh"><span style="font-family:'Press Start 2P',monospace;font-size:8px;color:#9bbc0f">VERB</span>
+    <button class="btn btn-d" style="font-size:6px;padding:3px 6px;margin-left:auto" data-solo="verb">S</button>
+    <button class="btn btn-d" style="font-size:6px;padding:3px 6px" data-mute="verb">M</button></div>
+  <div class="lc"><div class="cg"><label>Vol</label><input type="range" class="sp" data-p="secVerb" min="0" max="150" value="100"><div class="rv">100%</div></div></div>
+</div>
+
+<div style="padding:6px 8px;font-family:'Press Start 2P',monospace;font-size:8px;color:#8bac0f;margin:8px 0 6px">MASTER FX</div>
+
+<div class="layer layer-flange" data-layer="flange">
+  <div class="lh"><span class="lt lt-flange" data-toggle="flange">FLANGE</span>
+    <span class="ll">Jet-swoosh comb sweep over the whole weapon</span></div>
+  <div class="lc">
+    <div class="cg"><label>Rate</label><input type="range" class="sp" data-p="flangeRate" min="1" max="100" value="12"><div class="rv">1.2Hz</div></div>
+    <div class="cg"><label>Depth</label><input type="range" class="sp" data-p="flangeDepth" min="0" max="100" value="60"><div class="rv">60%</div></div>
+    <div class="cg"><label>FB</label><input type="range" class="sp" data-p="flangeFB" min="0" max="90" value="40"><div class="rv">40%</div></div>
+    <div class="cg"><label>Mix</label><input type="range" class="sp" data-p="flangeMix" min="0" max="100" value="50"><div class="rv">50%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-drive" data-layer="drive">
+  <div class="lh"><span class="lt lt-drive" data-toggle="drive">DRIVE</span>
+    <span class="ll">Waveshaper — overdriven emitter, angry plasma</span></div>
+  <div class="lc">
+    <div class="cg"><label>Amt</label><input type="range" class="sp" data-p="driveAmt" min="0" max="100" value="35"><div class="rv">35%</div></div>
+  </div>
+</div>
+
+<div class="layer layer-crush" data-layer="crush">
+  <div class="lh"><span class="lt lt-crush" data-toggle="crush">CRUSH</span>
+    <span class="ll">Bitcrusher — retro console weapon, aliasing as a feature</span></div>
+  <div class="lc">
+    <div class="cg"><label>Bits</label><input type="range" class="sp" data-p="crushBits" min="3" max="16" value="5"><div class="rv">8</div></div>
+    <div class="cg"><label>Down</label><input type="range" class="sp" data-p="crushDown" min="1" max="16" value="6"><div class="rv">4</div></div>
+  </div>
+</div>
+
+<div class="layer layer-clip" data-layer="clip">
+  <div class="lh"><span class="lt lt-clip" data-toggle="clip">CLIP</span>
+    <span class="ll">Asymmetric saturation — the mic didn't survive the discharge</span></div>
+  <div class="lc">
+    <div class="cg"><label>Amt</label><input type="range" class="sp" data-p="clipAmt" min="0" max="100" value="40"><div class="rv">40%</div></div>
+    <div class="cg"><label>Pos Ceil</label><input type="range" class="sp" data-p="clipPos" min="50" max="100" value="80"><div class="rv">80%</div></div>
+    <div class="cg"><label>Neg Floor</label><input type="range" class="sp" data-p="clipNeg" min="50" max="100" value="80"><div class="rv">80%</div></div>
+  </div>
+</div>
+
+<div class="layer out-layer">
+  <div class="lh"><span class="lt" style="background:#306230;border-color:#8bac0f;cursor:default">OUT</span>
+    <span class="ll">Fade in only ramps pre-onset floor — it can never touch the attack</span></div>
+  <div class="lc">
+    <div class="cg"><label>Level</label><input type="range" class="sp" data-p="outLevel" min="10" max="100" value="85"><div class="rv">85%</div></div>
+    <div class="cg"><label>Fade In</label><input type="range" class="sp" data-p="fadeIn" min="0" max="50" value="3"><div class="rv">0.3ms</div></div>
+    <div class="cg"><label>Fade Out</label><input type="range" class="sp" data-p="fadeOut" min="0" max="200" value="12"><div class="rv">20ms</div></div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- WAVEFORM -->
+<div class="viz-box" id="waveformBox">
+  <div class="viz-header">
+    <span class="viz-title">WAVEFORM</span>
+    <span class="viz-info" id="waveformInfo"></span>
+  </div>
+  <div class="viz-cw"><canvas id="waveformCanvas" height="120"></canvas></div>
+</div>
+
+<div class="status-row">
+  <div class="status-dot" id="statusDot"></div>
+  <span id="statusText">READY</span>
+</div>
+
+</div>
+<script>
+// ═══════════════════════ PEW BOY v1 ═══════════════════════
+// Same skeleton as Shot Forge v17: rounds → take → FULL/+SHOTS/+LAYERS
+// export with exact reassembly. All synthesis replaced with sci-fi
+// generators. Five stems now: TRANSIENT ENERGY SUBS MECHS VERB.
+var SR=48000;
+var fireMode='single', curBuf=null, curTake=null, nGen=0, layerOff={};
+function rnd(){ return Math.random(); }
+
+// ── small DSP helpers ──────────────────────────────
+function peakOf(b){ var m=0; for(var i=0;i<b.length;i++) m=Math.max(m,Math.abs(b[i])); return m; }
+function normTo1(buf){
+  var mx=peakOf(buf);
+  if(mx>1e-9) for(var i=0;i<buf.length;i++) buf[i]/=mx;
+  return buf;
+}
+// per-sample one-pole LP; cutoff can vary each sample (stable at any cutoff,
+// unlike Chamberlin above SR/6 — that's why CRACK uses two of these in series)
+function lpCoef(cut){ return 1-Math.exp(-2*Math.PI*Math.max(10,Math.min(cut,20000))/SR); }
+
+// ═══ TRANSIENT generators ═══
+
+// ZAP — Karplus-Strong plucked wire. Burtt's blaster was a struck guy wire;
+// KS is the digital version: noise burst circulating in a damped delay line.
+// Fall STRETCHES the delay over time so the pitch dives like a proper pew.
+function genZap(p){
+  var f0=Math.max(60,p.zapFreq||440);
+  var decay=Math.max(0.03,(p.zapDecay||220)/1000);
+  var bend=(p.zapBend||0)/100;
+  var damp=(p.zapDamp||35)/100;
+  var N=Math.min(Math.ceil(decay*4*SR),Math.round(1.6*SR));
+  var L0=SR/f0, Lmax=L0*(1+2.2*bend)+8;
+  var B=Math.ceil(Lmax)+4;
+  var buf=new Float32Array(B);
+  for(var i=0;i<Math.ceil(L0);i++) buf[i]=rnd()*2-1;
+  var w=Math.ceil(L0)% B;
+  // loop gain for -60dB at `decay` given the (sliding) period
+  var out=new Float32Array(N);
+  var prev=0;
+  for(var n=0;n<N;n++){
+    var L=L0*(1+2.2*bend*(n/N));           // period grows → pitch falls
+    var fb=Math.pow(10,-3/(decay*(SR/L))); // recomputed as pitch slides
+    var rp=w-L; while(rp<0) rp+=B;
+    var i0=Math.floor(rp)%B, i1=(i0+1)%B, fr=rp-Math.floor(rp);
+    var y=buf[i0]*(1-fr)+buf[i1]*fr;
+    var d=(1-damp)*y + damp*0.5*(y+prev);  // damping = brightness loss per pass
+    prev=y;
+    buf[w]=d*fb;
+    w=(w+1)%B;
+    out[n]=y*Math.min(1,n/(0.0005*SR)); // micro-attack: file starts at zero
+  }
+  return out;
+}
+
+// PEW — the classic laser: one oscillator, exponential pitch dive.
+// Buzz waveshapes sine → square-ish for the cheap-and-nasty vintage tone.
+function genPew(p){
+  var f1=p.pewFrom||2600, f2=Math.max(20,p.pewTo||140);
+  var T=Math.max(0.02,(p.pewLen||120)/1000);
+  var buzz=1+(p.pewBuzz||0)/100*6;
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var ph=0, atk=Math.max(1,Math.round(0.001*SR)), tn=Math.tanh(buzz);
+  for(var n=0;n<N;n++){
+    var t=n/N;
+    var f=f1*Math.pow(f2/f1,t);
+    ph+=2*Math.PI*f/SR;
+    var s=Math.tanh(Math.sin(ph)*buzz)/tn;
+    var env=(n<atk?n/atk:1)*Math.exp(-3.2*t);
+    out[n]=s*env;
+  }
+  return out;
+}
+
+// CRACK — the plasma bark: resonant-feeling LP dive over noise + click.
+// Two cascaded one-pole LPs with a fast-falling cutoff; Res adds a ringing
+// sine that tracks the sweep, standing in for filter resonance without the
+// instability of a real 2-pole at 14kHz.
+function genCrack(p){
+  var T=Math.max(0.01,(p.crackLen||60)/1000);
+  var res=(p.crackRes||55)/100, sweep=(p.crackSweep||70)/100;
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var y1=0,y2=0,ph=0;
+  var cutHi=2000+12000*sweep;
+  for(var n=0;n<N;n++){
+    var t=n/N;
+    var cut=cutHi*Math.pow(250/cutHi,t);
+    var a=lpCoef(cut);
+    var x=rnd()*2-1;
+    y1+=a*(x-y1); y2+=a*(y1-y2);
+    ph+=2*Math.PI*cut/SR;
+    var ring=Math.sin(ph)*res*0.7;
+    var env=Math.exp(-4.5*t)*Math.min(1,n/(0.0004*SR)); // micro-attack
+    out[n]=(y2*2.2+ring)*env;
+  }
+  for(var i=0;i<Math.min(8,N);i++) out[i]+= Math.min(1,i/2)*(1-i/8)*(i%2?-1:1)*0.8; // ignition click
+  return out;
+}
+
+// ZORP — FM one-shot. Fast pitch envelope on the MODULATOR is the classic
+// laser-rip trick: the sideband spray collapses as the mod pitch falls.
+function genZorp(p){
+  var fc=p.zorpFreq||320, ratio=(p.zorpRatio||275)/100;
+  var I0=(p.zorpIndex||60)/100*10;
+  var T=Math.max(0.02,(p.zorpLen||140)/1000);
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var phC=0, phM=0, atk=Math.max(1,Math.round(0.0008*SR));
+  for(var n=0;n<N;n++){
+    var t=n/N;
+    var fm=fc*ratio*(1-0.7*t);       // modulator dives
+    var I=I0*Math.exp(-6*t);         // index collapses
+    phM+=2*Math.PI*fm/SR;
+    phC+=2*Math.PI*fc/SR;
+    var env=(n<atk?n/atk:1)*Math.exp(-4*t);
+    out[n]=Math.sin(phC+I*Math.sin(phM))*env;
+  }
+  return out;
+}
+
+// shared micro-arc engine — SIZZLE (dense frying) and ARC (discrete cracks)
+// are the same physics at different densities. Each event is an enveloped
+// sine ping + a noise blip; no filters needed so any pitch is safe.
+function arcEvents(N,count,fLo,fHi,ringMs,frontLoad){
+  var out=new Float32Array(N);
+  for(var e=0;e<count;e++){
+    var pos=2+Math.floor(Math.pow(rnd(),frontLoad)*(N*0.9-2));
+    var f=fLo+rnd()*(fHi-fLo);
+    var ring=Math.ceil((ringMs*(0.5+rnd()))/1000*SR);
+    var amp=0.4+rnd()*0.6;
+    var w=2*Math.PI*f/SR;
+    for(var i=0;i<ring && pos+i<N;i++){
+      var env=Math.exp(-6*i/ring);
+      out[pos+i]+=(Math.sin(w*i)*0.8+(rnd()*2-1)*0.35)*env*amp;
+    }
+  }
+  return out;
+}
+
+function genSizzle(p){
+  var T=Math.max(0.03,(p.sizzleLen||120)/1000);
+  var N=Math.ceil(T*SR);
+  var count=Math.round((p.sizzleDens||40)*T*10);
+  var bright=(p.sizzleBright||60)/100;
+  return arcEvents(N,count,1500+bright*2000,4000+bright*5000,4,1.6);
+}
+
+// NOISE — the Game Boy noise channel: a linear-feedback shift register
+// sample-held at a clock rate. Metal blends toward the 7-bit short register,
+// whose 127-step period reads as pitched metallic buzz instead of hiss.
+function genNoise(p){
+  var clk=Math.max(200,p.noiseClk||9000);
+  var metal=(p.noiseMetal||25)/100;
+  var T=Math.max(0.01,(p.noiseLen||90)/1000);
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var lfsr15=0x7FFF, lfsr7=0x7F, holdW=1, holdM=1, acc=1;
+  var step=clk/SR, atk=Math.max(1,Math.round(0.0008*SR));
+  for(var n=0;n<N;n++){
+    acc+=step;
+    while(acc>=1){
+      acc-=1;
+      var b=((lfsr15)^(lfsr15>>1))&1;
+      lfsr15=(lfsr15>>1)|(b<<14);
+      holdW=(lfsr15&1)?1:-1;
+      var c=((lfsr7)^(lfsr7>>1))&1;
+      lfsr7=(lfsr7>>1)|(c<<6);
+      holdM=(lfsr7&1)?1:-1;
+    }
+    var env=(n<atk?n/atk:1)*Math.exp(-5*n/N);
+    out[n]=(holdW*(1-metal)+holdM*metal)*env;
+  }
+  return out;
+}
+
+// ARP — square wave stepping through a chord: root, +span/3, +2span/3, +span
+// semitones, cycling at Speed steps per second. Pure item-get.
+function genArp(p){
+  var base=p.arpFreq||880;
+  var span=Math.max(1,p.arpSpan||12);
+  var speed=Math.max(2,p.arpSpeed||28);
+  var T=Math.max(0.03,(p.arpLen||160)/1000);
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var semis=[0,Math.round(span/3),Math.round(2*span/3),Math.round(span)];
+  var ph=0, atk=Math.max(1,Math.round(0.001*SR));
+  for(var n=0;n<N;n++){
+    var stepIdx=Math.floor(n/SR*speed)%semis.length;
+    var f=base*Math.pow(2,semis[stepIdx]/12);
+    ph+=f/SR;
+    var s=(ph-Math.floor(ph))<0.5?1:-1;
+    var env=(n<atk?n/atk:1)*Math.exp(-3.5*n/N);
+    out[n]=s*env;
+  }
+  return out;
+}
+
+// ═══ PER-SECTION TIME SCALING ═══ multiplies every ms-domain param in a
+// section — mega quick to stretched from one slider, per section.
+var TIME_PARAMS={
+  timeTransient:['zapDecay','pewLen','crackLen','zorpLen','sizzleLen','noiseLen'],
+  timeEnergy:['chargeLen','beamLen','arcLen','gooLen','iceLen','arpLen'],
+  timeSubs:['thwompLen','wobbleLen','pulseLen'],
+  timeMechs:['servoLen','ventLen','clunkLen','coilLen','servoDelay','ventDelay','clunkDelay','coilDelay'],
+  timeVerb:['roomSize','pingTime','warpLen','tailLen']
+};
+function scaleTimes(p){
+  var q={}; for(var k in p) q[k]=p[k];
+  var master=0.01*(+((document.getElementById('pTimeAll')||{}).value)||100);
+  for(var tk in TIME_PARAMS){
+    var m=master*((p[tk]!==undefined?p[tk]:100)/100);
+    if(m===1) continue;
+    var list=TIME_PARAMS[tk];
+    for(var i=0;i<list.length;i++){
+      var key=list[i];
+      if(q[key]!==undefined) q[key]=Math.min(4000,q[key]*m);
+    }
+  }
+  return q;
+}
+
+// ═══ ENERGY generators ═══
+
+// CHARGE — the energy-weapon signature: rising whine + noise swell that ends
+// exactly where the shot begins. genSingle shifts every other layer later by
+// this length, so the charge leads INTO the hit.
+function genCharge(p){
+  var T=Math.max(0.02,(p.chargeLen||160)/1000);
+  var f1=p.chargeFrom||180, f2=p.chargeTo||2400;
+  var buzz=1+(p.chargeBuzz||50)/100*5;
+  var nz=(p.chargeNoise||40)/100;
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var ph=0, y1=0, tn=Math.tanh(buzz);
+  for(var n=0;n<N;n++){
+    var t=n/N;
+    var f=f1*Math.pow(f2/f1,t);
+    ph+=2*Math.PI*f/SR;
+    var s=Math.tanh(Math.sin(ph)*buzz)/tn;
+    var a=lpCoef(600+f*2);
+    y1+=a*((rnd()*2-1)-y1);
+    var env=t*t;                    // swells into the shot
+    out[n]=(s*(1-nz*0.5)+y1*nz*2.5)*env;
+  }
+  return out;
+}
+
+// BEAM — ring modulation, the phaser family. sin×sin with vibrato on the
+// second oscillator gives the wavering ZZZZ that hangs after the hit.
+function genBeam(p){
+  var f1=p.beamF1||220, f2=p.beamF2||470;
+  var vr=(p.beamVib||70)/10, va=(p.beamVibAmt||35)/100;
+  var T=Math.max(0.06,(p.beamLen||420)/1000);
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var ph1=0,ph2=0, atk=Math.max(1,Math.round(0.004*SR));
+  for(var n=0;n<N;n++){
+    var t=n/N;
+    var vib=1+va*0.06*Math.sin(2*Math.PI*vr*n/SR);
+    ph1+=2*Math.PI*f1/SR;
+    ph2+=2*Math.PI*f2*vib/SR;
+    var env=(n<atk?n/atk:1)*Math.exp(-3*t);
+    out[n]=Math.sin(ph1)*Math.sin(ph2)*env;
+  }
+  return out;
+}
+
+function genArc(p){
+  var T=Math.max(0.03,(p.arcLen||180)/1000);
+  var N=Math.ceil(T*SR);
+  var tone=p.arcTone||2200;
+  return arcEvents(N,Math.max(1,p.arcHits||7),tone*0.5,tone*1.6,14,1.2);
+}
+
+// GOO — bio-plasma blorp: saturated low drone through two formant bandpasses
+// whose centres wobble against each other. The LFO phase offset is what makes
+// it sound wet instead of just filtered.
+function genGoo(p){
+  var f0=p.gooFreq||110;
+  var wob=(p.gooWob||45)/10;
+  var wet=(p.gooWet||65)/100;
+  var T=Math.max(0.06,(p.gooLen||380)/1000);
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var ph=0, l1=0,b1=0, l2=0,b2=0;
+  var q=0.35;
+  for(var n=0;n<N;n++){
+    var t=n/N;
+    ph+=2*Math.PI*f0/SR;
+    var frac=ph/(2*Math.PI); var saw=2*(frac-Math.floor(frac))-1;
+    var x=Math.tanh(saw*2.5);
+    var c1=380+300*Math.sin(2*Math.PI*wob*n/SR);
+    var c2=950+650*Math.sin(2*Math.PI*wob*n/SR+1.9);
+    var fc1=2*Math.sin(Math.PI*Math.min(c1,7000)/SR);
+    var fc2=2*Math.sin(Math.PI*Math.min(c2,7000)/SR);
+    l1+=fc1*b1; var h1=x-l1-q*b1; b1+=fc1*h1;
+    l2+=fc2*b2; var h2=x-l2-q*b2; b2+=fc2*h2;
+    var env=Math.min(1,n/(0.01*SR))*Math.exp(-3*t);
+    out[n]=Math.tanh((b1+b2)*(1+wet*3))*env;
+  }
+  return out;
+}
+
+// ICE — cryo shatter: high inharmonic partials with detuned twins so they
+// beat against each other. Glassy, crystalline, melts away slowly.
+function genIce(p){
+  var f0=p.iceFreq||2600;
+  var shim=(p.iceShimmer||40)/100;
+  var T=Math.max(0.08,(p.iceLen||500)/1000);
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var ratios=[1,1.41,2.31,3.97,6.13];
+  for(var m=0;m<ratios.length;m++){
+    var f=Math.min(f0*ratios[m],SR*0.45);
+    var det=1+shim*0.004*(m+1);
+    var amp=0.8/(m+1);
+    var dec=3+m*1.5;
+    var w1=2*Math.PI*f/SR, w2=2*Math.PI*f*det/SR;
+    for(var n=0;n<N;n++){
+      var env=Math.exp(-dec*n/N);
+      out[n]+=(Math.sin(w1*n)+Math.sin(w2*n))*0.5*amp*env;
+    }
+  }
+  // shatter click
+  for(var i=0;i<Math.min(60,N);i++) out[i]+=Math.min(1,i/3)*(rnd()*2-1)*Math.exp(-i/12)*0.5;
+  return out;
+}
+
+// ═══ SUBS generators — goofy long sci-fi lows ═══
+
+// THWOMP — the SHHRVUMP: a long pitch dive into the floor. Girth folds in a
+// driven second harmonic so it reads on small speakers too.
+function genThwomp(p){
+  var f1=p.thwompFrom||180, f2=Math.max(15,p.thwompTo||38);
+  var T=Math.max(0.1,(p.thwompLen||700)/1000);
+  var girth=(p.thwompGirth||45)/100;
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var ph=0, atk=Math.max(1,Math.round(0.003*SR));
+  for(var n=0;n<N;n++){
+    var t=n/N;
+    var f=f1*Math.pow(f2/f1,Math.pow(t,0.6));
+    ph+=2*Math.PI*f/SR;
+    var s=Math.sin(ph)+girth*0.5*Math.sin(2*ph);
+    s=Math.tanh(s*(1+girth*2))/Math.tanh(1+girth*2);
+    var env=(n<atk?n/atk:1)*Math.exp(-3.5*t);
+    out[n]=s*env;
+  }
+  return out;
+}
+
+// WOBBLE — LFO on both amp and pitch of a sub drone. The dubby energy core.
+function genWobble(p){
+  var f0=p.wobbleFreq||52;
+  var rate=(p.wobbleRate||60)/10, depth=(p.wobbleDepth||60)/100;
+  var T=Math.max(0.1,(p.wobbleLen||900)/1000);
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var ph=0, atk=Math.max(1,Math.round(0.005*SR));
+  for(var n=0;n<N;n++){
+    var t=n/N;
+    var lfo=Math.sin(2*Math.PI*rate*n/SR);
+    ph+=2*Math.PI*f0*(1+0.08*depth*lfo)/SR;
+    var trem=1-depth*0.5+depth*0.5*lfo;
+    var env=(n<atk?n/atk:1)*Math.exp(-2.8*t);
+    out[n]=Math.sin(ph)*trem*env;
+  }
+  return out;
+}
+
+// PULSE — gated sub: the reactor stutter. Gate is a smoothed square so each
+// UNF has its own little attack instead of clicking.
+function genPulse(p){
+  var f0=p.pulseFreq||45, gr=p.pulseGate||12;
+  var T=Math.max(0.1,(p.pulseLen||650)/1000);
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var ph=0, g=0;
+  for(var n=0;n<N;n++){
+    var t=n/N;
+    ph+=2*Math.PI*f0/SR;
+    var target=Math.sin(2*Math.PI*gr*n/SR)>0?1:0.12;
+    g+=0.004*(target-g);
+    var env=Math.min(1,n/(0.004*SR))*Math.exp(-3*t);
+    out[n]=Math.sin(ph)*g*env;
+  }
+  return out;
+}
+
+// ═══ MECHS generators ═══
+
+function genServo(p){
+  var f1=p.servoFrom||1400, f2=p.servoTo||420;
+  var T=Math.max(0.02,(p.servoLen||110)/1000);
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var ph=0;
+  for(var n=0;n<N;n++){
+    var t=n/N;
+    var f=f1+(f2-f1)*t;
+    ph+=2*Math.PI*f/SR;
+    var s=Math.tanh(Math.sin(ph)*2.4)*0.8+0.2*Math.sin(2*ph);
+    var env=Math.min(1,n/(0.003*SR))*Math.min(1,(N-n)/(0.02*SR));
+    out[n]=s*env;
+  }
+  return out;
+}
+
+function genVent(p){
+  var fc=p.ventFreq||1800;
+  var T=Math.max(0.03,(p.ventLen||260)/1000);
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var l=0,b=0,q=0.5;
+  var f1=2*Math.sin(Math.PI*Math.min(fc,7000)/SR);
+  for(var n=0;n<N;n++){
+    var t=n/N;
+    var x=rnd()*2-1;
+    l+=f1*b; var h=x-l-q*b; b+=f1*h;
+    var env=Math.min(1,n/(0.002*SR))*Math.exp(-3.2*t);
+    out[n]=b*2*env;
+  }
+  return out;
+}
+
+// CLUNK — modal impact: click exciting a few heavy inharmonic modes.
+function genClunk(p){
+  var f0=p.clunkFreq||170;
+  var T=Math.max(0.03,(p.clunkLen||140)/1000);
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var modes=[{r:1,a:1,d:5},{r:1.53,a:0.55,d:7},{r:2.4,a:0.3,d:9},{r:3.17,a:0.15,d:12}];
+  for(var m=0;m<modes.length;m++){
+    var f=Math.min(f0*modes[m].r,SR*0.4), w=2*Math.PI*f/SR;
+    for(var n=0;n<N;n++) out[n]+=Math.sin(w*n)*modes[m].a*Math.exp(-modes[m].d*n/N);
+  }
+  for(var i=0;i<Math.min(30,N);i++) out[i]+=Math.min(1,i/3)*(rnd()*2-1)*Math.exp(-i/7)*0.7;
+  return out;
+}
+
+// COIL — the alien metal: inharmonic modes ring-modulated by a carrier, so
+// every mode splits into sum+difference sidebands. Capacitor bank complaining.
+function genCoil(p){
+  var f0=p.coilFreq||760, fc=p.coilCarrier||310;
+  var T=Math.max(0.04,(p.coilLen||240)/1000);
+  var N=Math.ceil(T*SR), out=new Float32Array(N);
+  var modes=[{r:1,a:1,d:4},{r:2.76,a:0.5,d:6},{r:5.4,a:0.25,d:9}];
+  var wc=2*Math.PI*fc/SR;
+  for(var m=0;m<modes.length;m++){
+    var f=Math.min(f0*modes[m].r,SR*0.42), w=2*Math.PI*f/SR;
+    for(var n=0;n<N;n++)
+      out[n]+=Math.sin(w*n)*Math.sin(wc*n)*modes[m].a*Math.exp(-modes[m].d*n/N);
+  }
+  for(var i=0;i<Math.min(20,N);i++) out[i]+=Math.min(1,i/3)*(rnd()*2-1)*Math.exp(-i/5)*0.4;
+  return out;
+}
+
+// ═══ VERB generators — take the direct sound as input ═══
+
+// ROOM — early reflection taps, hangar slapback. Deterministic tap pattern so
+// every render of the same patch reflects the same way.
+function genRoom(direct,p){
+  var size=(p.roomSize||70)/1000;
+  var cut=p.roomCut||3800;
+  var taps=10;
+  var maxD=Math.round(size*SR);
+  var N=direct.length+maxD+Math.round(0.05*SR);
+  var out=new Float32Array(N);
+  var a=lpCoef(cut), y=0;
+  for(var k=1;k<=taps;k++){
+    var d=Math.round(maxD*Math.pow(k/taps,1.4)*(0.85+0.15*Math.sin(k*3.7)));
+    var g=Math.pow(0.72,k)*(k%2?1:-0.85);
+    for(var i=0;i<direct.length && d+i<N;i++) out[d+i]+=direct[i]*g;
+  }
+  for(var i=0;i<N;i++){ y+=a*(out[i]-y); out[i]=y; }
+  return out;
+}
+
+// PING — the pew…pew…pew canyon: discrete feedback echoes, each repeat
+// darker than the last.
+function genPing(direct,p){
+  var dT=Math.round(Math.min(0.8,Math.max(0.02,(p.pingTime||110)/1000))*SR);
+  var fb=Math.min(0.95,(p.pingFB||45)/100);
+  var cut=p.pingCut||3000;
+  var reps=Math.max(1,Math.min(12,Math.ceil(Math.log(0.02)/Math.log(Math.max(0.05,fb)))));
+  reps=Math.min(reps,Math.max(1,Math.floor(1.6*SR/dT))); // echo tail budget: 1.6s
+  var N=direct.length+dT*reps+Math.round(0.05*SR);
+  var out=new Float32Array(N);
+  var src=direct;
+  for(var k=1;k<=reps;k++){
+    var g=Math.pow(fb,k);
+    var flt=new Float32Array(src.length);
+    var a=lpCoef(cut), y=0;
+    for(var i=0;i<src.length;i++){ y+=a*(src[i]-y); flt[i]=y; }
+    var off=dT*k;
+    for(var i=0;i<flt.length && off+i<N;i++) out[off+i]+=flt[i]*g;
+    src=flt; // each repeat filters again → progressively darker
+  }
+  return out;
+}
+
+// WARP — space that isn't real: a comb with a slowly modulated delay time and
+// lowpassed feedback. Detuned metallic smear instead of a room.
+function genWarp(direct,p){
+  var rate=(p.warpRate||25)/10;
+  var depth=(p.warpDepth||45)/100;
+  var fb=Math.min(0.93,(p.warpFB||60)/100);
+  var T=Math.max(0.1,(p.warpLen||700)/1000);
+  var N=direct.length+Math.ceil(T*SR);
+  var out=new Float32Array(N);
+  var base=Math.round(0.017*SR), maxD=Math.ceil(base*(1+depth*0.5))+4;
+  var dl=new Float32Array(maxD+8), w=0, y=0, a=lpCoef(2600);
+  for(var n=0;n<N;n++){
+    var x=n<direct.length?direct[n]:0;
+    var d=base*(1+depth*0.4*Math.sin(2*Math.PI*rate*n/SR));
+    var rp=w-d; while(rp<0) rp+=dl.length;
+    var i0=Math.floor(rp)%dl.length, i1=(i0+1)%dl.length, fr=rp-Math.floor(rp);
+    var tap=dl[i0]*(1-fr)+dl[i1]*fr;
+    y+=a*(tap-y);
+    dl[w]=x+y*fb;
+    w=(w+1)%dl.length;
+    var fade=n<direct.length?1:Math.exp(-3*(n-direct.length)/(N-direct.length));
+    out[n]=tap*fade;
+  }
+  return out;
+}
+
+// TAIL — dark wash: the shot exciting a darkening lowpassed feedback loop.
+function genTail(direct,p){
+  var T=Math.max(0.1,(p.tailLen||900)/1000);
+  var cut0=p.tailCut||4200;
+  var N=direct.length+Math.ceil(T*SR);
+  var out=new Float32Array(N);
+  var d=Math.round(0.041*SR);
+  var dl=new Float32Array(d), w=0, y=0;
+  for(var n=0;n<N;n++){
+    var t=Math.max(0,(n-direct.length))/(N-direct.length||1);
+    var a=lpCoef(cut0*Math.pow(0.12,t));     // darkens as it decays
+    var x=n<direct.length?direct[n]:0;
+    var tap=dl[w];
+    y+=a*(tap-y);
+    dl[w]=x*0.7+y*0.82;
+    w=(w+1)%d;
+    var fade=n<direct.length?1:Math.exp(-2.6*t);
+    out[n]=y*fade;
+  }
+  return out;
+}
+
+// ═══ MASTER FX ═══
+
+// FLANGE — linear (time-varying but the same kernel every call), so running
+// it on the mix and on each stem separately keeps the stems summing exactly.
+function applyFlange(buf,p){
+  var rate=(p.flangeRate||12)/10;
+  var depth=(p.flangeDepth||60)/100;
+  var fb=Math.min(0.9,(p.flangeFB||40)/100);
+  var mix=(p.flangeMix||50)/100;
+  var base=Math.round(0.002*SR), maxD=Math.ceil(base*(1+depth))+4;
+  var dl=new Float32Array(maxD+8), w=0;
+  for(var n=0;n<buf.length;n++){
+    var d=base*(1+depth*0.9*(0.5+0.5*Math.sin(2*Math.PI*rate*n/SR)));
+    var rp=w-d; while(rp<0) rp+=dl.length;
+    var i0=Math.floor(rp)%dl.length, i1=(i0+1)%dl.length, fr=rp-Math.floor(rp);
+    var tap=dl[i0]*(1-fr)+dl[i1]*fr;
+    dl[w]=buf[n]+tap*fb;
+    w=(w+1)%dl.length;
+    buf[n]=buf[n]+tap*mix;
+  }
+  return buf;
+}
+
+function applyDrive(buf,p){
+  var amt=(p.driveAmt||35)/100;
+  var drive=1+amt*6, den=Math.tanh(drive*0.9);
+  for(var i=0;i<buf.length;i++) buf[i]=Math.tanh(buf[i]*drive)/den;
+  return buf;
+}
+
+// CRUSH is split in two. The downsample HOLD is linear (fixed grid, same
+// kernel every call) so it runs on mix and stems alike — a per-sample gain
+// can't describe a held plateau across a zero-crossing. The bit QUANT is the
+// memoryless nonlinear half and goes through the ratio redistribution.
+// Memoryless nonlinearities commute with the hold, so hold-first is identical.
+function applyHold(buf,p){
+  var down=Math.round(Math.max(1,Math.min(16,p.crushDown||4)));
+  if(down<=1) return buf;
+  var hold=0;
+  for(var i=0;i<buf.length;i++){
+    if(i%down===0) hold=buf[i];
+    buf[i]=hold;
+  }
+  return buf;
+}
+function applyQuant(buf,p){
+  var bits=Math.round(Math.max(3,Math.min(16,p.crushBits||8)));
+  var step=Math.pow(2,bits-1);
+  for(var i=0;i<buf.length;i++)
+    buf[i]=Math.round(Math.max(-1,Math.min(1,buf[i]))*step)/step;
+  return buf;
+}
+
+// CLIP — asymmetric saturation, ported from Shot Forge's mic model.
+function applyClip(buf,p){
+  var amt=(p.clipAmt||40)/100;
+  if(amt<0.005) return buf;
+  var pos=(p.clipPos||80)/100, neg=-(p.clipNeg||80)/100;
+  for(var i=0;i<buf.length;i++){
+    var x=buf[i], soft=x;
+    if(x>pos)      soft=pos+(x-pos)/(1+Math.pow((x-pos)/(1-pos+1e-6),2));
+    else if(x<neg) soft=neg+(x-neg)/(1+Math.pow((x-neg)/(neg+1+1e-6),2));
+    buf[i]=x*(1-amt)+soft*amt;
+  }
+  return buf;
+}
+
+// +3dB shelf above 2.5k — synth lows dominate ±1-normalised layers exactly
+// like the ballistic ones did; the shelf keeps the zap on top. Linear.
+function spectralTilt(buf){
+  var N=buf.length;
+  var tiltGain=1.41, tiltW=2*Math.PI*2500/SR;
+  var A=Math.sqrt(tiltGain);
+  var al=Math.sin(tiltW)/2*Math.sqrt((A+1/A)*(1/0.7-1)+2);
+  var sq=Math.sqrt(A);
+  var b0=A*((A+1)+(A-1)*Math.cos(tiltW)+2*sq*al);
+  var b1=-2*A*((A-1)+(A+1)*Math.cos(tiltW));
+  var b2=A*((A+1)+(A-1)*Math.cos(tiltW)-2*sq*al);
+  var a0=(A+1)-(A-1)*Math.cos(tiltW)+2*sq*al;
+  var a1=2*((A-1)-(A+1)*Math.cos(tiltW));
+  var a2=(A+1)-(A-1)*Math.cos(tiltW)-2*sq*al;
+  b0/=a0;b1/=a0;b2/=a0;a1/=a0;a2/=a0;
+  var x1=0,x2=0,y1=0,y2=0;
+  for(var i=0;i<N;i++){
+    var x=buf[i], y=b0*x+b1*x1+b2*x2-a1*y1-a2*y2;
+    buf[i]=y; x2=x1;x1=x;y2=y1;y1=y;
+  }
+  return buf;
+}
+
+// ═══ SHOT ASSEMBLY ═══════════════════════════════════
+// One shot = five stems (TRANSIENT ENERGY SUBS MECHS VERB) summed, then the
+// master FX chain. If CHARGE is on, every other layer is shifted later by the
+// charge length so the riser leads INTO the hit — attackMs records where the
+// hit actually lands inside the file.
+var sectionMuted={transient:false,energy:false,subs:false,mechs:false,verb:false};
+var sectionSoloed=null;
+
+function genSingle(p){
+  p=scaleTimes(p);
+  var secT=(p.secTransient!==undefined?p.secTransient:100)/100;
+  var secE=(p.secEnergy!==undefined?p.secEnergy:100)/100;
+  var secS=(p.secSubs!==undefined?p.secSubs:100)/100;
+  var secM=(p.secMechs!==undefined?p.secMechs:100)/100;
+  var secV=(p.secVerb!==undefined?p.secVerb:100)/100;
+  if(sectionSoloed){
+    if(sectionSoloed!=='transient') secT=0;
+    if(sectionSoloed!=='energy')    secE=0;
+    if(sectionSoloed!=='subs')      secS=0;
+    if(sectionSoloed!=='mechs')     secM=0;
+    if(sectionSoloed!=='verb')      secV=0;
+  }
+  if(sectionMuted.transient) secT=0;
+  if(sectionMuted.energy)    secE=0;
+  if(sectionMuted.subs)      secS=0;
+  if(sectionMuted.mechs)     secM=0;
+  if(sectionMuted.verb)      secV=0;
+
+  function lvl(key,def){ return layerOff[key]?0:((p[key+'Lvl']!==undefined?p[key+'Lvl']:def)/100); }
+
+  // charge shifts everything else later
+  var fireDelay=(!layerOff.charge && lvl('charge',70)>0)?Math.round(Math.max(0.02,(p.chargeLen||160)/1000)*SR):0;
+
+  // collect layers: {stem, buf, off}
+  var parts=[];
+  function add(stem,gen,l,delayMs,noShift){
+    if(l<=0) return;
+    var b=normTo1(gen);
+    for(var i=0;i<b.length;i++) b[i]*=l;
+    var off=Math.round((delayMs||0)/1000*SR)+(noShift?0:fireDelay);
+    parts.push({stem:stem,buf:b,off:off});
+  }
+
+  // TRANSIENT
+  add('transient',genZap(p),   lvl('zap',90),   0);
+  add('transient',genPew(p),   lvl('pew',85),   0);
+  add('transient',genCrack(p), lvl('crack',70), 0);
+  add('transient',genZorp(p),  lvl('zorp',60),  0);
+  add('transient',genSizzle(p),lvl('sizzle',45),0);
+  add('transient',genNoise(p), lvl('noise',85), 0);
+  // ENERGY — charge sits at t=0 and is the one thing NOT shifted
+  add('energy',genCharge(p), lvl('charge',70), 0, true);
+  add('energy',genBeam(p),   lvl('beam',65),   0);
+  add('energy',genArc(p),    lvl('arc',55),    0);
+  add('energy',genGoo(p),    lvl('goo',55),    0);
+  add('energy',genIce(p),    lvl('ice',50),    0);
+  add('energy',genArp(p),    lvl('arp',55),    0);
+  // SUBS
+  add('subs',genThwomp(p), lvl('thwomp',80), 0);
+  add('subs',genWobble(p), lvl('wobble',55), 0);
+  add('subs',genPulse(p),  lvl('pulse',60),  0);
+  // MECHS
+  add('mechs',genServo(p), lvl('servo',50), p.servoDelay||0);
+  add('mechs',genVent(p),  lvl('vent',45),  p.ventDelay||0);
+  add('mechs',genClunk(p), lvl('clunk',55), p.clunkDelay||0);
+  add('mechs',genCoil(p),  lvl('coil',50),  p.coilDelay||0);
+
+  var N=1;
+  for(var i=0;i<parts.length;i++) N=Math.max(N,parts[i].off+parts[i].buf.length);
+
+  var sT=new Float32Array(N), sE=new Float32Array(N),
+      sS=new Float32Array(N), sM=new Float32Array(N);
+
+  var fader={transient:secT,energy:secE,subs:secS,mechs:secM};
+  var target={transient:sT,energy:sE,subs:sS,mechs:sM};
+  for(var i=0;i<parts.length;i++){
+    var pt=parts[i], dst=target[pt.stem], g=fader[pt.stem];
+    if(g<=0) continue;
+    for(var j=0;j<pt.buf.length;j++) dst[pt.off+j]+=pt.buf[j]*g;
+  }
+
+  // VERB — excited by transient+energy, so the sci-fi character carries into
+  // the space instead of just the bang.
+  var exciter=new Float32Array(N);
+  for(var i=0;i<N;i++) exciter[i]=sT[i]+sE[i];
+
+  var vParts=[];
+  function addV(gen,l){
+    if(l<=0||secV<=0) return;
+    var b=normTo1(gen);
+    for(var i=0;i<b.length;i++) b[i]*=l*secV;
+    vParts.push(b);
+  }
+  addV(layerOff.room?null:genRoom(exciter,p), layerOff.room?0:lvl('room',45));
+  addV(layerOff.ping?null:genPing(exciter,p), layerOff.ping?0:lvl('ping',50));
+  addV(layerOff.warp?null:genWarp(exciter,p), layerOff.warp?0:lvl('warp',50));
+  addV(layerOff.tail?null:genTail(exciter,p), layerOff.tail?0:lvl('tail',50));
+
+  var NV=N;
+  for(var i=0;i<vParts.length;i++) NV=Math.max(NV,vParts[i].length);
+  var sV=new Float32Array(NV);
+  for(var i=0;i<vParts.length;i++){
+    var b=vParts[i];
+    for(var j=0;j<b.length;j++) sV[j]+=b[j];
+  }
+
+  if(NV>N){
+    var g2=function(a){var b=new Float32Array(NV);b.set(a);return b;};
+    sT=g2(sT); sE=g2(sE); sS=g2(sS); sM=g2(sM); N=NV;
+  }
+
+  var out=new Float32Array(N);
+  for(var i=0;i<N;i++) out[i]=sT[i]+sE[i]+sS[i]+sM[i]+sV[i];
+
+  // ── master chain ──
+  // TILT and FLANGE are linear: applied to the mix AND to every stem with the
+  // identical kernel, so stems keep summing to the mix through them.
+  // DRIVE, CRUSH and CLIP are not: they run on the mix only, and the
+  // per-sample gain they produced is redistributed onto the stems —
+  // sum(stem*g) == g*sum(stem) == processed mix. Clamped at ±8 because the
+  // crusher's quantisation makes the ratio spike where the input is near zero.
+  spectralTilt(out);
+  spectralTilt(sT); spectralTilt(sE); spectralTilt(sS); spectralTilt(sM); spectralTilt(sV);
+  if(!layerOff.flange){
+    applyFlange(out,p);
+    applyFlange(sT,p); applyFlange(sE,p); applyFlange(sS,p);
+    applyFlange(sM,p); applyFlange(sV,p);
+  }
+  if(!layerOff.crush){
+    applyHold(out,p);
+    applyHold(sT,p); applyHold(sE,p); applyHold(sS,p);
+    applyHold(sM,p); applyHold(sV,p);
+  }
+  var pre=new Float32Array(out);
+  if(!layerOff.drive) applyDrive(out,p);
+  if(!layerOff.crush) applyQuant(out,p);
+  if(!layerOff.clip)  applyClip(out,p);
+  for(var i=0;i<N;i++){
+    var g=Math.abs(pre[i])>1e-9?out[i]/pre[i]:1;
+    if(g>8)g=8; if(g<-8)g=-8;
+    sT[i]*=g; sE[i]*=g; sS[i]*=g; sM[i]*=g; sV[i]*=g;
+  }
+
+  return {mix:out,
+          stems:{transient:sT,energy:sE,subs:sS,mechs:sM,verb:sV},
+          attackMs:+(fireDelay/SR*1000).toFixed(2)};
+}
+
+// ═══ VARIATION ENGINE ═══ (ranges harvested from the DOM)
+var pRanges={};
+function initRanges(){
+  document.querySelectorAll('.sp').forEach(function(el){
+    pRanges[el.dataset.p]={min:+el.min,max:+el.max};
+  });
+}
+var VARY_EXCLUDE={outLevel:1,secTransient:1,secEnergy:1,secSubs:1,secMechs:1,secVerb:1,fadeIn:1,fadeOut:1};
+// randomise leaves the time sliders alone — they're mix intent, and random
+// time multipliers would undo the whole point of the master scalar
+var RAND_EXCLUDE={outLevel:1,secTransient:1,secEnergy:1,secSubs:1,secMechs:1,secVerb:1,fadeIn:1,fadeOut:1,
+  timeTransient:1,timeEnergy:1,timeSubs:1,timeMechs:1,timeVerb:1};
+var SECTION_LAYERS={
+  transient:['zap','pew','crack','zorp','sizzle','noise'],
+  energy:['charge','beam','arc','goo','ice','arp'],
+  subs:['thwomp','wobble','pulse'],
+  mechs:['servo','vent','clunk','coil'],
+  verb:['room','ping','warp','tail']
+};
+var LAYER_ON_PROB={transient:0.55,energy:0.30,subs:0.5,mechs:0.45,verb:0.45};
+var LAYER_PROB_OVERRIDE={charge:0.12}; // shifts timing — keep it rare
+function setLayer(key,on){
+  layerOff[key]=!on;
+  var t=document.querySelector('.lt[data-toggle="'+key+'"]');
+  if(t){
+    t.classList.toggle('off',!on);
+    var lay=t.closest('.layer');
+    if(lay) lay.classList.toggle('off',!on);
+  }
+}
+// random on/off for a section's layers; guarantees at least one stays on so
+// a randomised section is never silently empty
+function randomiseToggles(section){
+  var list=SECTION_LAYERS[section], anyOn=false;
+  for(var i=0;i<list.length;i++){
+    var k=list[i];
+    var prob=LAYER_PROB_OVERRIDE[k]!==undefined?LAYER_PROB_OVERRIDE[k]:LAYER_ON_PROB[section];
+    var on=rnd()<prob;
+    setLayer(k,on);
+    anyOn=anyOn||on;
+  }
+  if(!anyOn) setLayer(list[Math.floor(rnd()*list.length)],true);
+}
+// length-ish params draw short-biased so random patches stay snappy
+function randSlider(el){
+  var min=+el.min,max=+el.max,k=el.dataset.p;
+  function ends(s){ return k.length>=s.length && k.slice(-s.length)===s; }
+  var r=(ends('Len')||ends('Decay')||ends('Time')||ends('Size')||ends('FB'))?Math.pow(rnd(),1.8):rnd();
+  el.value=Math.round(min+r*(max-min));
+  refreshReadout(el);
+}
+function varyP(p,vari){
+  if(vari<=0) return p;
+  var vp={};for(var k in p) vp[k]=p[k];
+  for(var k in vp){
+    if(VARY_EXCLUDE[k]) continue;
+    var r=pRanges[k]; if(!r) continue;
+    var span=r.max-r.min; if(span<=0) continue;
+    var w=(k.length>3&&k.slice(-3)==='Lvl')?0.6:1;
+    var d=(rnd()*2-1)*vari*span*0.25*w;
+    vp[k]=Math.max(r.min,Math.min(r.max,vp[k]+d));
+  }
+  return vp;
+}
+
+// ═══ ATTACK-SAFE FADES ═══ fade-in clamped to onset; fade-out kills the
+// truncation click. The window is COMPUTED from the mix and APPLIED with the
+// same indices to every stem — per-buffer onsets would give each stem its own
+// ramp and break the sum at the head.
+function computeFadeWin(buf,fiMs,foMs){
+  var N=buf.length;
+  if(N<8) return {fi:0,fo:0,N:N};
+  var pk=0,pkIdx=0;
+  for(var i=0;i<N;i++){var a=Math.abs(buf[i]); if(a>pk){pk=a;pkIdx=i;}}
+  var thr=pk*0.01, onset=0;
+  while(onset<pkIdx && Math.abs(buf[onset])<thr) onset++;
+  var fi=Math.min(Math.round(fiMs/1000*SR), onset, N>>1);
+  var fo=Math.min(Math.round(foMs/1000*SR), N-pkIdx-1, N-1);
+  return {fi:fi,fo:fo,N:N};
+}
+function applyFadeWin(buf,w){
+  if(buf.length!==w.N){ /* stems are same length as mix by construction */ }
+  if(w.fi>0) for(var i=0;i<w.fi;i++) buf[i]*=0.5-0.5*Math.cos(Math.PI*i/w.fi);
+  if(w.fo>0){
+    var st=buf.length-w.fo;
+    for(var i=0;i<w.fo;i++) buf[st+i]*=0.5+0.5*Math.cos(Math.PI*(i/w.fo));
+  }
+  buf[buf.length-1]=0;
+  return buf;
+}
+function applyFades(buf,fiMs,foMs){ return applyFadeWin(buf,computeFadeWin(buf,fiMs,foMs)); }
+
+// ═══ TAKE RENDERING ═══ SINGLE = one round. BURST = 2/3/5/10/20 at RPM.
+// Export is FULL (one wav) or +LAYERS (five whole-take stems that sum back
+// to the full file — accumulated per round at the same offsets as the mix,
+// with the mix's normalisation gain and the mix's exact fade window).
+var burstCnt=3;
+function roundCount(){ return fireMode==='single'?1:burstCnt; }
+function spacingSamp(){ return Math.round(60/+document.getElementById('pRPM').value*SR); }
+function dcCentre(buf){
+  var sum=0;
+  for(var i=0;i<buf.length;i++) sum+=buf[i];
+  var dc=sum/buf.length;
+  if(Math.abs(dc)>1e-12) for(var i=0;i<buf.length;i++) buf[i]-=dc;
+  return buf;
+}
+function buildShots(p){
+  var vari=+document.getElementById('pVariation').value/100;
+  var cnt=roundCount(), iS=cnt>1?spacingSamp():0;
+  var out=[];
+  for(var s=0;s<cnt;s++){
+    var r=genSingle(varyP(p,vari));
+    dcCentre(r.mix);
+    STEM_KEYS.forEach(function(k){ dcCentre(r.stems[k]); });
+    out.push({mix:r.mix, stems:r.stems, attackMs:r.attackMs,
+      off:Math.max(0,Math.round(s*iS*(1+(cnt>1?1:0)*(rnd()-0.5)*vari*0.04)))});
+  }
+  return out;
+}
+function renderTake(p){
+  var shots=buildShots(p);
+  var maxLen=0;
+  for(var i=0;i<shots.length;i++) maxLen=Math.max(maxLen,shots[i].off+shots[i].mix.length);
+  var mix=new Float32Array(maxLen);
+  var stems={};
+  STEM_KEYS.forEach(function(k){ stems[k]=new Float32Array(maxLen); });
+  for(var i=0;i<shots.length;i++){
+    var sh=shots[i];
+    for(var j=0;j<sh.mix.length;j++) mix[sh.off+j]+=sh.mix[j];
+    STEM_KEYS.forEach(function(k){
+      var sb=sh.stems[k];
+      for(var j=0;j<sb.length;j++) stems[k][sh.off+j]+=sb[j];
+    });
+  }
+  var g=normG(mix,p.outLevel/100);
+  STEM_KEYS.forEach(function(k){ applyGain(stems[k],g); dcCentre(stems[k]); });
+  var f=fadeMs(p);
+  var win=computeFadeWin(mix,f.fi,f.fo);
+  applyFadeWin(mix,win);
+  STEM_KEYS.forEach(function(k){ applyFadeWin(stems[k],win); });
+  return {mix:mix,stems:stems,shots:shots,gain:g};
+}
+function genShot(p){ return renderTake(p).mix; }
+function normG(buf,vol){
+  var sum=0;
+  for(var i=0;i<buf.length;i++) sum+=buf[i];
+  var dc=sum/buf.length;
+  for(var i=0;i<buf.length;i++) buf[i]-=dc;
+  var mx=peakOf(buf);
+  var g=mx>1e-9?vol/mx:1;
+  for(var i=0;i<buf.length;i++) buf[i]*=g;
+  return g;
+}
+function applyGain(buf,g){
+  for(var i=0;i<buf.length;i++) buf[i]*=g;
+  return buf;
+}
+function fadeMs(p){
+  return {fi:(p.fadeIn!==undefined?p.fadeIn:3)/10, fo:(p.fadeOut!==undefined?p.fadeOut:12)};
+}
+
+// ═══ WAV ═══
+function encWAV(smp){
+  var N=smp.length,ds=N*2,buf=new ArrayBuffer(44+ds),v=new DataView(buf);
+  function ws(o,s){for(var i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))}
+  ws(0,'RIFF');v.setUint32(4,36+ds,true);ws(8,'WAVE');ws(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,SR,true);v.setUint32(28,SR*2,true);v.setUint16(32,2,true);
+  v.setUint16(34,16,true);ws(36,'data');v.setUint32(40,ds,true);
+  for(var i=0;i<N;i++)v.setInt16(44+i*2,Math.round(Math.max(-1,Math.min(1,smp[i]))*32767),true);
+  return buf;
+}
+
+// ═══ ZIP (store method, no dependencies) ═══
+var crcTable=(function(){
+  var t=new Uint32Array(256);
+  for(var n=0;n<256;n++){
+    var c=n;
+    for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);
+    t[n]=c>>>0;
+  }
+  return t;
+})();
+function crc32(u8){
+  var c=0xFFFFFFFF;
+  for(var i=0;i<u8.length;i++) c=crcTable[(c^u8[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0;
+}
+function makeZip(files){
+  var enc=new TextEncoder();
+  var d=new Date();
+  var dosTime=((d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1))&0xFFFF;
+  var dosDate=(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xFFFF;
+  var parts=[],central=[],offset=0;
+  for(var i=0;i<files.length;i++){
+    var nameU8=enc.encode(files[i].name);
+    var data=new Uint8Array(files[i].data);
+    var crc=crc32(data);
+    var lh=new Uint8Array(30+nameU8.length);
+    var lv=new DataView(lh.buffer);
+    lv.setUint32(0,0x04034b50,true); lv.setUint16(4,20,true); lv.setUint16(6,0,true);
+    lv.setUint16(8,0,true); lv.setUint16(10,dosTime,true); lv.setUint16(12,dosDate,true);
+    lv.setUint32(14,crc,true); lv.setUint32(18,data.length,true); lv.setUint32(22,data.length,true);
+    lv.setUint16(26,nameU8.length,true); lv.setUint16(28,0,true);
+    lh.set(nameU8,30);
+    parts.push(lh,data);
+    var ch=new Uint8Array(46+nameU8.length);
+    var cv=new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true);
+    cv.setUint16(8,0,true); cv.setUint16(10,0,true); cv.setUint16(12,dosTime,true);
+    cv.setUint16(14,dosDate,true); cv.setUint32(16,crc,true);
+    cv.setUint32(20,data.length,true); cv.setUint32(24,data.length,true);
+    cv.setUint16(28,nameU8.length,true); cv.setUint16(30,0,true); cv.setUint16(32,0,true);
+    cv.setUint16(34,0,true); cv.setUint16(36,0,true); cv.setUint32(38,0,true);
+    cv.setUint32(42,offset,true);
+    ch.set(nameU8,46);
+    central.push(ch);
+    offset+=lh.length+data.length;
+  }
+  var cdSize=0;
+  for(var i=0;i<central.length;i++) cdSize+=central[i].length;
+  var eocd=new Uint8Array(22);
+  var ev=new DataView(eocd.buffer);
+  ev.setUint32(0,0x06054b50,true); ev.setUint16(4,0,true); ev.setUint16(6,0,true);
+  ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true);
+  ev.setUint32(12,cdSize,true); ev.setUint32(16,offset,true); ev.setUint16(20,0,true);
+  return new Blob(parts.concat(central,[eocd]),{type:'application/zip'});
+}
+function saveBlob(blob,name){
+  var a=document.createElement('a');
+  var url=URL.createObjectURL(blob);
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},4000);
+}
+
+// ═══ DESKTOP BRIDGE ═══ same contract as Shot Forge — drops into the same
+// Electron shell unchanged. In a browser it falls back to blob downloads.
+var IS_APP=(typeof window!=='undefined') && !!window.electronAPI;
+function u8ToB64(u8){
+  var bin='',CH=0x8000;
+  for(var i=0;i<u8.length;i+=CH) bin+=String.fromCharCode.apply(null,u8.subarray(i,Math.min(i+CH,u8.length)));
+  return btoa(bin);
+}
+function deliverSingle(wavAB,name){
+  if(IS_APP){
+    return window.electronAPI.saveWavDialog(name,u8ToB64(new Uint8Array(wavAB)))
+      .then(function(r){ setS(r.success?'Saved':'Cancelled'); });
+  }
+  saveBlob(new Blob([wavAB],{type:'audio/wav'}),name); setS('Saved');
+  return Promise.resolve();
+}
+function deliverBatch(files,pack,zipName){
+  var n=files.length;
+  if(IS_APP){
+    if(pack==='files'){
+      var payload=files.map(function(f){return {name:f.name,b64:u8ToB64(new Uint8Array(f.data))};});
+      return window.electronAPI.saveBatchDialog(payload).then(function(r){
+        setS(r.success?('Wrote '+r.count+' WAVs'):'Cancelled');
+      });
+    }
+    return makeZip(files).arrayBuffer().then(function(ab){
+      return window.electronAPI.saveZipDialog(zipName,u8ToB64(new Uint8Array(ab)));
+    }).then(function(r){ setS(r.success?('ZIP '+n+' files'):'Cancelled'); });
+  }
+  if(pack==='zip'){ saveBlob(makeZip(files),zipName); setS('ZIP '+n+' files'); return Promise.resolve(); }
+  var j=0;
+  (function drop(){
+    if(j>=files.length){ setS('Saved '+n+' files'); return; }
+    saveBlob(new Blob([files[j].data],{type:'audio/wav'}),files[j].name);
+    j++; setTimeout(drop,180);
+  })();
+  return Promise.resolve();
+}
+
+// ═══ EXPORT ═══ cumulative: FULL → 1, +SHOTS → 1+R, +LAYERS → 1+R+5R
+var batchBusy=false;
+function padNum(v,w){ var s=String(v); while(s.length<w) s='0'+s; return s; }
+function exportScope(){ return document.getElementById('pScope').value; }
+function updateDownloadLabel(){
+  var sc=exportScope();
+  var b=document.getElementById('downloadBtn');
+  b.textContent = sc==='layers' ? 'DOWNLOAD 6 FILES' : 'DOWNLOAD';
+  b.disabled = !curTake;
+}
+
+var STEM_KEYS=['transient','energy','subs','mechs','verb'];
+
+// gA scales the full file (usually 1 — it's already normalised to OUT level),
+// gB backs the stems off if section cancellation pushed one above full scale.
+// stem_bus_makeup = gA/gB: push the recombined stem bus by that to land on
+// the full file exactly.
+function exportGains(take,scope){
+  var gA=1, gB=1;
+  var mxM=peakOf(take.mix);
+  if(mxM*gA>0.999) gA=0.999/mxM;
+  gB=gA;
+  if(scope==='layers'){
+    var mxS=0;
+    STEM_KEYS.forEach(function(k){ mxS=Math.max(mxS,peakOf(take.stems[k])); });
+    if(mxS*gB>0.999) gB=0.999/mxS;
+  }
+  return {a:gA,b:gB};
+}
+
+function takeFiles(take,p,scope,stamp,manifest,meta){
+  var base='pewboy_'+stamp;
+  var out=[];
+  var g=exportGains(take,scope);
+  if(meta){
+    meta.stem_bus_makeup=+(g.a/g.b).toFixed(4);
+    meta.stem_bus_makeup_db=+(20*Math.log10(g.a/g.b)).toFixed(2);
+    meta.rounds_detail=take.shots.map(function(sh,i){
+      return {round:i+1, offset_ms:+(sh.off/SR*1000).toFixed(3), attack_ms:sh.attackMs};
+    });
+  }
+  var ref=new Float32Array(take.mix);
+  if(g.a!==1) applyGain(ref,g.a);
+  out.push({name:base+'_full.wav',data:encWAV(ref)});
+  manifest.push({file:base+'_full.wav',type:'full',
+    peak:+peakOf(ref).toFixed(4),
+    length_ms:+(ref.length/SR*1000).toFixed(2)});
+  if(scope!=='layers') return out;
+  STEM_KEYS.forEach(function(k){
+    var st=new Float32Array(take.stems[k]);
+    applyGain(st,g.b);
+    var sn=base+'_'+k+'.wav';
+    out.push({name:sn,data:encWAV(st)});
+    manifest.push({file:sn,type:'stem',stem:k,
+      peak:+peakOf(st).toFixed(4),
+      length_ms:+(st.length/SR*1000).toFixed(2)});
+  });
+  return out;
+}
+
+function lockUI(on){
+  ['downloadBtn','pScope','pPack','generateBtn','randomBtn'].forEach(function(id){
+    document.getElementById(id).disabled=on;
+  });
+  if(!on) updateDownloadLabel();
+}
+
+// ═══ WAVEFORM / AUDIO / STATUS ═══
+function drawWF(cv,smp){
+  var ctx=cv.getContext('2d'),dpr=window.devicePixelRatio||1,r=cv.getBoundingClientRect();
+  cv.width=r.width*dpr;cv.height=120*dpr;ctx.scale(dpr,dpr);
+  var W=r.width,H=120,P={t:14,b:18,l:34,r:10},pW=W-P.l-P.r,pH=H-P.t-P.b,zY=P.t+pH/2;
+  ctx.fillStyle='#06120b';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#14381c';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(P.l,zY);ctx.lineTo(W-P.r,zY);ctx.stroke();
+  ctx.fillStyle='#306230';ctx.font='11px VT323,monospace';
+  ctx.textAlign='right';ctx.fillText('+1',P.l-4,P.t+8);ctx.fillText('-1',P.l-4,P.t+pH+3);
+  var ms=(smp.length/SR*1000).toFixed(1);
+  ctx.textAlign='center';ctx.fillText('0',P.l,H-3);ctx.fillText(ms+'ms',W-P.r,H-3);
+  var N=smp.length;ctx.beginPath();
+  for(var px=0;px<pW;px++){
+    var idx=Math.floor(px/pW*N),y=zY-smp[idx]*(pH/2-2);
+    if(px===0)ctx.moveTo(P.l,y);else ctx.lineTo(P.l+px,y);
+  }
+  ctx.strokeStyle='#8bac0f';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.globalAlpha=0.15;ctx.lineWidth=5;ctx.stroke();ctx.globalAlpha=1;
+}
+var audioCtx=null;
+function playS(smp){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:SR});
+  var buf=audioCtx.createBuffer(1,smp.length,SR);
+  buf.getChannelData(0).set(smp);
+  var src=audioCtx.createBufferSource();
+  src.buffer=buf;src.connect(audioCtx.destination);src.start();
+}
+function setS(t){
+  document.getElementById('statusText').textContent=t;
+  var d=document.getElementById('statusDot');
+  d.classList.add('active');setTimeout(function(){d.classList.remove('active')},600);
+}
+
+// ═══ PARAM READ + READOUTS ═══
+function readP(){
+  var p={};
+  document.querySelectorAll('.sp').forEach(function(el){ p[el.dataset.p]=+el.value; });
+  return p;
+}
+function fmtReadout(key,v){
+  function ends(s){ return key.length>=s.length && key.slice(-s.length)===s; }
+  if(key==='fadeIn') return (v/10)+'ms';
+  if(ends('Ratio')) return (v/100)+'x';
+  if(ends('Rate')||ends('Wob')||ends('Vib')) return (v/10)+'Hz';
+  if(ends('Bits')||ends('Down')||ends('Hits')||ends('Gate')||ends('Dens')) return String(v);
+  if(ends('Span')) return v+'st';
+  if(ends('Speed')) return v+'/s';
+  if(ends('Clk')) return v+'Hz';
+  if(ends('Freq')||ends('From')||ends('To')||ends('Tone')||ends('Cut')||ends('F1')||ends('F2')||ends('Carrier')) return v+'Hz';
+  if(ends('Len')||ends('Delay')||ends('Decay')||ends('Time')||ends('Size')) return v+'ms';
+  return v+'%';
+}
+function refreshReadout(el){
+  var rv=el.parentElement.querySelector('.rv');
+  if(rv) rv.textContent=fmtReadout(el.dataset.p,+el.value);
+}
+
+// ═══ PRESETS ═══ (localStorage in browser, disk via the bridge in the app)
+var PRESET_LS='pewboy_presets';
+var store={
+  load:function(){
+    if(IS_APP) return window.electronAPI.loadPresets();
+    try{ return Promise.resolve(JSON.parse(localStorage.getItem(PRESET_LS)||'{}')); }
+    catch(e){ return Promise.resolve({}); }
+  },
+  save:function(all){
+    if(IS_APP) return window.electronAPI.savePresets(all);
+    localStorage.setItem(PRESET_LS,JSON.stringify(all));
+    return Promise.resolve();
+  }
+};
+function collectState(){
+  var st={params:readP(),layerOff:{},fireMode:fireMode,
+    burst:burstCnt,
+    timeAll:+document.getElementById('pTimeAll').value,
+    variation:+document.getElementById('pVariation').value,
+    rpm:+document.getElementById('pRPM').value};
+  for(var k in layerOff) if(layerOff[k]) st.layerOff[k]=1;
+  return st;
+}
+function applyState(st){
+  if(!st) return;
+  if(st.fireMode){
+    var mb=document.querySelector('.mode-btn[data-mode="'+st.fireMode+'"]');
+    if(mb) mb.click();
+  }
+  if(st.burst!==undefined){
+    var cb=document.querySelector('.cnt-btn[data-cnt="'+st.burst+'"]');
+    if(cb) cb.click();
+  }
+  if(st.timeAll!==undefined){
+    var ta=document.getElementById('pTimeAll'); ta.value=st.timeAll;
+    ta.dispatchEvent(new Event('input'));
+  }
+  if(st.variation!==undefined){
+    var v=document.getElementById('pVariation'); v.value=st.variation;
+    v.dispatchEvent(new Event('input'));
+  }
+  if(st.rpm!==undefined){
+    var rp=document.getElementById('pRPM'); rp.value=st.rpm;
+    rp.dispatchEvent(new Event('input'));
+  }
+  if(st.params) document.querySelectorAll('.sp').forEach(function(el){
+    var k=el.dataset.p;
+    if(st.params[k]!==undefined){ el.value=st.params[k]; refreshReadout(el); }
+  });
+  document.querySelectorAll('.lt[data-toggle]').forEach(function(t){
+    var key=t.dataset.toggle;
+    var off=!!(st.layerOff&&st.layerOff[key]);
+    layerOff[key]=off;
+    t.classList.toggle('off',off);
+    var lay=t.closest('.layer');
+    if(lay) lay.classList.toggle('off',off);
+  });
+}
+function refreshPresetSel(all,sel){
+  var s=document.getElementById('presetSel');
+  s.innerHTML='<option value="">&mdash; PRESET &mdash;</option>';
+  Object.keys(all).sort().forEach(function(n){
+    var o=document.createElement('option');
+    o.value=n;o.textContent=n.toUpperCase();
+    if(n===sel)o.selected=true;
+    s.appendChild(o);
+  });
+}
+
+// ═══ WIRING ═══
+document.addEventListener('DOMContentLoaded',function(){
+  initRanges();
+
+  // start-OFF layers: melodic/exotic flavours + timing-shifting charge + FX.
+  // Default ON: zap pew crack noise thwomp servo vent clunk room tail crush.
+  ['sizzle','zorp','beam','goo','ice','arp','charge','arc','wobble','pulse','coil','ping','warp','flange','drive','clip']
+  .forEach(function(k){
+    layerOff[k]=true;
+    var t=document.querySelector('.lt[data-toggle="'+k+'"]');
+    if(t){ t.classList.add('off'); var lay=t.closest('.layer'); if(lay) lay.classList.add('off'); }
+  });
+
+  // slider readouts
+  document.querySelectorAll('.sp').forEach(function(el){
+    refreshReadout(el);
+    el.addEventListener('input',function(){ refreshReadout(el); });
+  });
+
+  // fire modes — SINGLE is one round; BURST shows count + RPM
+  document.querySelectorAll('.mode-btn[data-mode]').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.mode-btn[data-mode]').forEach(function(x){x.classList.remove('active')});
+      b.classList.add('active');
+      fireMode=b.dataset.mode;
+      var burst=fireMode==='burst';
+      document.getElementById('rpmGroup').style.display=burst?'flex':'none';
+      document.getElementById('cntGroup').style.display=burst?'flex':'none';
+      updateDownloadLabel();
+    });
+  });
+  document.querySelectorAll('.cnt-btn').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('.cnt-btn').forEach(function(x){x.classList.remove('active')});
+      b.classList.add('active');
+      burstCnt=+b.dataset.cnt;
+    });
+  });
+  document.getElementById('pRPM').addEventListener('input',function(){
+    document.getElementById('vRPM').textContent=this.value+' RPM';
+  });
+  document.getElementById('pTimeAll').addEventListener('input',function(){
+    document.getElementById('vTimeAll').textContent=this.value+'%';
+  });
+  document.getElementById('pVariation').addEventListener('input',function(){
+    document.getElementById('vVariation').textContent=this.value+'%';
+  });
+
+  // tabs
+  document.querySelectorAll('#sectionTabs .mode-btn').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('#sectionTabs .mode-btn').forEach(function(x){x.classList.remove('active')});
+      b.classList.add('active');
+      document.querySelectorAll('.tab-panel').forEach(function(pn){
+        pn.style.display=pn.dataset.panel===b.dataset.tab?'flex':'none';
+      });
+    });
+  });
+
+  // layer toggles
+  document.querySelectorAll('.lt[data-toggle]').forEach(function(t){
+    t.addEventListener('click',function(){
+      var key=t.dataset.toggle;
+      layerOff[key]=!layerOff[key];
+      t.classList.toggle('off',!!layerOff[key]);
+      var lay=t.closest('.layer');
+      if(lay) lay.classList.toggle('off',!!layerOff[key]);
+    });
+  });
+
+  // solo / mute (buttons exist in section headers AND mix tab — sync all)
+  function paintSM(){
+    document.querySelectorAll('[data-solo]').forEach(function(b){
+      b.classList.toggle('solo-active',sectionSoloed===b.dataset.solo);
+    });
+    document.querySelectorAll('[data-mute]').forEach(function(b){
+      b.classList.toggle('mute-active',!!sectionMuted[b.dataset.mute]);
+    });
+  }
+  document.querySelectorAll('[data-solo]').forEach(function(b){
+    b.addEventListener('click',function(){
+      sectionSoloed=(sectionSoloed===b.dataset.solo)?null:b.dataset.solo;
+      paintSM();
+    });
+  });
+  document.querySelectorAll('[data-mute]').forEach(function(b){
+    b.addEventListener('click',function(){
+      sectionMuted[b.dataset.mute]=!sectionMuted[b.dataset.mute];
+      paintSM();
+    });
+  });
+
+  // section RAND — randomise only that panel's sliders
+  document.querySelectorAll('[data-rand-section]').forEach(function(b){
+    b.addEventListener('click',function(){
+      var sec=b.dataset.randSection;
+      randomiseToggles(sec);
+      var panel=document.querySelector('.tab-panel[data-panel="'+sec+'"]');
+      panel.querySelectorAll('.sp').forEach(function(el){
+        if(RAND_EXCLUDE[el.dataset.p]) return;
+        randSlider(el);
+      });
+      doGenerate();
+    });
+  });
+
+  // randomise all (leave output level + fades + section faders alone)
+  document.getElementById('randomBtn').addEventListener('click',function(){
+    for(var sec in SECTION_LAYERS) randomiseToggles(sec);
+    document.querySelectorAll('.sp').forEach(function(el){
+      if(RAND_EXCLUDE[el.dataset.p]) return;
+      randSlider(el);
+    });
+    doGenerate();
+  });
+
+  // GENERATE
+  function doGenerate(){
+    var p=readP();
+    curTake=renderTake(p);
+    curBuf=curTake.mix;
+    nGen++;
+    document.getElementById('waveformBox').style.display='block';
+    document.getElementById('waveformInfo').textContent=
+      curTake.shots.length+' rd — '+(curBuf.length/SR*1000).toFixed(0)+'ms — take #'+nGen;
+    drawWF(document.getElementById('waveformCanvas'),curBuf);
+    document.getElementById('testBtn').disabled=false;
+    updateDownloadLabel();
+    setS('Generated take #'+nGen);
+    playS(curBuf);
+  }
+  document.getElementById('generateBtn').addEventListener('click',doGenerate);
+  document.getElementById('testBtn').addEventListener('click',function(){
+    if(curBuf) playS(curBuf);
+  });
+
+  // DOWNLOAD
+  document.getElementById('downloadBtn').addEventListener('click',function(){
+    if(!curTake||batchBusy) return;
+    var p=readP();
+    var scope=exportScope();
+    var pack=document.getElementById('pPack').value;
+    var stamp=Date.now().toString(36);
+    if(scope==='full'&&true){
+      var g=exportGains(curTake,scope);
+      var ref=new Float32Array(curTake.mix);
+      if(g.a!==curTake.gain) applyGain(ref,g.a/curTake.gain);
+      deliverSingle(encWAV(ref),'pewboy_'+stamp+'.wav');
+      return;
+    }
+    batchBusy=true; lockUI(true); setS('Rendering export…');
+    setTimeout(function(){
+      try{
+        var manifest=[], meta={
+          tool:'PEW BOY v1', sr:SR, mode:fireMode,
+          rounds:curTake.shots.length,
+          rpm:fireMode==='burst'?+document.getElementById('pRPM').value:null,
+          variation_pct:+document.getElementById('pVariation').value,
+          scope:scope, generated:new Date().toISOString(),
+          stems:STEM_KEYS,
+          note:'the five stems sum to the full file after stem_bus_makeup gain. rounds_detail gives per-round offsets; attack_ms marks where the hit lands when CHARGE shifts it.'
+        };
+        var files=takeFiles(curTake,p,scope,stamp,manifest,meta);
+        files.push({name:'pewboy_'+stamp+'_manifest.json',
+          data:new TextEncoder().encode(JSON.stringify({meta:meta,files:manifest},null,2)).buffer});
+        deliverBatch(files,pack,'pewboy_'+stamp+'.zip').then(function(){
+          batchBusy=false; lockUI(false);
+        });
+      }catch(e){
+        setS('Export failed: '+e.message);
+        batchBusy=false; lockUI(false);
+      }
+    },30);
+  });
+  document.getElementById('pScope').addEventListener('change',updateDownloadLabel);
+
+  // presets
+  var presets={};
+  store.load().then(function(all){ presets=all||{}; refreshPresetSel(presets); });
+  document.getElementById('presetSave').addEventListener('click',function(){
+    var name=document.getElementById('presetName').value.trim().toLowerCase();
+    if(!name){ setS('Name the preset first'); return; }
+    presets[name]=collectState();
+    store.save(presets).then(function(){
+      refreshPresetSel(presets,name);
+      setS('Saved preset "'+name.toUpperCase()+'"');
+    });
+  });
+  document.getElementById('presetDel').addEventListener('click',function(){
+    var sel=document.getElementById('presetSel').value;
+    if(!sel){ setS('Pick a preset to delete'); return; }
+    delete presets[sel];
+    store.save(presets).then(function(){
+      refreshPresetSel(presets);
+      setS('Deleted "'+sel.toUpperCase()+'"');
+    });
+  });
+  document.getElementById('presetSel').addEventListener('change',function(){
+    var sel=this.value;
+    if(!sel) return;
+    applyState(presets[sel]);
+    document.getElementById('presetName').value=sel;
+    setS('Loaded "'+sel.toUpperCase()+'"');
+  });
+
+  if(IS_APP){
+    document.querySelector('#pPack option[value="files"]').textContent='FOLDER';
+  }
+
+  updateDownloadLabel();
+});
+</script>
+</body>
+</html>
