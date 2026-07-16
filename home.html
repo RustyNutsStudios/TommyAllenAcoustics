@@ -104,6 +104,7 @@
   <div class="nav-section">
     <h2>&gt;&gt; SOUND DESIGN TOOLS</h2>
     <div class="nav-grid">
+      <a href="impact-forge.html" class="nav-card"><span class="card-icon">&#128165;</span><span class="card-title">IMPACT FORGE</span><span class="card-desc">Hertzian hits &amp; flybys</span></a>
       <a href="shot-forge-2.html" class="nav-card"><span class="card-icon">&#9733;&#9733;&#9733;</span><span class="card-title">SHOT FORGE 2</span><span class="card-desc">Blast &amp; crack, upgraded</span></a>
       <a href="shot-forge.html" class="nav-card"><span class="card-icon">&#9733;&#9733;</span><span class="card-title">SHOT FORGE</span><span class="card-desc">The original synthesizer</span></a>
       <a href="scifi-shot-forge.html" class="nav-card"><span class="card-icon">&#128760;</span><span class="card-title">SCIFI SHOT FORGE</span><span class="card-desc">Sci-fi effect generator</span></a>
@@ -181,7 +182,7 @@
 const c=document.getElementById('visitorNum');
 const base=4891+Math.floor((Date.now()-new Date('2025-01-01').getTime())/3600000);
 c.textContent=String(base).padStart(7,'0').replace(/(\d)(?=(\d{3})+$)/g,'$1,');
-const pages=['tone-generator.html','tone-generator-advanced.html','noise-generator.html','banded-noise-generator.html','sweep-generator.html','mls-generator.html','impulse-generator.html','amplitude-mod-generator.html','babel.html','shot-forge-2.html','shot-forge.html','scifi-shot-forge.html','pewboy.html','click-factory.html','click-clicker.html','videos.html','about.html','games.html','itch.html'];
+const pages=['tone-generator.html','tone-generator-advanced.html','noise-generator.html','banded-noise-generator.html','sweep-generator.html','mls-generator.html','impulse-generator.html','amplitude-mod-generator.html','babel.html','impact-forge.html','shot-forge-2.html','shot-forge.html','scifi-shot-forge.html','pewboy.html','click-factory.html','click-clicker.html','videos.html','about.html','games.html','itch.html'];
 document.getElementById('randomBtn').addEventListener('click',()=>{window.location.href=pages[Math.floor(Math.random()*pages.length)];});
 </script>
 </body>

@@ -1,0 +1,1516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>*~IMPACT FORGE~* — AIR + CONTACT</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Bungee+Shade&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#150e2e;color:#ddd;font-family:'VT323',monospace;font-size:20px;min-height:100vh;overflow-x:hidden}
+.bg{position:fixed;inset:0;z-index:0;background:radial-gradient(circle at 25% 25%,#3a2410 0%,transparent 50%),radial-gradient(circle at 75% 75%,#062a3a 0%,transparent 50%),radial-gradient(circle at 50% 50%,#150e2e 0%,#080614 100%)}
+.bg-grid{position:fixed;inset:0;z-index:1;opacity:0.06;background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:40px 40px}
+.scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.08) 3px,rgba(0,0,0,0.08) 6px);z-index:100;pointer-events:none}
+.bar-top{position:fixed;top:0;left:0;right:0;height:16px;z-index:50;background:repeating-linear-gradient(-45deg,#f59e0b,#f59e0b 10px,#150e2e 10px,#150e2e 20px);border-bottom:3px solid #22d3ee}
+.bar-bottom{position:fixed;bottom:0;left:0;right:0;height:16px;z-index:50;background:repeating-linear-gradient(45deg,#22d3ee,#22d3ee 10px,#150e2e 10px,#150e2e 20px);border-top:3px solid #f59e0b}
+.app{position:relative;z-index:10;max-width:820px;margin:0 auto;padding:28px 12px 50px}
+.header{text-align:center;margin-bottom:8px;padding-bottom:8px;border-bottom:3px double #f59e0b}
+.header h1{font-family:'Bungee Shade',cursive;font-size:22px;color:#fbbf24;text-shadow:3px 3px 0 #b45309,0 0 20px rgba(251,191,36,0.3);line-height:1.4}
+.header .sub{font-size:18px;color:#22d3ee;margin-top:4px}
+.marquee-wrapper{width:100%;overflow:hidden;border:2px ridge #f59e0b;background:#0c0820;padding:2px 0;margin:6px 0}
+.marquee-text{font-size:14px;color:#fbbf24;white-space:nowrap;animation:sl 16s linear infinite}
+@keyframes sl{0%{transform:translateX(100%)}100%{transform:translateX(-100%)}}
+
+/* ── Projectile panel ── */
+.proj-box{background:rgba(12,8,32,0.9);border:3px ridge #f59e0b;margin-bottom:8px;padding:8px 10px}
+.proj-title{font-family:'Press Start 2P',monospace;font-size:8px;color:#fbbf24;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.proj-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px 10px}
+.phys-strip{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;padding-top:6px;border-top:1px solid #3a2410}
+.phys{font-size:14px;color:#22d3ee;background:rgba(34,211,238,0.07);border:1px solid #155e75;padding:1px 6px;white-space:nowrap}
+.phys b{color:#67e8f9;font-weight:normal}
+.phys.hot{color:#fbbf24;border-color:#b45309;background:rgba(251,191,36,0.08)}
+.phys.hot b{color:#fde047}
+
+.mode-row{display:flex;gap:0;margin-bottom:10px}
+.mode-btn{flex:1;font-family:'Press Start 2P',monospace;font-size:9px;padding:12px 6px;cursor:pointer;border:3px outset #f59e0b;background:#150e2e;color:#f59e0b;text-align:center;transition:all 0.1s}
+.mode-btn:hover{background:#2a1b10}
+.mode-btn.active{background:linear-gradient(180deg,#f59e0b,#b45309);color:#fff;border-style:inset}
+.mode-btn.soon{opacity:0.3;cursor:not-allowed;border-color:#4b5563;color:#6b7280;font-size:7px}
+.mode-btn.soon:hover{background:#150e2e}
+
+.flight-params{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;padding:10px 12px;background:rgba(12,8,32,0.9);border:3px ridge #22d3ee;margin-bottom:10px}
+
+.layers{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}
+.layer{background:rgba(12,8,32,0.9);border:2px solid #2a1b10;overflow:hidden}
+.layer.off{opacity:0.35}
+.layer.off .lc{display:none}
+.lh{display:flex;align-items:center;gap:8px;padding:4px 8px;border-bottom:1px solid #150e2e;min-height:28px}
+.lt{font-family:'Press Start 2P',monospace;font-size:8px;padding:3px 8px;cursor:pointer;border:2px outset #f59e0b;background:#b45309;color:#fff;user-select:none;white-space:nowrap}
+.lt:hover{filter:brightness(1.25)}
+.lt.off{background:#150e2e!important;color:#57534e!important;border-style:inset;opacity:0.6}
+.ll{font-size:13px;color:#a16207}
+.badge{font-family:'Press Start 2P',monospace;font-size:7px;padding:2px 5px;margin-left:auto;border:1px solid #22d3ee;color:#22d3ee;background:rgba(34,211,238,0.1);transition:opacity 0.2s}
+.lc{display:grid;grid-template-columns:repeat(5,1fr);gap:6px 10px;padding:6px 8px}
+.lc-6{grid-template-columns:repeat(6,1fr)}
+.cg{display:flex;flex-direction:column;gap:3px}
+.cg label{font-size:14px;color:#a16207;letter-spacing:1px}
+input[type="range"]{-webkit-appearance:none;height:6px;border-radius:0;background:linear-gradient(90deg,#b45309,#fbbf24);border:2px ridge #f59e0b;padding:0;width:100%;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:16px;background:#fbbf24;border:2px outset #f59e0b;cursor:pointer}
+input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;background:#fbbf24;border:2px outset #f59e0b;cursor:pointer}
+.rv{font-size:15px;color:#fbbf24;text-align:center}
+
+.btn-select{font-family:'Press Start 2P',monospace;font-size:8px;padding:8px 5px;background:#0c0820;border:3px ridge #fbbf24;color:#fbbf24;cursor:pointer;outline:none}
+.btn-select:disabled{opacity:0.3;cursor:not-allowed}
+.btn-input{font-family:'Press Start 2P',monospace;font-size:8px;padding:8px 6px;background:#0c0820;border:3px ridge #fbbf24;color:#fbbf24;outline:none;min-width:0}
+.btn-input::placeholder{color:#78350f}
+.btn-row{display:flex;gap:6px;flex-wrap:wrap;padding:8px 10px;background:rgba(12,8,32,0.92);border:3px ridge #f59e0b;margin-bottom:14px;align-items:center}
+.btn{font-family:'Press Start 2P',monospace;font-size:9px;padding:8px 14px;cursor:pointer;border:3px outset;text-shadow:1px 1px 0 rgba(0,0,0,0.5);transition:all 0.1s}
+.btn:hover{filter:brightness(1.3)}.btn:active{border-style:inset}.btn:disabled{opacity:0.3;cursor:not-allowed}
+.btn-r{background:linear-gradient(180deg,#d946ef,#a21caf);color:#fff;border-color:#e879f9}
+.btn-g{background:linear-gradient(180deg,#f59e0b,#b45309);color:#fff;border-color:#fbbf24}
+.btn-t{background:linear-gradient(180deg,#06b6d4,#0e7490);color:#fff;border-color:#22d3ee}
+.btn-d{background:linear-gradient(180deg,#444,#222);color:#ccc;border-color:#666}
+
+.viz-box{background:rgba(8,4,18,0.95);border:3px ridge #f59e0b;margin-bottom:14px;overflow:hidden;display:none}
+.viz-header{display:flex;justify-content:space-between;padding:8px 12px;border-bottom:2px solid #2a1b10}
+.viz-title{font-family:'Press Start 2P',monospace;font-size:9px;color:#fbbf24}
+.viz-info{font-size:16px;color:#22d3ee}
+.viz-cw{padding:6px;background:#050210}
+.viz-cw canvas{display:block;width:100%}
+
+.status-bar{position:fixed;bottom:16px;left:0;right:0;background:#0c0820;border-top:3px solid #f59e0b;padding:5px 16px;display:flex;align-items:center;gap:10px;font-size:16px;color:#f59e0b;z-index:50}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#2a1b10;transition:all 0.3s}
+.status-dot.active{background:#fbbf24;box-shadow:0 0 8px #fbbf24}
+.status-bar .right{margin-left:auto;font-size:12px;color:#a16207}
+.tab-panel{display:flex;flex-direction:column;gap:3px}
+.solo-active{background:linear-gradient(180deg,#fbbf24,#d97706)!important;color:#000!important;border-color:#fde047!important}
+.mute-active{background:linear-gradient(180deg,#dc2626,#991b1b)!important;color:#fff!important;border-color:#f87171!important}
+.sec-bar{display:flex;align-items:center;gap:6px;padding:4px 8px;margin-bottom:4px}
+.roadmap{font-size:14px;color:#6b7280;text-align:center;padding:6px;border:1px dashed #374151;margin-bottom:10px}
+.roadmap b{color:#a16207}
+@media(max-width:700px){
+  .proj-grid{grid-template-columns:repeat(3,1fr)}
+  .lc,.lc-6{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="bg-grid"></div><div class="scanlines"></div>
+<div class="bar-top"></div><div class="bar-bottom"></div>
+<div class="app">
+
+<div class="header">
+  <h1>*~IMPACT FORGE~*</h1>
+  <div class="sub">Hertzian Contact + Strouhal Flyby_</div>
+</div>
+<div class="marquee-wrapper">
+  <div class="marquee-text">*** HERTZ CONTACT MECHANICS 1882 *** STROUHAL VORTEX SHEDDING *** DOPPLER FLYBY *** CONTACT TIME = TIMBRE *** SOFT=LONG=THUD // HARD=SHORT=CRACK ***</div>
+</div>
+
+<!-- ═══ THE PROJECTILE — drives every stage ═══ -->
+<div class="proj-box">
+  <div class="proj-title">
+    <span>&#9679; THE PROJECTILE</span>
+    <select class="btn-select" id="projSel" style="flex:1;max-width:200px">
+      <option value="">&mdash; PICK A THING &mdash;</option>
+    </select>
+  </div>
+  <div class="proj-grid">
+    <div class="cg"><label>Size</label><input type="range" class="sp" data-p="size" min="4" max="600" value="60"><div class="rv">60mm</div></div>
+    <div class="cg"><label>Velocity</label><input type="range" class="sp" data-p="velocity" min="1" max="1000" value="30"><div class="rv">30m/s</div></div>
+    <div class="cg"><label>Density</label><input type="range" class="sp" data-p="density" min="0" max="100" value="45"><div class="rv">45%</div></div>
+    <div class="cg"><label>Hardness</label><input type="range" class="sp" data-p="hardness" min="0" max="100" value="50"><div class="rv">50%</div></div>
+    <div class="cg"><label>Shape</label><input type="range" class="sp" data-p="shape" min="0" max="100" value="30"><div class="rv">30%</div></div>
+  </div>
+  <div class="phys-strip" id="physStrip"></div>
+</div>
+
+<!-- PRESETS -->
+<div class="btn-row" style="margin-bottom:10px">
+  <select class="btn-select" id="presetSel" style="flex:1;min-width:110px">
+    <option value="">&mdash; PRESET &mdash;</option>
+  </select>
+  <input type="text" class="btn-input" id="presetName" placeholder="NAME" style="flex:1;min-width:90px">
+  <button class="btn btn-t" id="presetSave">SAVE</button>
+  <button class="btn btn-d" id="presetDel">DEL</button>
+</div>
+
+<!-- TAB NAV — stages of the journey -->
+<div class="mode-row" id="sectionTabs">
+  <div class="mode-btn active" data-tab="air"    style="border-color:#22d3ee;color:#22d3ee">1 AIR</div>
+  <div class="mode-btn"        data-tab="impact" style="border-color:#f59e0b;color:#f59e0b">2 IMPACT</div>
+  <div class="mode-btn soon">3 TARGET</div>
+  <div class="mode-btn soon">4 MATERIAL</div>
+  <div class="mode-btn soon">5 RESULT</div>
+  <div class="mode-btn soon">6 DEBRIS</div>
+  <div class="mode-btn"        data-tab="mix"    style="border-color:#a78bfa;color:#a78bfa">MIX</div>
+</div>
+<div class="roadmap">
+  BUILT: <b>the approach</b> &rarr; <b>the contact</b>. &nbsp;NEXT: what it hits &rarr; what that's made of &rarr; what the projectile does &rarr; the aftermath.
+</div>
+
+<!-- GENERATE BAR -->
+<div class="btn-row" style="position:sticky;top:16px;z-index:40">
+  <button class="btn btn-g" id="generateBtn">GENERATE</button>
+  <button class="btn btn-t" id="testBtn" disabled>&#9654; TEST</button>
+  <button class="btn btn-d" id="downloadBtn" disabled>DOWNLOAD</button>
+  <select class="btn-select" id="pBatch" title="How many files to bounce">
+    <option value="1" selected>x1</option>
+    <option value="5">x5</option>
+    <option value="10">x10</option>
+    <option value="20">x20</option>
+    <option value="30">x30</option>
+    <option value="50">x50</option>
+  </select>
+  <select class="btn-select" id="pPack" title="ZIP = one archive. FILES = separate downloads">
+    <option value="zip" selected>ZIP</option>
+    <option value="files">FILES</option>
+  </select>
+  <button class="btn btn-r" id="randomBtn">RANDOMISE ALL</button>
+</div>
+
+<div class="layers">
+
+<!-- ═══════════ TAB 1 — AIR ═══════════ -->
+<div class="tab-panel" data-panel="air">
+  <div class="sec-bar">
+    <button class="btn btn-r" style="font-size:7px;padding:5px 8px" data-rand-section="air">RAND</button>
+    <button class="btn btn-d" style="font-size:7px;padding:5px 8px" data-solo="air">SOLO</button>
+    <button class="btn btn-d" style="font-size:7px;padding:5px 8px" data-mute="air">MUTE</button>
+    <input type="range" class="sp" data-p="secAir" min="0" max="150" value="100" style="width:70px">
+    <div class="rv" style="font-size:12px;min-width:34px">100%</div>
+  </div>
+
+  <div class="flight-params">
+    <div class="cg"><label>Approach</label><input type="range" class="sp" data-p="airLen" min="0" max="700" value="170"><div class="rv">170ms</div></div>
+    <div class="cg"><label>Miss Dist</label><input type="range" class="sp" data-p="airMiss" min="1" max="120" value="12"><div class="rv">1.2m</div></div>
+    <div class="cg"><label>Doppler</label><input type="range" class="sp" data-p="airDop" min="0" max="100" value="65"><div class="rv">65%</div></div>
+    <div class="cg"><label>Curve</label><input type="range" class="sp" data-p="airCurve" min="50" max="300" value="110"><div class="rv">1.10</div></div>
+  </div>
+
+  <div class="layer" style="border-color:#22d3ee;background:rgba(34,211,238,0.04)" data-layer="whoosh">
+    <div class="lh">
+      <span class="lt" style="background:#0e7490;border-color:#22d3ee" data-toggle="whoosh">WHOOSH</span>
+      <span class="ll">Turbulent wake &mdash; the body of the flyby</span>
+    </div>
+    <div class="lc lc-6">
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="wLvl" min="0" max="100" value="55"><div class="rv">55%</div></div>
+      <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="wTone" min="10" max="250" value="60"><div class="rv">0.60x</div></div>
+      <div class="cg"><label>Focus</label><input type="range" class="sp" data-p="wWidth" min="0" max="100" value="30"><div class="rv">30%</div></div>
+      <div class="cg"><label>Flutter</label><input type="range" class="sp" data-p="wFlutter" min="0" max="100" value="15"><div class="rv">15%</div></div>
+      <div class="cg"><label>Drive</label><input type="range" class="sp" data-p="wDrive" min="0" max="100" value="20"><div class="rv">20%</div></div>
+      <div class="cg"><label>Hiss</label><input type="range" class="sp" data-p="wHiss" min="0" max="100" value="25"><div class="rv">25%</div></div>
+    </div>
+  </div>
+
+  <div class="layer" style="border-color:#67e8f9;background:rgba(103,232,249,0.04)" data-layer="zip">
+    <div class="lh">
+      <span class="lt" style="background:#155e75;border-color:#67e8f9" data-toggle="zip">ZIP</span>
+      <span class="ll">Aeolian vortex tone &mdash; f = 0.2&middot;v/d &mdash; the whistle</span>
+      <span class="badge" id="zipBadge">8.4kHz</span>
+    </div>
+    <div class="lc lc-6">
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="zLvl" min="0" max="100" value="20"><div class="rv">20%</div></div>
+      <div class="cg"><label>Tune</label><input type="range" class="sp" data-p="zTune" min="10" max="400" value="100"><div class="rv">1.00x</div></div>
+      <div class="cg"><label>Purity</label><input type="range" class="sp" data-p="zPure" min="0" max="100" value="30"><div class="rv">30%</div></div>
+      <div class="cg"><label>Reso</label><input type="range" class="sp" data-p="zQ" min="0" max="100" value="45"><div class="rv">45%</div></div>
+      <div class="cg"><label>Warble</label><input type="range" class="sp" data-p="zWarble" min="0" max="100" value="12"><div class="rv">12%</div></div>
+      <div class="cg"><label>Fifth</label><input type="range" class="sp" data-p="zHarm" min="0" max="100" value="18"><div class="rv">18%</div></div>
+    </div>
+  </div>
+
+  <div class="layer" style="border-color:#a78bfa;background:rgba(167,139,250,0.04)" data-layer="push">
+    <div class="lh">
+      <span class="lt" style="background:#5b21b6;border-color:#a78bfa" data-toggle="push">PUSH</span>
+      <span class="ll">Displaced air &mdash; the low wumph of something heavy arriving</span>
+    </div>
+    <div class="lc lc-6">
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="puLvl" min="0" max="100" value="30"><div class="rv">30%</div></div>
+      <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="puFreq" min="25" max="400" value="90"><div class="rv">90Hz</div></div>
+      <div class="cg"><label>Focus</label><input type="range" class="sp" data-p="puFocus" min="100" max="500" value="240"><div class="rv">2.40</div></div>
+      <div class="cg"><label>Rumble</label><input type="range" class="sp" data-p="puRumble" min="0" max="100" value="40"><div class="rv">40%</div></div>
+      <div class="cg"><label>Tail</label><input type="range" class="sp" data-p="puTail" min="0" max="100" value="35"><div class="rv">35%</div></div>
+      <div class="cg"><label>Drive</label><input type="range" class="sp" data-p="puDrive" min="0" max="100" value="15"><div class="rv">15%</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ TAB 2 — IMPACT ═══════════ -->
+<div class="tab-panel" data-panel="impact" style="display:none">
+  <div class="sec-bar">
+    <button class="btn btn-r" style="font-size:7px;padding:5px 8px" data-rand-section="impact">RAND</button>
+    <button class="btn btn-d" style="font-size:7px;padding:5px 8px" data-solo="impact">SOLO</button>
+    <button class="btn btn-d" style="font-size:7px;padding:5px 8px" data-mute="impact">MUTE</button>
+    <input type="range" class="sp" data-p="secImpact" min="0" max="150" value="100" style="width:70px">
+    <div class="rv" style="font-size:12px;min-width:34px">100%</div>
+  </div>
+
+  <div class="layer" style="border-color:#ef4444;background:rgba(239,68,68,0.05)" data-layer="contact">
+    <div class="lh">
+      <span class="lt" style="background:#991b1b;border-color:#ef4444" data-toggle="contact">CONTACT</span>
+      <span class="ll">Hertzian force pulse &mdash; dF/dt &mdash; the actual hit</span>
+      <span class="badge" id="tauBadge">&tau; 2.8ms</span>
+    </div>
+    <div class="lc lc-6">
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="cLvl" min="0" max="100" value="85"><div class="rv">85%</div></div>
+      <div class="cg"><label>Squish</label><input type="range" class="sp" data-p="cSquish" min="15" max="500" value="100"><div class="rv">1.00x</div></div>
+      <div class="cg"><label>Tilt</label><input type="range" class="sp" data-p="cTilt" min="300" max="19000" value="12000"><div class="rv">12000Hz</div></div>
+      <div class="cg"><label>Bite</label><input type="range" class="sp" data-p="cBite" min="0" max="100" value="25"><div class="rv">25%</div></div>
+      <div class="cg"><label>Body</label><input type="range" class="sp" data-p="cBody" min="0" max="100" value="35"><div class="rv">35%</div></div>
+      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="cDelay" min="0" max="30" value="0"><div class="rv">0ms</div></div>
+    </div>
+  </div>
+
+  <div class="layer" style="border-color:#fb923c;background:rgba(251,146,60,0.04)" data-layer="slap">
+    <div class="lh">
+      <span class="lt" style="background:#c2410c;border-color:#fb923c" data-toggle="slap">SLAP</span>
+      <span class="ll">Trapped air squirt &mdash; flat faces clap, points don't</span>
+      <span class="badge" id="slapBadge">FLAT 30%</span>
+    </div>
+    <div class="lc lc-6">
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="sLvl" min="0" max="100" value="40"><div class="rv">40%</div></div>
+      <div class="cg"><label>Length</label><input type="range" class="sp" data-p="sLen" min="1" max="60" value="9"><div class="rv">9ms</div></div>
+      <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="sTone" min="0" max="100" value="45"><div class="rv">45%</div></div>
+      <div class="cg"><label>Squirt</label><input type="range" class="sp" data-p="sSquirt" min="0" max="100" value="60"><div class="rv">60%</div></div>
+      <div class="cg"><label>Snap</label><input type="range" class="sp" data-p="sSnap" min="0" max="100" value="70"><div class="rv">70%</div></div>
+      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="sDelay" min="0" max="30" value="0"><div class="rv">0ms</div></div>
+    </div>
+  </div>
+
+  <div class="layer" style="border-color:#facc15;background:rgba(250,204,21,0.04)" data-layer="grit">
+    <div class="lh">
+      <span class="lt" style="background:#a16207;border-color:#facc15" data-toggle="grit">GRIT</span>
+      <span class="ll">Surface roughness &mdash; a thousand micro-contacts</span>
+    </div>
+    <div class="lc lc-6">
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="gLvl" min="0" max="100" value="35"><div class="rv">35%</div></div>
+      <div class="cg"><label>Length</label><input type="range" class="sp" data-p="gLen" min="1" max="120" value="18"><div class="rv">18ms</div></div>
+      <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="gTone" min="0" max="100" value="55"><div class="rv">55%</div></div>
+      <div class="cg"><label>Coarse</label><input type="range" class="sp" data-p="gCoarse" min="0" max="100" value="30"><div class="rv">30%</div></div>
+      <div class="cg"><label>Sweep</label><input type="range" class="sp" data-p="gSweep" min="0" max="100" value="55"><div class="rv">55%</div></div>
+      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="gDelay" min="0" max="30" value="0"><div class="rv">0ms</div></div>
+    </div>
+  </div>
+
+  <div class="layer" style="border-color:#a855f7;background:rgba(168,85,247,0.04)" data-layer="punch">
+    <div class="lh">
+      <span class="lt" style="background:#6b21a8;border-color:#a855f7" data-toggle="punch">PUNCH</span>
+      <span class="ll">Momentum dumped &mdash; the low-end weight of the blow</span>
+      <span class="badge" id="punchBadge">91Hz</span>
+    </div>
+    <div class="lc lc-6">
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="pLvl" min="0" max="100" value="50"><div class="rv">50%</div></div>
+      <div class="cg"><label>Tune</label><input type="range" class="sp" data-p="pTune" min="25" max="400" value="100"><div class="rv">1.00x</div></div>
+      <div class="cg"><label>Length</label><input type="range" class="sp" data-p="pLen" min="10" max="400" value="90"><div class="rv">90ms</div></div>
+      <div class="cg"><label>Bend</label><input type="range" class="sp" data-p="pBend" min="0" max="100" value="45"><div class="rv">45%</div></div>
+      <div class="cg"><label>Click</label><input type="range" class="sp" data-p="pClick" min="0" max="100" value="30"><div class="rv">30%</div></div>
+      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="pDelay" min="0" max="30" value="1"><div class="rv">1ms</div></div>
+    </div>
+  </div>
+
+  <div class="layer" style="border-color:#4ade80;background:rgba(74,222,128,0.04)" data-layer="ring">
+    <div class="lh">
+      <span class="lt" style="background:#166534;border-color:#4ade80" data-toggle="ring">RING</span>
+      <span class="ll">The projectile itself resonating &mdash; steel sings, jelly doesn't</span>
+      <span class="badge" id="ringBadge">&mdash;</span>
+    </div>
+    <div class="lc lc-6">
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="rLvl" min="0" max="100" value="18"><div class="rv">18%</div></div>
+      <div class="cg"><label>Tune</label><input type="range" class="sp" data-p="rTune" min="10" max="400" value="100"><div class="rv">1.00x</div></div>
+      <div class="cg"><label>Decay</label><input type="range" class="sp" data-p="rDecay" min="10" max="400" value="100"><div class="rv">1.00x</div></div>
+      <div class="cg"><label>Spread</label><input type="range" class="sp" data-p="rSpread" min="0" max="100" value="50"><div class="rv">50%</div></div>
+      <div class="cg"><label>Metal</label><input type="range" class="sp" data-p="rMetal" min="0" max="100" value="50"><div class="rv">50%</div></div>
+      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="rDelay" min="0" max="30" value="0"><div class="rv">0ms</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MIX ═══════════ -->
+<div class="tab-panel" data-panel="mix" style="display:none">
+  <div class="layer" style="border-color:#a78bfa">
+    <div class="lh"><span class="lt" style="background:#5b21b6;border-color:#a78bfa;cursor:default">OUTPUT</span><span class="ll">Master bounce settings</span></div>
+    <div class="lc lc-6">
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="outLevel" min="0" max="100" value="90"><div class="rv">90%</div></div>
+      <div class="cg"><label>Fade In</label><input type="range" class="sp" data-p="fadeIn" min="0" max="100" value="5"><div class="rv">0.5ms</div></div>
+      <div class="cg"><label>Fade Out</label><input type="range" class="sp" data-p="fadeOut" min="0" max="200" value="25"><div class="rv">25ms</div></div>
+      <div class="cg"><label>Variation</label><input type="range" class="sp" data-p="variation" min="0" max="60" value="12"><div class="rv">12%</div></div>
+      <div class="cg"><label>Air Vol</label><input type="range" class="sp" data-p="secAir" min="0" max="150" value="100"><div class="rv">100%</div></div>
+      <div class="cg"><label>Impact Vol</label><input type="range" class="sp" data-p="secImpact" min="0" max="150" value="100"><div class="rv">100%</div></div>
+    </div>
+  </div>
+  <div class="layer" style="border-color:#22d3ee">
+    <div class="lh"><span class="lt" style="background:#0e7490;border-color:#22d3ee;cursor:default">LENGTH</span><span class="ll">Game assets stay tight &mdash; hard cap on the bounce</span></div>
+    <div class="lc" style="grid-template-columns:repeat(2,1fr)">
+      <div class="cg"><label>Max Length</label>
+        <select class="btn-select" id="pMaxLen">
+          <option value="250">250 ms</option>
+          <option value="500">500 ms</option>
+          <option value="750" selected>750 ms</option>
+          <option value="1000">1000 ms</option>
+          <option value="1500">1500 ms</option>
+        </select>
+      </div>
+      <div class="cg"><label>Trim Silence</label>
+        <select class="btn-select" id="pTrim">
+          <option value="1" selected>ON</option>
+          <option value="0">OFF</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- WAVEFORM -->
+<div class="viz-box" id="waveformBox">
+  <div class="viz-header">
+    <div class="viz-title">WAVEFORM</div>
+    <div class="viz-info" id="waveformInfo"></div>
+  </div>
+  <div class="viz-cw"><canvas id="waveformCanvas"></canvas></div>
+</div>
+
+</div>
+
+<div class="status-bar">
+  <div class="status-dot" id="statusDot"></div>
+  <span id="statusText">Ready</span>
+  <span class="right">IMPACT FORGE v1 &mdash; stages 1-2</span>
+</div>
+
+<script>
+var SR=48000, C=343;
+var curBuf=null, curImpactN=0, nGen=0;
+var layerOff={};
+var pRanges={};
+function rnd(){ return Math.random(); }
+
+// ═══════════════════════════════════════════════════
+//  PHYSICS — one projectile, derived once, drives everything
+// ═══════════════════════════════════════════════════
+// Density  0-100 → 25 kg/m3 (foam) .. 11500 (lead), log
+// Hardness 0-100 → 1 MPa (jelly) .. 400 GPa (ceramic), log
+//   Young's modulus is what "soft / hard / SUPER hard" actually means.
+// Everything downstream is derived. Change Size and the flyby whistle,
+// the contact time, the punch pitch and the ring all move together —
+// because in the real world they are the same object.
+function projPhys(p){
+  var d    = Math.max(0.001, p.size/1000);          // m, diameter
+  var R    = d/2;
+  var rho  = 25*Math.pow(11500/25, p.density/100);  // kg/m3
+  var vol  = (4/3)*Math.PI*R*R*R;
+  var m    = Math.max(1e-6, rho*vol);               // kg
+  var E    = 1e6*Math.pow(4e11/1e6, p.hardness/100);// Pa
+  var Es   = E/1.82;                                // E* contact modulus, nu≈0.3
+  var v    = Math.max(0.5, p.velocity);
+  var shp  = p.shape/100;
+
+  // ── Hertz elastic impact ──────────────────────────
+  // Sphere on halfspace. Contact stiffness k = (4/3)E*sqrt(R).
+  // Max approach  δ = (5 m v² / 4k)^(2/5)
+  // Contact time  τ = 2.94 δ / v
+  // Steel-on-steel 10mm @ 1m/s → 35µs (matches measurement).
+  // Rubber ball    60mm @ 10m/s → ~3ms. Jelly → ~7ms.
+  var k    = (4/3)*Es*Math.sqrt(R);
+  var dmax = Math.pow(5*m*v*v/(4*k), 0.4);
+  dmax     = Math.min(dmax, R*0.6);                 // can't crush past the radius
+  var tau  = 2.94*dmax/v;
+
+  // Shape concentrates or spreads the contact patch.
+  // Point = small patch = shorter = brighter. Flat = broad = longer = slappier.
+  tau *= 0.35 + shp*1.5;
+  tau  = Math.max(8e-6, Math.min(0.06, tau));
+
+  var cmat = Math.sqrt(E/rho);                      // speed of sound in the material
+  return {
+    d:d, R:R, rho:rho, m:m, E:E, v:v, shp:shp,
+    tau:tau, dmax:dmax, cmat:cmat,
+    mom:m*v, ke:0.5*m*v*v,
+    aeol: 0.2*v/d,                                  // Strouhal vortex shedding
+    ringF: cmat/(2*d)                               // fundamental mode of the body
+  };
+}
+
+// ═══════════════════════════════════════════════════
+//  DSP HELPERS
+// ═══════════════════════════════════════════════════
+function normTo1(buf){
+  var mx=0;
+  for(var i=0;i<buf.length;i++) mx=Math.max(mx,Math.abs(buf[i]));
+  if(mx>1e-9) for(var i=0;i<buf.length;i++) buf[i]/=mx;
+  return buf;
+}
+function norm(buf,vol){
+  var sum=0;
+  for(var i=0;i<buf.length;i++) sum+=buf[i];
+  var dc=sum/buf.length;
+  for(var i=0;i<buf.length;i++) buf[i]-=dc;
+  var mx=0;
+  for(var i=0;i<buf.length;i++) mx=Math.max(mx,Math.abs(buf[i]));
+  if(mx>1e-9) for(var i=0;i<buf.length;i++) buf[i]*=vol/mx;
+  return buf;
+}
+function biquadLP(sig, cutoff, Q, sr){
+  Q=Q||0.707; sr=sr||SR;
+  cutoff=Math.max(20,Math.min(sr*0.47,cutoff));
+  var w0=2*Math.PI*cutoff/sr, sinW=Math.sin(w0), cosW=Math.cos(w0);
+  var alpha=sinW/(2*Q);
+  var b0=(1-cosW)/2, b1=1-cosW, b2=(1-cosW)/2;
+  var a0=1+alpha, a1=-2*cosW, a2=1-alpha;
+  b0/=a0; b1/=a0; b2/=a0; a1/=a0; a2/=a0;
+  var out=new Float32Array(sig.length);
+  var x1=0,x2=0,y1=0,y2=0;
+  for(var i=0;i<sig.length;i++){
+    var x=sig[i], y=b0*x+b1*x1+b2*x2-a1*y1-a2*y2;
+    out[i]=y; x2=x1; x1=x; y2=y1; y1=y;
+  }
+  return out;
+}
+function dcBlock(buf, hz){
+  var a=1/(1+SR/(6.28318*(hz||12))), s=0;
+  for(var i=0;i<buf.length;i++){ s+=a*(buf[i]-s); buf[i]-=s; }
+  return buf;
+}
+// TPT state-variable filter — stays stable while the cutoff is swept
+// every sample, which is exactly what a doppler flyby needs.
+function svf(){ return {ic1:0, ic2:0, lp:0, bp:0, hp:0}; }
+function svfTick(s, x, fc, Q){
+  fc=Math.max(15,Math.min(SR*0.47,fc));
+  var g=Math.tan(Math.PI*fc/SR), k=1/Math.max(0.35,Q);
+  var a1=1/(1+g*(g+k)), a2=g*a1, a3=g*a2;
+  var v3=x-s.ic2, v1=a1*s.ic1+a2*v3, v2=s.ic2+a2*s.ic1+a3*v3;
+  s.ic1=2*v1-s.ic1; s.ic2=2*v2-s.ic2;
+  s.bp=v1; s.lp=v2; s.hp=x-k*v1-v2;
+  return s;
+}
+function drive(buf, amt){
+  if(amt<=0.01) return buf;
+  var g=1+amt*18;
+  var t=Math.tanh(g);
+  for(var i=0;i<buf.length;i++) buf[i]=Math.tanh(buf[i]*g)/t;
+  return buf;
+}
+
+// ═══════════════════════════════════════════════════
+//  STAGE 1 — AIR : the approach
+// ═══════════════════════════════════════════════════
+// Geometry, computed once and shared by all three air layers.
+// The projectile flies a straight line at v. The listener sits `miss`
+// metres to the side of that line, level with the impact point.
+//   r  = sqrt(axial² + miss²)      → amplitude 1/r^curve
+//   vr = v·axial/r                 → doppler c/(c-vr)
+// This is why a bullet's swell collapses into a last-instant ZIP while a
+// boulder's stretches into a long WOOOO — same code, different velocity.
+function airGeo(p, ph, airN, tailN){
+  var N=airN+tailN;
+  var g={amp:new Float32Array(N), dop:new Float32Array(N), n:N};
+  var miss=Math.max(0.05, p.airMiss/10);
+  var dopAmt=p.airDop/100;
+  var curve=p.airCurve/100;
+  var v=ph.v;
+  for(var i=0;i<N;i++){
+    if(i<airN){
+      var tRem=(airN-i)/SR;
+      var ax=v*tRem;
+      var r=Math.sqrt(ax*ax+miss*miss);
+      var vr=v*ax/r;
+      g.amp[i]=Math.pow(miss/r, curve);
+      var den=C-vr*dopAmt;
+      g.dop[i]=Math.max(0.25, Math.min(4.0, den>1 ? C/den : 4.0));
+    } else {
+      // The wake doesn't stop when the object does — it dissipates.
+      // This overlap is also what stops a click at the air/impact seam.
+      var t=(i-airN)/Math.max(1,tailN);
+      g.amp[i]=Math.exp(-t*5.5);
+      g.dop[i]=1;
+    }
+  }
+  return g;
+}
+
+function genWhoosh(p, ph, geo){
+  var N=geo.n; if(N<8) return new Float32Array(0);
+  var out=new Float32Array(N);
+  var base=Math.max(60, Math.min(9000, ph.aeol*(p.wTone/100)*0.55));
+  var Q=0.45+(p.wWidth/100)*4.0;
+  var hiss=p.wHiss/100;
+  var flut=p.wFlutter/100;
+  var fRate=Math.max(4, Math.min(90, 4+ph.v*0.5));   // tumble rate tracks speed
+  var sBP=svf(), sHP=svf();
+  var fPh=0, fInc=2*Math.PI*fRate/SR;
+  for(var i=0;i<N;i++){
+    var n=rnd()*2-1;
+    var fc=base*geo.dop[i];
+    svfTick(sBP,n,fc,Q);
+    var body=sBP.bp;
+    svfTick(sHP,n,Math.max(1500,fc*3.2),0.6);
+    var air=sHP.hp*hiss*0.5;
+    fPh+=fInc;
+    var wob=1-flut*0.55*(0.5+0.5*Math.sin(fPh));
+    out[i]=(body+air)*geo.amp[i]*wob;
+  }
+  normTo1(out);
+  drive(out,p.wDrive/100);
+  return dcBlock(out,25);
+}
+
+function genZip(p, ph, geo){
+  var N=geo.n; if(N<8) return new Float32Array(0);
+  var out=new Float32Array(N);
+  var f0=Math.max(25, Math.min(SR*0.42, ph.aeol*(p.zTune/100)));
+  var pure=p.zPure/100;
+  var Q=2+(p.zQ/100)*45;
+  var warb=p.zWarble/100;
+  var harm=p.zHarm/100;
+  var s1=svf(), s2=svf();
+  var acc=0, acc5=0, wPh=0;
+  var wInc=2*Math.PI*(11+ph.v*0.08)/SR;
+  for(var i=0;i<N;i++){
+    wPh+=wInc;
+    var f=f0*geo.dop[i]*(1+warb*0.06*Math.sin(wPh));
+    f=Math.max(25, Math.min(SR*0.45, f));
+    acc +=2*Math.PI*f/SR;
+    acc5+=2*Math.PI*Math.min(SR*0.45,f*1.5)/SR;
+    var tone=Math.sin(acc)+harm*0.5*Math.sin(acc5);
+    var n=rnd()*2-1;
+    svfTick(s1,n,f,Q);
+    var res=s1.bp*3.2;
+    svfTick(s2,n,Math.min(SR*0.45,f*1.5),Q);
+    var res5=s2.bp*3.2*harm*0.5;
+    var mix=tone*pure+(res+res5)*(1-pure);
+    out[i]=mix*geo.amp[i];
+  }
+  return normTo1(out);
+}
+
+function genPush(p, ph, geo){
+  var N=geo.n; if(N<8) return new Float32Array(0);
+  var out=new Float32Array(N);
+  var fc=p.puFreq;
+  var focus=p.puFocus/100;
+  var rum=p.puRumble/100;
+  var s1=svf(), s2=svf();
+  for(var i=0;i<N;i++){
+    var n=rnd()*2-1;
+    svfTick(s1,n,fc,0.7);
+    svfTick(s2,s1.lp,fc*1.4,0.7);
+    // Near-field pressure builds far steeper than the far-field wake:
+    // amp^focus with focus>1 keeps it out of the way until the last moment.
+    var e=Math.pow(geo.amp[i], focus);
+    out[i]=s2.lp*e*(0.55+rum*0.9);
+  }
+  normTo1(out);
+  drive(out,p.puDrive/100);
+  return dcBlock(out,14);
+}
+
+// ═══════════════════════════════════════════════════
+//  STAGE 2 — IMPACT : the contact event
+// ═══════════════════════════════════════════════════
+// The whole tool hangs off this function.
+//
+// Hertz gives a force pulse F(t) ≈ Fmax·sin(πt/τ)^1.5 over the contact.
+// Radiated pressure follows the RATE OF CHANGE of that force, so the sound
+// is dF/dt — a bipolar pulse whose width is τ. Hence:
+//    τ = 7ms  → ~140Hz blob   → soft WUMPH
+//    τ = 3ms  → ~330Hz        → rubber THUD
+//    τ = 35µs → wideband spike → steel TICK
+//
+// Shape morphs the exponent 1.5 (Hertzian point) → 0.25 (flat plate).
+// A near-rectangular force pulse differentiates into two edge spikes,
+// which is precisely what a slap is. The physics does the sound design.
+function genContact(p, ph){
+  var tau=ph.tau*(p.cSquish/100);
+  // Floor is PHYSICAL (8µs — harder than diamond), not sample-rate-driven.
+  // A 3-sample floor at 48k silently welded steel, lead and ceramic into the
+  // same click and killed the whole top of the Hardness range.
+  tau=Math.max(8e-6, Math.min(0.09, tau));
+
+  // A pulse only has a shape if it spans enough samples to have one. Short
+  // contacts get rendered oversampled, then filtered back down.
+  var OS=1;
+  while(tau*SR*OS < 24 && OS < 16) OS*=2;
+  var srOS=SR*OS;
+
+  var tauN=Math.max(4, Math.round(tau*srOS));
+  // 1.5 = Hertzian (F ∝ δ^1.5) — a point contact, one clean bipolar swing.
+  // Toward 0 the force pulse goes rectangular, and differentiating a rectangle
+  // gives two edge spikes: that IS a slap. The floor sits low enough that the
+  // second edge emerges across the top third of the knob, not only at 100.
+  var expo=Math.max(0.12, 1.5-ph.shp*1.45);
+  var padOS=Math.round(srOS*0.004);
+  var N=tauN+padOS;
+
+  var F=new Float32Array(N);
+  var w=Math.PI/tauN;
+  for(var i=0;i<tauN;i++){
+    var s=Math.sin(w*i);
+    if(s<0) s=0;
+    F[i]=Math.pow(s,expo);
+  }
+  // Radiated pressure follows the rate of change of contact force.
+  var d=new Float32Array(N), prev=0;
+  for(var i=0;i<N;i++){ d[i]=F[i]-prev; prev=F[i]; }
+
+  if(OS>1){
+    // 6th-order anti-alias before decimating — the differentiator's edges are
+    // broadband and would fold straight back into the audible band.
+    d=biquadLP(d, 20000, 0.52, srOS);
+    d=biquadLP(d, 20000, 0.71, srOS);
+    d=biquadLP(d, 20000, 1.93, srOS);
+    var M=Math.ceil(N/OS), dec=new Float32Array(M);
+    for(var i=0;i<M;i++) dec[i]=d[i*OS];
+    d=dec;
+  }
+  var out=biquadLP(d, p.cTilt, 0.707);
+  normTo1(out);
+  drive(out, p.cBite/100);
+
+  // Body: a touch of the undifferentiated force pulse back in. Restores the
+  // low-frequency shove that dF/dt subtracts out — reads as mass behind the hit.
+  var body=p.cBody/100;
+  if(body>0.01){
+    var lf=biquadLP(F, Math.max(45, 0.55/tau), 0.6, srOS);
+    if(OS>1){
+      var M2=Math.ceil(lf.length/OS), l2=new Float32Array(M2);
+      for(var i=0;i<M2;i++) l2[i]=lf[i*OS];
+      lf=l2;
+    }
+    dcBlock(lf,18); normTo1(lf);
+    var L=Math.min(out.length, lf.length);
+    for(var i=0;i<L;i++) out[i]+=lf[i]*body*0.85;
+    normTo1(out);
+  }
+  return out;
+}
+
+function genSlap(p, ph){
+  var lenN=Math.max(8, Math.round(p.sLen/1000*SR));
+  var N=lenN+Math.round(SR*0.002);
+  var out=new Float32Array(N);
+  var tone=p.sTone/100;
+  var squirt=p.sSquirt/100;
+  var snap=p.sSnap/100;
+  var f0=350+tone*4200;
+  var fEnd=f0*(1-squirt*0.82);
+  var atkN=Math.max(2, Math.round(lenN*(1-snap)*0.25)+2);
+  var s1=svf(), s2=svf();
+  for(var i=0;i<lenN;i++){
+    var t=i/lenN;
+    var n=rnd()*2-1;
+    var fc=f0+(fEnd-f0)*t;
+    svfTick(s1,n,fc,1.1+tone*2.2);
+    svfTick(s2,s1.bp,Math.max(120,fc*0.5),0.8);
+    var env;
+    if(i<atkN){ var a=i/atkN; env=a*a; }
+    else       { env=Math.exp(-(i-atkN)/(lenN*0.22)); }
+    out[i]=(s1.bp*0.75+s2.bp*0.45)*env;
+  }
+  normTo1(out);
+  return dcBlock(out,40);
+}
+
+function genGrit(p, ph){
+  var lenN=Math.max(8, Math.round(p.gLen/1000*SR));
+  var N=lenN;
+  var out=new Float32Array(N);
+  var tone=p.gTone/100;
+  var coarse=p.gCoarse/100;
+  var sweep=p.gSweep/100;
+  // Hard surfaces scatter brighter grit than soft ones.
+  var hard=Math.min(1, Math.log(ph.E/1e6)/Math.log(4e5));
+  var fStart=600+tone*9000+hard*3000;
+  var fEnd=fStart*(1-sweep*0.85);
+  var s1=svf();
+  var hold=0, holdN=1+Math.round(coarse*14);   // sample-hold = coarser grain
+  var hv=0;
+  for(var i=0;i<lenN;i++){
+    var t=i/lenN;
+    if(hold<=0){ hv=rnd()*2-1; hold=holdN; }
+    hold--;
+    var fc=fStart+(fEnd-fStart)*t;
+    svfTick(s1,hv,fc,0.8+coarse*1.5);
+    var env=Math.exp(-t*4.2)*(1-t);
+    var atk=Math.min(1, i/6);
+    out[i]=s1.bp*env*atk;
+  }
+  normTo1(out);
+  return dcBlock(out,50);
+}
+
+function genPunch(p, ph){
+  var lenN=Math.max(16, Math.round(p.pLen/1000*SR));
+  var N=lenN;
+  var out=new Float32Array(N);
+  // Bigger and heavier lands lower. 9mm → ~270Hz snap, 480mm → ~29Hz boom.
+  var f0=900/Math.pow(Math.max(4,p.size), 0.55)*(p.pTune/100);
+  f0=Math.max(18, Math.min(600, f0));
+  var bend=p.pBend/100;
+  var click=p.pClick/100;
+  var fTop=f0*(1+bend*3.2);
+  var acc=0;
+  var bendN=Math.max(4, lenN*0.16);
+  for(var i=0;i<lenN;i++){
+    var t=i/lenN;
+    var f=f0+(fTop-f0)*Math.exp(-i/bendN);
+    acc+=2*Math.PI*f/SR;
+    var env=Math.exp(-t*4.5);
+    var atk=Math.min(1, i/3);
+    out[i]=Math.sin(acc)*env*atk;
+  }
+  if(click>0.01){
+    var cN=Math.round(SR*0.003);
+    for(var i=0;i<cN&&i<N;i++){
+      out[i]+=(rnd()*2-1)*Math.exp(-i/(cN*0.18))*click*0.5;
+    }
+  }
+  normTo1(out);
+  return dcBlock(out,12);
+}
+
+// The projectile's own body ringing after it's been struck.
+// f ≈ c_material / 2d, where c = sqrt(E/rho). A small steel ball rings
+// way above hearing (so it just ticks); a big steel plate sings. That's
+// real — and it's why Tune exists, for when reality is boring.
+function genRing(p, ph){
+  var f1=ph.ringF*(p.rTune/100);
+  f1=Math.max(45, Math.min(11000, f1));
+  var metal=p.rMetal/100;
+  var spread=p.rSpread/100;
+  // Soft things simply do not ring. Hardness drives the decay by orders.
+  var dec=0.0015*Math.pow(1200, p.hardness/100)*(p.rDecay/100);
+  dec=Math.max(0.0008, Math.min(1.6, dec));
+  var N=Math.max(32, Math.round(dec*4.5*SR));
+  N=Math.min(N, Math.round(SR*1.2));
+  var out=new Float32Array(N);
+  // Inharmonic bar/plate ratios → metal. Pulled toward harmonic → wood-ish.
+  var barR=[1, 2.756, 5.404, 8.933];
+  var harR=[1, 2.0, 3.0, 4.0];
+  for(var k=0;k<4;k++){
+    var ratio=harR[k]+(barR[k]-harR[k])*metal;
+    var f=f1*(1+(ratio-1)*(0.35+spread*1.3));
+    if(f>SR*0.45) continue;
+    var amp=1/Math.pow(k+1, 1.3-metal*0.5);
+    var d=dec/(1+k*(0.35+metal*0.5));
+    var w=2*Math.PI*f/SR;
+    var jit=1+(rnd()-0.5)*0.01;
+    for(var i=0;i<N;i++){
+      out[i]+=Math.sin(w*i*jit)*Math.exp(-i/(d*SR))*amp;
+    }
+  }
+  var atk=Math.max(2, Math.round(SR*0.0004));
+  for(var i=0;i<atk;i++) out[i]*=i/atk;
+  normTo1(out);
+  return dcBlock(out,18);
+}
+
+// ═══════════════════════════════════════════════════
+//  ASSEMBLY
+// ═══════════════════════════════════════════════════
+function delayBuf(buf, ms){
+  var ds=Math.round(ms/1000*SR);
+  if(ds<=0) return buf;
+  var out=new Float32Array(buf.length+ds);
+  out.set(buf, ds);
+  return out;
+}
+function applyFades(buf,fiMs,foMs){
+  var N=buf.length; if(N<8) return buf;
+  var pk=0,pkIdx=0;
+  for(var i=0;i<N;i++){var a=Math.abs(buf[i]); if(a>pk){pk=a;pkIdx=i;}}
+  var fi=Math.min(Math.round(fiMs/1000*SR), pkIdx, N>>1);
+  if(fi>0) for(var i=0;i<fi;i++) buf[i]*=0.5-0.5*Math.cos(Math.PI*i/fi);
+  var fo=Math.min(Math.round(foMs/1000*SR), N-pkIdx-1, N-1);
+  if(fo>0){
+    var st=N-fo;
+    for(var i=0;i<fo;i++) buf[st+i]*=0.5+0.5*Math.cos(Math.PI*(i/fo));
+  }
+  if(pkIdx>0) buf[0]=0;
+  buf[N-1]=0;
+  return buf;
+}
+
+var VARY_EXCLUDE={outLevel:1,fadeIn:1,fadeOut:1,variation:1,secAir:1,secImpact:1};
+function varyP(p,vari){
+  if(vari<=0) return p;
+  var vp={}; for(var k in p) vp[k]=p[k];
+  for(var k in vp){
+    if(VARY_EXCLUDE[k]) continue;
+    var r=pRanges[k]; if(!r) continue;
+    var span=r.max-r.min; if(span<=0) continue;
+    var w=(k.length>3&&k.slice(-3)==='Lvl')?0.6:1;
+    var d=(rnd()*2-1)*vari*span*0.25*w;
+    vp[k]=Math.max(r.min,Math.min(r.max,vp[k]+d));
+  }
+  return vp;
+}
+
+var sectionMuted={air:false,impact:false};
+var sectionSoloed=null;
+
+function genOne(rawP){
+  var vari=(rawP.variation||0)/100;
+  var p=varyP(rawP, vari);
+  var ph=projPhys(p);
+
+  var secAir=(p.secAir!==undefined?p.secAir:100)/100;
+  var secImp=(p.secImpact!==undefined?p.secImpact:100)/100;
+  if(sectionSoloed){
+    if(sectionSoloed!=='air')    secAir=0;
+    if(sectionSoloed!=='impact') secImp=0;
+  }
+  if(sectionMuted.air)    secAir=0;
+  if(sectionMuted.impact) secImp=0;
+
+  var maxN=Math.round(maxLenMs()/1000*SR);
+
+  // ── impact section (t=0 is the moment of contact) ──
+  var imps=[];
+  function addImp(key, gen, lvlKey, delKey, defLvl){
+    if(layerOff[key]) return;
+    var lvl=(p[lvlKey]!==undefined?p[lvlKey]:defLvl)/100*secImp;
+    if(lvl<=0.0005) return;
+    var b=delayBuf(gen(p,ph), p[delKey]||0);
+    imps.push({b:b, l:lvl});
+  }
+  addImp('contact', genContact, 'cLvl', 'cDelay', 85);
+  addImp('slap',    genSlap,    'sLvl', 'sDelay', 40);
+  addImp('grit',    genGrit,    'gLvl', 'gDelay', 35);
+  addImp('punch',   genPunch,   'pLvl', 'pDelay', 50);
+  addImp('ring',    genRing,    'rLvl', 'rDelay', 18);
+
+  var impNat=0;
+  for(var i=0;i<imps.length;i++) impNat=Math.max(impNat, imps[i].b.length);
+  impNat=Math.max(impNat, Math.round(SR*0.01));
+
+  // ── budget split ───────────────────────────────────
+  // The approach is a duration you dialed on purpose; the impact's tail is a
+  // decay that fades to nothing anyway. So the air gets the length it asked
+  // for (capped at 60% of the file, so the hit always keeps a real body) and
+  // the impact takes the rest. Truncating a ring-out is free; deleting the
+  // whole flyby is not.
+  var airN=Math.round((p.airLen||0)/1000*SR);
+  var tailN=Math.round(SR*0.018);
+  if(secAir<=0.0005) airN=0;
+  airN=Math.max(0, Math.min(airN, Math.floor(maxN*0.6)));
+  var impN=Math.min(impNat, maxN-airN);
+
+  var total=airN+impN;
+  var out=new Float32Array(total);
+
+  if(airN>=8){
+    var geo=airGeo(p, ph, airN, tailN);
+    var airs=[];
+    function addAir(key, gen, lvlKey, defLvl){
+      if(layerOff[key]) return;
+      var lvl=(p[lvlKey]!==undefined?p[lvlKey]:defLvl)/100*secAir;
+      if(lvl<=0.0005) return;
+      airs.push({b:gen(p,ph,geo), l:lvl});
+    }
+    addAir('whoosh', genWhoosh, 'wLvl',  55);
+    addAir('zip',    genZip,    'zLvl',  20);
+    addAir('push',   genPush,   'puLvl', 30);
+    for(var a=0;a<airs.length;a++){
+      var b=airs[a].b, l=airs[a].l;
+      for(var i=0;i<b.length && i<total;i++) out[i]+=b[i]*l;
+    }
+  }
+  for(var a=0;a<imps.length;a++){
+    var b=imps[a].b, l=imps[a].l;
+    for(var i=0;i<b.length && (airN+i)<total;i++) out[airN+i]+=b[i]*l;
+  }
+
+  curImpactN=airN;
+
+  // Trim trailing silence so game assets don't carry dead air.
+  if(trimOn()){
+    var pk=0;
+    for(var i=0;i<total;i++) pk=Math.max(pk,Math.abs(out[i]));
+    if(pk>1e-9){
+      var last=total-1;
+      while(last>airN+64 && Math.abs(out[last])<pk*0.0012) last--;
+      last=Math.min(total-1, last+Math.round(SR*0.004));
+      if(last<total-1) out=out.subarray(0,last+1);
+    }
+  }
+
+  var vol=(p.outLevel!==undefined?p.outLevel:90)/100;
+  var fi=(p.fadeIn!==undefined?p.fadeIn:5)/10;
+  var fo=(p.fadeOut!==undefined?p.fadeOut:25);
+  return applyFades(norm(out,vol), fi, fo);
+}
+
+function maxLenMs(){ return +document.getElementById('pMaxLen').value; }
+function trimOn(){ return document.getElementById('pTrim').value==='1'; }
+
+// ═══════════════════════════════════════════════════
+//  WAV / ZIP / SAVE
+// ═══════════════════════════════════════════════════
+function encWAV(smp){
+  var N=smp.length,ds=N*2,buf=new ArrayBuffer(44+ds),v=new DataView(buf);
+  function ws(o,s){for(var i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))}
+  ws(0,'RIFF');v.setUint32(4,36+ds,true);ws(8,'WAVE');ws(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,SR,true);v.setUint32(28,SR*2,true);v.setUint16(32,2,true);
+  v.setUint16(34,16,true);ws(36,'data');v.setUint32(40,ds,true);
+  for(var i=0;i<N;i++)v.setInt16(44+i*2,Math.round(Math.max(-1,Math.min(1,smp[i]))*32767),true);
+  return buf;
+}
+var crcTable=(function(){
+  var t=new Uint32Array(256);
+  for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}
+  return t;
+})();
+function crc32(u8){
+  var c=0xFFFFFFFF;
+  for(var i=0;i<u8.length;i++) c=crcTable[(c^u8[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0;
+}
+function makeZip(files){
+  var enc=new TextEncoder(), d=new Date();
+  var dosTime=((d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1))&0xFFFF;
+  var dosDate=(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xFFFF;
+  var parts=[],central=[],offset=0;
+  for(var i=0;i<files.length;i++){
+    var nameU8=enc.encode(files[i].name);
+    var data=new Uint8Array(files[i].data);
+    var crc=crc32(data);
+    var lh=new Uint8Array(30+nameU8.length), lv=new DataView(lh.buffer);
+    lv.setUint32(0,0x04034b50,true); lv.setUint16(4,20,true); lv.setUint16(6,0,true);
+    lv.setUint16(8,0,true); lv.setUint16(10,dosTime,true); lv.setUint16(12,dosDate,true);
+    lv.setUint32(14,crc,true); lv.setUint32(18,data.length,true); lv.setUint32(22,data.length,true);
+    lv.setUint16(26,nameU8.length,true); lv.setUint16(28,0,true);
+    lh.set(nameU8,30);
+    parts.push(lh,data);
+    var ch=new Uint8Array(46+nameU8.length), cv=new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true);
+    cv.setUint16(8,0,true); cv.setUint16(10,0,true); cv.setUint16(12,dosTime,true);
+    cv.setUint16(14,dosDate,true); cv.setUint32(16,crc,true);
+    cv.setUint32(20,data.length,true); cv.setUint32(24,data.length,true);
+    cv.setUint16(28,nameU8.length,true); cv.setUint16(30,0,true); cv.setUint16(32,0,true);
+    cv.setUint16(34,0,true); cv.setUint16(36,0,true); cv.setUint32(38,0,true);
+    cv.setUint32(42,offset,true);
+    ch.set(nameU8,46);
+    central.push(ch);
+    offset+=lh.length+data.length;
+  }
+  var cdSize=0;
+  for(var i=0;i<central.length;i++) cdSize+=central[i].length;
+  var eocd=new Uint8Array(22), ev=new DataView(eocd.buffer);
+  ev.setUint32(0,0x06054b50,true); ev.setUint16(4,0,true); ev.setUint16(6,0,true);
+  ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true);
+  ev.setUint32(12,cdSize,true); ev.setUint32(16,offset,true); ev.setUint16(20,0,true);
+  return new Blob(parts.concat(central,[eocd]),{type:'application/zip'});
+}
+function saveBlob(blob,name){
+  var a=document.createElement('a'), url=URL.createObjectURL(blob);
+  a.href=url; a.download=name;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},4000);
+}
+var IS_APP=(typeof window!=='undefined') && !!window.electronAPI;
+function u8ToB64(u8){
+  var bin='',CH=0x8000;
+  for(var i=0;i<u8.length;i+=CH) bin+=String.fromCharCode.apply(null,u8.subarray(i,Math.min(i+CH,u8.length)));
+  return btoa(bin);
+}
+function deliverSingle(wavAB,name){
+  if(IS_APP) return window.electronAPI.saveWavDialog(name,u8ToB64(new Uint8Array(wavAB)))
+    .then(function(r){ setS(r.success?'Saved':'Cancelled'); });
+  saveBlob(new Blob([wavAB],{type:'audio/wav'}),name); setS('Saved');
+  return Promise.resolve();
+}
+function deliverBatch(files,pack,zipName){
+  var n=files.length;
+  if(IS_APP){
+    if(pack==='files'){
+      var payload=files.map(function(f){return {name:f.name,b64:u8ToB64(new Uint8Array(f.data))};});
+      return window.electronAPI.saveBatchDialog(payload).then(function(r){
+        setS(r.success?('Wrote '+r.count+' WAVs'):'Cancelled');
+      });
+    }
+    return makeZip(files).arrayBuffer().then(function(ab){
+      return window.electronAPI.saveZipDialog(zipName,u8ToB64(new Uint8Array(ab)));
+    }).then(function(r){ setS(r.success?('ZIP '+n+' files'):'Cancelled'); });
+  }
+  if(pack==='zip'){ saveBlob(makeZip(files),zipName); setS('ZIP '+n+' files'); return Promise.resolve(); }
+  var j=0;
+  (function drop(){
+    if(j>=files.length){ setS('Saved '+n+' files'); return; }
+    saveBlob(new Blob([files[j].data],{type:'audio/wav'}),files[j].name);
+    j++; setTimeout(drop,180);
+  })();
+  return Promise.resolve();
+}
+
+// ═══════════════════════════════════════════════════
+//  WAVEFORM
+// ═══════════════════════════════════════════════════
+function drawWF(cv,smp,impactN,retry){
+  var r=cv.getBoundingClientRect();
+  // The viz box is display:none until the first generate, so the very first
+  // draw can land before layout settles and bake a zero-width canvas.
+  if(r.width<10){
+    if((retry||0)<10) requestAnimationFrame(function(){ drawWF(cv,smp,impactN,(retry||0)+1); });
+    return;
+  }
+  var ctx=cv.getContext('2d'),dpr=window.devicePixelRatio||1;
+  cv.width=r.width*dpr;cv.height=132*dpr;ctx.scale(dpr,dpr);
+  var W=r.width,H=132,P={t:14,b:18,l:34,r:10},pW=W-P.l-P.r,pH=H-P.t-P.b,zY=P.t+pH/2;
+  ctx.fillStyle='#050210';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='#2a1b10';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(P.l,zY);ctx.lineTo(W-P.r,zY);ctx.stroke();
+  ctx.fillStyle='#a16207';ctx.font='11px VT323,monospace';
+  ctx.textAlign='right';ctx.fillText('+1',P.l-4,P.t+8);ctx.fillText('-1',P.l-4,P.t+pH+3);
+  var ms=(smp.length/SR*1000).toFixed(1);
+  ctx.textAlign='center';ctx.fillText('0',P.l,H-3);ctx.fillText(ms+'ms',W-P.r,H-3);
+
+  var N=smp.length;
+  // Impact marker — the seam between the approach and the hit.
+  if(impactN>0 && impactN<N){
+    var mx=P.l+impactN/N*pW;
+    ctx.strokeStyle='#22d3ee';ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.beginPath();ctx.moveTo(mx,P.t);ctx.lineTo(mx,P.t+pH);ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle='#22d3ee';ctx.textAlign='left';
+    ctx.fillText('IMPACT',mx+3,P.t+9);
+    ctx.fillStyle='rgba(34,211,238,0.05)';ctx.fillRect(P.l,P.t,mx-P.l,pH);
+  }
+  ctx.beginPath();
+  for(var px=0;px<pW;px++){
+    var idx=Math.floor(px/pW*N),y=zY-smp[idx]*(pH/2-2);
+    if(px===0)ctx.moveTo(P.l,y);else ctx.lineTo(P.l+px,y);
+  }
+  ctx.strokeStyle='#fbbf24';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.globalAlpha=0.15;ctx.lineWidth=5;ctx.stroke();ctx.globalAlpha=1;
+}
+
+var audioCtx=null;
+function playS(smp){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:SR});
+  if(audioCtx.state==='suspended') audioCtx.resume();
+  var buf=audioCtx.createBuffer(1,smp.length,SR);
+  buf.getChannelData(0).set(smp);
+  var src=audioCtx.createBufferSource();
+  src.buffer=buf;src.connect(audioCtx.destination);src.start();
+}
+function setS(t){
+  document.getElementById('statusText').textContent=t;
+  var d=document.getElementById('statusDot');
+  d.classList.add('active');setTimeout(function(){d.classList.remove('active')},600);
+}
+
+// ═══════════════════════════════════════════════════
+//  UI
+// ═══════════════════════════════════════════════════
+function readP(){
+  var p={};
+  document.querySelectorAll('.sp').forEach(function(el){p[el.dataset.p]=+el.value;});
+  return p;
+}
+function initRanges(){
+  document.querySelectorAll('.sp').forEach(function(el){
+    pRanges[el.dataset.p]={min:+el.min,max:+el.max};
+  });
+}
+function fmtHz(f){
+  if(f>=1000) return (f/1000).toFixed(f>=10000?0:1)+'kHz';
+  return Math.round(f)+'Hz';
+}
+function fmtT(s){
+  if(s<0.001)  return (s*1e6).toFixed(0)+'µs';
+  if(s<0.1)    return (s*1000).toFixed(2)+'ms';
+  return (s*1000).toFixed(1)+'ms';
+}
+function fmtM(kg){
+  if(kg<0.001) return (kg*1e6).toFixed(0)+'mg';
+  if(kg<1)     return (kg*1000).toFixed(1)+'g';
+  return kg.toFixed(2)+'kg';
+}
+
+// The physics strip is the teaching surface: move Hardness and watch
+// contact time fall off a cliff, and hear why it goes from thud to tick.
+function updatePhys(){
+  var p=readP(), ph=projPhys(p);
+  var el=document.getElementById('physStrip');
+  var contactChar = ph.tau>0.004 ? 'WUMPH' : ph.tau>0.0015 ? 'THUD'
+                  : ph.tau>0.0004 ? 'KNOCK' : ph.tau>0.0001 ? 'CRACK' : 'TICK';
+  var sup=ph.v>C;
+  el.innerHTML=
+    '<span class="phys">MASS <b>'+fmtM(ph.m)+'</b></span>'+
+    '<span class="phys hot">CONTACT <b>'+fmtT(ph.tau)+'</b></span>'+
+    '<span class="phys hot">&rarr; <b>'+contactChar+'</b></span>'+
+    '<span class="phys">ENERGY <b>'+(ph.ke<1000?ph.ke.toFixed(1)+'J':(ph.ke/1000).toFixed(1)+'kJ')+'</b></span>'+
+    '<span class="phys">ZIP <b>'+fmtHz(ph.aeol)+'</b></span>'+
+    '<span class="phys">SQUASH <b>'+(ph.dmax*1000).toFixed(2)+'mm</b></span>'+
+    (sup?'<span class="phys hot">&#9888; <b>SUPERSONIC</b></span>':'');
+  document.getElementById('tauBadge').innerHTML='&tau; '+fmtT(ph.tau);
+  document.getElementById('zipBadge').textContent=fmtHz(ph.aeol);
+  var rf=Math.max(45,Math.min(11000,ph.ringF*(p.rTune/100)));
+  document.getElementById('ringBadge').textContent=fmtHz(rf)+(ph.ringF>11000?' (clamped)':'');
+  document.getElementById('punchBadge').textContent=
+    fmtHz(Math.max(18,Math.min(600,900/Math.pow(Math.max(4,p.size),0.55)*(p.pTune/100))));
+  var sb=document.getElementById('slapBadge');
+  sb.textContent=(p.shape<25?'POINT ':p.shape>65?'FLAT ':'EDGE ')+p.shape+'%';
+  sb.style.opacity=p.shape<15?'0.35':'1';
+}
+
+var VAL_FMT={
+  size:      function(v){return v+'mm'},
+  velocity:  function(v){return v+'m/s'},
+  airLen:    function(v){return v+'ms'},
+  airMiss:   function(v){return (v/10).toFixed(1)+'m'},
+  airCurve:  function(v){return (v/100).toFixed(2)},
+  wTone:     function(v){return (v/100).toFixed(2)+'x'},
+  zTune:     function(v){return (v/100).toFixed(2)+'x'},
+  puFreq:    function(v){return v+'Hz'},
+  puFocus:   function(v){return (v/100).toFixed(2)},
+  cSquish:   function(v){return (v/100).toFixed(2)+'x'},
+  cTilt:     function(v){return v+'Hz'},
+  cDelay:    function(v){return v+'ms'},
+  sLen:      function(v){return v+'ms'},
+  sDelay:    function(v){return v+'ms'},
+  gLen:      function(v){return v+'ms'},
+  gDelay:    function(v){return v+'ms'},
+  pTune:     function(v){return (v/100).toFixed(2)+'x'},
+  pLen:      function(v){return v+'ms'},
+  pDelay:    function(v){return v+'ms'},
+  rTune:     function(v){return (v/100).toFixed(2)+'x'},
+  rDecay:    function(v){return (v/100).toFixed(2)+'x'},
+  rDelay:    function(v){return v+'ms'},
+  fadeIn:    function(v){return (v/10).toFixed(1)+'ms'},
+  fadeOut:   function(v){return v+'ms'}
+};
+var PHYS_PARAMS={size:1,velocity:1,density:1,hardness:1,shape:1,rTune:1,pTune:1};
+
+function syncDup(pk,val){
+  document.querySelectorAll('.sp[data-p="'+pk+'"]').forEach(function(el){
+    if(+el.value!==val) el.value=val;
+    var vd=el.nextElementSibling;
+    if(vd&&vd.classList.contains('rv')) vd.textContent=(VAL_FMT[pk]?VAL_FMT[pk](val):val+'%');
+  });
+}
+document.querySelectorAll('.sp').forEach(function(el){
+  el.addEventListener('input',function(){
+    var v=+el.value, pk=el.dataset.p;
+    syncDup(pk,v);
+    if(PHYS_PARAMS[pk]) updatePhys();
+  });
+});
+document.querySelectorAll('.lt[data-toggle]').forEach(function(el){
+  el.addEventListener('click',function(){
+    var layer=el.dataset.toggle;
+    layerOff[layer]=!layerOff[layer];
+    el.classList.toggle('off',layerOff[layer]);
+    el.closest('.layer').classList.toggle('off',layerOff[layer]);
+  });
+});
+document.querySelectorAll('#sectionTabs .mode-btn').forEach(function(btn){
+  if(btn.classList.contains('soon')) return;
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('#sectionTabs .mode-btn').forEach(function(b){
+      if(!b.classList.contains('soon')) b.classList.remove('active');
+    });
+    btn.classList.add('active');
+    var tab=btn.dataset.tab;
+    document.querySelectorAll('.tab-panel').forEach(function(pn){
+      pn.style.display=pn.dataset.panel===tab?'flex':'none';
+    });
+  });
+});
+function syncSoloMuteUI(){
+  document.querySelectorAll('[data-solo]').forEach(function(b){
+    b.classList.toggle('solo-active',sectionSoloed===b.dataset.solo);
+  });
+  document.querySelectorAll('[data-mute]').forEach(function(b){
+    b.classList.toggle('mute-active',!!sectionMuted[b.dataset.mute]);
+  });
+}
+document.querySelectorAll('[data-solo]').forEach(function(b){
+  b.addEventListener('click',function(){
+    sectionSoloed = sectionSoloed===b.dataset.solo ? null : b.dataset.solo;
+    syncSoloMuteUI();
+  });
+});
+document.querySelectorAll('[data-mute]').forEach(function(b){
+  b.addEventListener('click',function(){
+    sectionMuted[b.dataset.mute]=!sectionMuted[b.dataset.mute];
+    syncSoloMuteUI();
+  });
+});
+
+// Section RAND — reroll only the layers on this tab, keep the rest of the rig.
+var SECTION_PANELS={air:'air', impact:'impact'};
+document.querySelectorAll('[data-rand-section]').forEach(function(b){
+  b.addEventListener('click',function(){
+    var panel=document.querySelector('.tab-panel[data-panel="'+SECTION_PANELS[b.dataset.randSection]+'"]');
+    if(!panel) return;
+    panel.querySelectorAll('.sp').forEach(function(el){
+      var pk=el.dataset.p;
+      if(pk==='secAir'||pk==='secImpact') return;
+      var mn=+el.min,mx=+el.max;
+      el.value=Math.round(mn+rnd()*(mx-mn));
+      el.dispatchEvent(new Event('input'));
+    });
+    document.getElementById('generateBtn').click();
+  });
+});
+
+document.getElementById('generateBtn').addEventListener('click',function(){
+  var p=readP();
+  curBuf=genOne(p); nGen++;
+  document.getElementById('waveformBox').style.display='block';
+  var lenMs=curBuf.length/SR*1000;
+  document.getElementById('waveformInfo').textContent=
+    (SR/1000)+'kHz | '+lenMs.toFixed(1)+'ms | air '+(curImpactN/SR*1000).toFixed(0)+'ms';
+  drawWF(document.getElementById('waveformCanvas'),curBuf,curImpactN);
+  document.getElementById('testBtn').disabled=false;
+  document.getElementById('downloadBtn').disabled=false;
+  playS(curBuf); setS('#'+nGen+'  '+lenMs.toFixed(0)+'ms');
+  store.saveLast(collectState());
+});
+document.getElementById('testBtn').addEventListener('click',function(){ if(curBuf) playS(curBuf); });
+
+var batchBusy=false;
+function updateDownloadLabel(){
+  var n=+document.getElementById('pBatch').value;
+  var b=document.getElementById('downloadBtn');
+  b.textContent = n===1 ? 'DOWNLOAD' : ('BOUNCE x'+n);
+  b.disabled = (n===1 && !curBuf);
+}
+document.getElementById('pBatch').addEventListener('change',updateDownloadLabel);
+document.getElementById('downloadBtn').addEventListener('click',function(){
+  if(batchBusy) return;
+  var n=+document.getElementById('pBatch').value;
+  var pack=document.getElementById('pPack').value;
+  var stamp=Date.now();
+  if(n===1){
+    if(!curBuf) return;
+    deliverSingle(encWAV(curBuf),'impact_'+stamp+'.wav');
+    return;
+  }
+  var p=readP(), pad=String(n).length, files=[], i=0;
+  batchBusy=true;
+  document.getElementById('downloadBtn').disabled=true;
+  document.getElementById('pBatch').disabled=true;
+  document.getElementById('generateBtn').disabled=true;
+  function finish(){
+    deliverBatch(files,pack,'impact_'+stamp+'_x'+n+'.zip');
+    batchBusy=false;
+    document.getElementById('downloadBtn').disabled=false;
+    document.getElementById('pBatch').disabled=false;
+    document.getElementById('generateBtn').disabled=false;
+  }
+  function step(){
+    var buf=genOne(p);
+    var idx=String(i+1); while(idx.length<pad) idx='0'+idx;
+    files.push({name:'impact_'+stamp+'_'+idx+'.wav', data:encWAV(buf)});
+    i++; setS('BOUNCE '+i+'/'+n);
+    if(i<n) setTimeout(step,0); else setTimeout(finish,0);
+  }
+  setS('BOUNCE 0/'+n);
+  setTimeout(step,0);
+});
+document.getElementById('randomBtn').addEventListener('click',function(){
+  document.querySelectorAll('.sp').forEach(function(el){
+    var pk=el.dataset.p;
+    if(pk==='outLevel'||pk==='fadeIn'||pk==='fadeOut'||pk==='variation') return;
+    if(pk==='secAir'||pk==='secImpact') return;
+    var mn=+el.min,mx=+el.max;
+    el.value=Math.round(mn+rnd()*(mx-mn));
+    el.dispatchEvent(new Event('input'));
+  });
+  document.getElementById('generateBtn').click();
+});
+window.addEventListener('resize',function(){
+  if(curBuf) drawWF(document.getElementById('waveformCanvas'),curBuf,curImpactN);
+});
+// A hidden tab has no layout and never fires rAF, so a bounce started in the
+// background would leave the waveform blank. Redraw when it comes back.
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden && curBuf) drawWF(document.getElementById('waveformCanvas'),curBuf,curImpactN);
+});
+
+// ═══════════════════════════════════════════════════
+//  FACTORY PROJECTILES
+// ═══════════════════════════════════════════════════
+// Each one only states what makes it that thing. Everything unstated
+// falls out of the physics.
+var PROJECTILES=[
+  {n:'BULLET 9MM',    v:{size:9,velocity:380,density:92,hardness:58,shape:12,
+      airLen:120,airMiss:8,airDop:80,zLvl:42,zPure:22,zQ:70,wLvl:38,wTone:70,puLvl:8,
+      cLvl:90,cSquish:80,cTilt:19000,cBite:45,cBody:15,sLvl:12,gLvl:48,gLen:9,gTone:82,
+      pLvl:30,pLen:45,pBend:60,rLvl:10,pMax:250}},
+  {n:'ARROW',         v:{size:9,velocity:62,density:52,hardness:66,shape:4,
+      airLen:220,airMiss:10,airDop:60,zLvl:30,zPure:38,zQ:62,wLvl:44,wTone:80,puLvl:10,
+      cLvl:88,cSquish:60,cTilt:16000,cBite:30,cBody:18,sLvl:8,gLvl:40,gLen:14,gTone:70,
+      pLvl:26,pLen:55,pBend:55,rLvl:22,rTune:140,pMax:500}},
+  {n:'FIST / FLESH',  v:{size:95,velocity:9,density:40,hardness:9,shape:66,
+      airLen:150,airMiss:6,airDop:35,zLvl:0,wLvl:34,wTone:35,puLvl:44,puFreq:70,
+      cLvl:80,cSquish:130,cTilt:3200,cBite:18,cBody:62,sLvl:58,sLen:16,sTone:30,
+      gLvl:22,gLen:26,gTone:28,pLvl:70,pLen:120,pBend:35,rLvl:0,pMax:500}},
+  {n:'BASEBALL',      v:{size:74,velocity:40,density:36,hardness:34,shape:24,
+      airLen:180,airMiss:12,airDop:55,zLvl:8,wLvl:48,wTone:55,puLvl:26,
+      cLvl:86,cSquish:95,cTilt:9000,cBite:28,cBody:40,sLvl:34,sLen:10,
+      gLvl:36,gLen:16,pLvl:52,pLen:85,rLvl:12,pMax:500}},
+  {n:'ROCK',          v:{size:120,velocity:18,density:62,hardness:74,shape:42,
+      airLen:200,airMiss:14,airDop:45,zLvl:5,wLvl:42,wTone:40,wFlutter:45,puLvl:34,
+      cLvl:88,cSquish:85,cTilt:14000,cBite:35,cBody:30,sLvl:30,
+      gLvl:58,gLen:30,gTone:60,gCoarse:55,pLvl:56,pLen:100,rLvl:16,rMetal:22,pMax:500}},
+  {n:'HAMMER',        v:{size:45,velocity:14,density:88,hardness:84,shape:78,
+      airLen:170,airMiss:8,airDop:40,zLvl:6,wLvl:40,wTone:45,wFlutter:30,puLvl:22,
+      cLvl:92,cSquish:70,cTilt:18000,cBite:48,cBody:26,sLvl:52,sLen:7,sTone:60,
+      gLvl:38,gLen:12,gTone:70,pLvl:60,pLen:75,pBend:52,rLvl:30,rMetal:80,rDecay:150,pMax:500}},
+  {n:'SWORD',         v:{size:26,velocity:24,density:84,hardness:80,shape:3,
+      airLen:260,airMiss:9,airDop:52,zLvl:26,zTune:150,zPure:30,wLvl:52,wTone:95,wFlutter:22,puLvl:14,
+      cLvl:86,cSquish:55,cTilt:19000,cBite:40,cBody:14,sLvl:10,
+      gLvl:44,gLen:11,gTone:78,pLvl:32,pLen:50,rLvl:38,rMetal:88,rDecay:220,rTune:120,pMax:750}},
+  {n:'BOULDER',       v:{size:520,velocity:13,density:60,hardness:70,shape:52,
+      airLen:420,airMiss:30,airDop:35,zLvl:0,wLvl:46,wTone:25,wFlutter:55,puLvl:62,puFreq:45,puFocus:180,
+      cLvl:82,cSquish:120,cTilt:7000,cBite:30,cBody:52,sLvl:36,sLen:26,sTone:25,
+      gLvl:54,gLen:60,gTone:38,gCoarse:70,pLvl:80,pLen:220,pBend:40,rLvl:14,pMax:1000}},
+  {n:'WATER BALLOON', v:{size:110,velocity:15,density:34,hardness:1,shape:72,
+      airLen:150,airMiss:8,airDop:35,zLvl:0,wLvl:30,wTone:30,puLvl:30,
+      cLvl:78,cSquish:160,cTilt:2200,cBite:10,cBody:70,sLvl:66,sLen:24,sTone:38,sSquirt:80,
+      gLvl:44,gLen:70,gTone:35,gSweep:75,pLvl:58,pLen:130,pBend:30,rLvl:0,pMax:500}},
+  {n:'CANNONBALL',    v:{size:150,velocity:240,density:90,hardness:76,shape:28,
+      airLen:200,airMiss:25,airDop:85,zLvl:18,wLvl:58,wTone:38,puLvl:52,puFreq:55,
+      cLvl:92,cSquish:75,cTilt:17000,cBite:50,cBody:38,sLvl:34,
+      gLvl:50,gLen:24,gTone:64,pLvl:76,pLen:160,pBend:55,rLvl:22,rMetal:70,pMax:1000}},
+  {n:'PEBBLE / TINK', v:{size:12,velocity:12,density:64,hardness:78,shape:22,
+      airLen:80,airMiss:6,airDop:30,zLvl:6,wLvl:22,puLvl:4,
+      cLvl:88,cSquish:70,cTilt:19000,cBite:30,cBody:12,sLvl:14,
+      gLvl:34,gLen:7,gTone:78,pLvl:22,pLen:35,rLvl:34,rMetal:45,rDecay:70,pMax:250}},
+  {n:'SUPER HARD',    v:{size:40,velocity:120,density:95,hardness:100,shape:8,
+      airLen:120,airMiss:8,airDop:75,zLvl:22,wLvl:40,wTone:70,puLvl:14,
+      cLvl:95,cSquish:40,cTilt:19000,cBite:65,cBody:10,sLvl:8,
+      gLvl:52,gLen:8,gTone:92,pLvl:34,pLen:40,pBend:70,rLvl:42,rMetal:95,rDecay:260,pMax:500}}
+];
+
+function applyProjectile(v){
+  for(var k in v){
+    if(k==='pMax'){
+      var ms=document.getElementById('pMaxLen');
+      var want=String(v[k]);
+      for(var i=0;i<ms.options.length;i++) if(ms.options[i].value===want) ms.value=want;
+      continue;
+    }
+    syncDup(k, v[k]);
+  }
+  // Anything the preset didn't mention keeps its current value on purpose —
+  // so you can dial in a texture and then audition it as ten different objects.
+  updatePhys();
+}
+(function initProjSel(){
+  var el=document.getElementById('projSel');
+  PROJECTILES.forEach(function(pr,i){
+    var o=document.createElement('option'); o.value=i; o.textContent=pr.n; el.appendChild(o);
+  });
+  el.addEventListener('change',function(){
+    if(this.value==='') return;
+    var pr=PROJECTILES[+this.value];
+    document.querySelectorAll('.lt[data-toggle]').forEach(function(t){
+      layerOff[t.dataset.toggle]=false;
+      t.classList.remove('off'); t.closest('.layer').classList.remove('off');
+    });
+    applyProjectile(pr.v);
+    setS(pr.n);
+    document.getElementById('generateBtn').click();
+  });
+})();
+
+// ═══════════════════════════════════════════════════
+//  PRESETS / SESSION
+// ═══════════════════════════════════════════════════
+var store={
+  loadPresets:function(){
+    if(IS_APP) return window.electronAPI.loadPresets().then(function(r){return r.data||[];});
+    try{ return Promise.resolve(JSON.parse(localStorage.getItem('if_presets')||'[]')); }
+    catch(e){ return Promise.resolve([]); }
+  },
+  savePresets:function(p){
+    if(IS_APP) return window.electronAPI.savePresets(p);
+    try{ localStorage.setItem('if_presets',JSON.stringify(p)); }catch(e){}
+    return Promise.resolve();
+  },
+  loadLast:function(){
+    if(IS_APP) return window.electronAPI.loadLastSettings().then(function(r){return r.success?r.data:null;});
+    try{ var s=localStorage.getItem('if_last'); return Promise.resolve(s?JSON.parse(s):null); }
+    catch(e){ return Promise.resolve(null); }
+  },
+  saveLast:function(s){
+    if(IS_APP) return window.electronAPI.saveLastSettings(s);
+    try{ localStorage.setItem('if_last',JSON.stringify(s)); }catch(e){}
+    return Promise.resolve();
+  }
+};
+function collectState(){
+  var s={sp:{},layerOff:{},maxLen:document.getElementById('pMaxLen').value,
+         trim:document.getElementById('pTrim').value};
+  document.querySelectorAll('.sp').forEach(function(el){ s.sp[el.dataset.p]=+el.value; });
+  for(var k in layerOff) if(layerOff[k]) s.layerOff[k]=1;
+  return s;
+}
+function applyState(s){
+  if(!s) return;
+  if(s.sp) for(var k in s.sp) syncDup(k, s.sp[k]);
+  document.querySelectorAll('.lt[data-toggle]').forEach(function(el){
+    var k=el.dataset.toggle, off=!!(s.layerOff&&s.layerOff[k]);
+    layerOff[k]=off;
+    el.classList.toggle('off',off);
+    el.closest('.layer').classList.toggle('off',off);
+  });
+  if(s.maxLen) document.getElementById('pMaxLen').value=s.maxLen;
+  if(s.trim)   document.getElementById('pTrim').value=s.trim;
+  updatePhys();
+}
+var presets=[];
+function refreshPresetSel(sel){
+  var el=document.getElementById('presetSel');
+  el.innerHTML='';
+  var o0=document.createElement('option'); o0.value=''; o0.textContent='— PRESET —';
+  el.appendChild(o0);
+  presets.forEach(function(p,i){
+    var o=document.createElement('option'); o.value=i; o.textContent=p.name; el.appendChild(o);
+  });
+  if(sel!==undefined) el.value=sel;
+}
+document.getElementById('presetSel').addEventListener('change',function(){
+  if(this.value==='') return;
+  var p=presets[+this.value];
+  applyState(p.data);
+  document.getElementById('presetName').value=p.name;
+  setS('Loaded '+p.name);
+  document.getElementById('generateBtn').click();
+});
+document.getElementById('presetSave').addEventListener('click',function(){
+  var name=(document.getElementById('presetName').value||'').trim();
+  if(!name){ setS('Name it first'); return; }
+  var entry={name:name,data:collectState()};
+  var ex=-1;
+  for(var i=0;i<presets.length;i++) if(presets[i].name===name) ex=i;
+  if(ex>=0) presets[ex]=entry; else { presets.push(entry); ex=presets.length-1; }
+  store.savePresets(presets);
+  refreshPresetSel(String(ex));
+  setS('Saved '+name);
+});
+document.getElementById('presetDel').addEventListener('click',function(){
+  var el=document.getElementById('presetSel');
+  if(el.value===''){ setS('Pick a preset'); return; }
+  var gone=presets.splice(+el.value,1)[0];
+  store.savePresets(presets);
+  refreshPresetSel('');
+  setS('Deleted '+gone.name);
+});
+
+initRanges();
+updateDownloadLabel();
+document.querySelectorAll('.sp').forEach(function(el){ syncDup(el.dataset.p, +el.value); });
+updatePhys();
+if(IS_APP) document.getElementById('pPack').options[1].textContent='FOLDER';
+store.loadPresets().then(function(p){ presets=p; refreshPresetSel(''); });
+store.loadLast().then(function(s){ if(s) applyState(s); });
+</script>
+</body>
+</html>
