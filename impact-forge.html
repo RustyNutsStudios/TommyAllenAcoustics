@@ -101,10 +101,10 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
 
 <div class="header">
   <h1>*~IMPACT FORGE~*</h1>
-  <div class="sub">Hertzian Contact + Strouhal Flyby_</div>
+  <div class="sub">Hertz Contact &rarr; Modal Resonance_</div>
 </div>
 <div class="marquee-wrapper">
-  <div class="marquee-text">*** HERTZ CONTACT MECHANICS 1882 *** STROUHAL VORTEX SHEDDING *** DOPPLER FLYBY *** CONTACT TIME = TIMBRE *** SOFT=LONG=THUD // HARD=SHORT=CRACK ***</div>
+  <div class="marquee-text">*** THE FORCE IS NOT THE SOUND &mdash; IT EXCITES THE MODES *** van den Doel &amp; Pai *** FoleyAutomatic SIGGRAPH 2001 *** HERTZ 1882 *** d = &pi;f&middot;tan&phi; + 1/&tau;0 *** HIGHS DIE FIRST *** NOTHING SWEEPS ***</div>
 </div>
 
 <!-- ═══ THE PROJECTILE — drives every stage ═══ -->
@@ -177,14 +177,23 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
     <button class="btn btn-r" style="font-size:7px;padding:5px 8px" data-rand-section="air">RAND</button>
     <button class="btn btn-d" style="font-size:7px;padding:5px 8px" data-solo="air">SOLO</button>
     <button class="btn btn-d" style="font-size:7px;padding:5px 8px" data-mute="air">MUTE</button>
-    <input type="range" class="sp" data-p="secAir" min="0" max="150" value="100" style="width:70px">
-    <div class="rv" style="font-size:12px;min-width:34px">100%</div>
+    <input type="range" class="sp" data-p="secAir" min="0" max="150" value="0" style="width:70px">
+    <div class="rv" style="font-size:12px;min-width:34px">0%</div>
+    <span class="ll" style="margin-left:6px">&larr; OFF by default. A flyby is a separate event from the hit.</span>
   </div>
 
+  <div class="roadmap" style="text-align:left;border-color:#155e75" id="airReality">&nbsp;</div>
+
   <div class="flight-params">
-    <div class="cg"><label>Approach</label><input type="range" class="sp" data-p="airLen" min="0" max="700" value="170"><div class="rv">170ms</div></div>
+    <div class="cg"><label>Approach</label>
+      <select class="btn-select" id="pAirAuto" style="font-size:7px;padding:4px">
+        <option value="1" selected>AUTO</option>
+        <option value="0">MANUAL</option>
+      </select>
+    </div>
+    <div class="cg"><label>&nbsp;Len</label><input type="range" class="sp" data-p="airLen" min="0" max="400" value="80" disabled><div class="rv" id="airLenRV">auto</div></div>
     <div class="cg"><label>Miss Dist</label><input type="range" class="sp" data-p="airMiss" min="1" max="120" value="12"><div class="rv">1.2m</div></div>
-    <div class="cg"><label>Doppler</label><input type="range" class="sp" data-p="airDop" min="0" max="100" value="65"><div class="rv">65%</div></div>
+    <div class="cg"><label>Doppler</label><input type="range" class="sp" data-p="airDop" min="0" max="100" value="35"><div class="rv">35%</div></div>
     <div class="cg"><label>Curve</label><input type="range" class="sp" data-p="airCurve" min="50" max="300" value="110"><div class="rv">1.10</div></div>
   </div>
 
@@ -210,9 +219,9 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
       <span class="badge" id="zipBadge">8.4kHz</span>
     </div>
     <div class="lc lc-6">
-      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="zLvl" min="0" max="100" value="20"><div class="rv">20%</div></div>
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="zLvl" min="0" max="100" value="0"><div class="rv">0%</div></div>
       <div class="cg"><label>Tune</label><input type="range" class="sp" data-p="zTune" min="10" max="400" value="100"><div class="rv">1.00x</div></div>
-      <div class="cg"><label>Purity</label><input type="range" class="sp" data-p="zPure" min="0" max="100" value="30"><div class="rv">30%</div></div>
+      <div class="cg"><label>Purity</label><input type="range" class="sp" data-p="zPure" min="0" max="100" value="0"><div class="rv">0%</div></div>
       <div class="cg"><label>Reso</label><input type="range" class="sp" data-p="zQ" min="0" max="100" value="45"><div class="rv">45%</div></div>
       <div class="cg"><label>Warble</label><input type="range" class="sp" data-p="zWarble" min="0" max="100" value="12"><div class="rv">12%</div></div>
       <div class="cg"><label>Fifth</label><input type="range" class="sp" data-p="zHarm" min="0" max="100" value="18"><div class="rv">18%</div></div>
@@ -245,35 +254,33 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
     <div class="rv" style="font-size:12px;min-width:34px">100%</div>
   </div>
 
-  <div class="layer" style="border-color:#ef4444;background:rgba(239,68,68,0.05)" data-layer="contact">
+  <div class="layer" style="border-color:#ef4444;background:rgba(239,68,68,0.06)" data-layer="modal">
     <div class="lh">
-      <span class="lt" style="background:#991b1b;border-color:#ef4444" data-toggle="contact">CONTACT</span>
-      <span class="ll">Hertzian force pulse &mdash; dF/dt &mdash; the actual hit</span>
-      <span class="badge" id="tauBadge">&tau; 2.8ms</span>
+      <span class="lt" style="background:#991b1b;border-color:#ef4444" data-toggle="modal">MODAL</span>
+      <span class="ll">The thing rings &mdash; reson bank driven by the contact force. THE HIT.</span>
+      <span class="badge" id="modalBadge">&mdash;</span>
     </div>
     <div class="lc lc-6">
-      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="cLvl" min="0" max="100" value="85"><div class="rv">85%</div></div>
-      <div class="cg"><label>Squish</label><input type="range" class="sp" data-p="cSquish" min="15" max="500" value="100"><div class="rv">1.00x</div></div>
-      <div class="cg"><label>Tilt</label><input type="range" class="sp" data-p="cTilt" min="300" max="19000" value="12000"><div class="rv">12000Hz</div></div>
-      <div class="cg"><label>Bite</label><input type="range" class="sp" data-p="cBite" min="0" max="100" value="25"><div class="rv">25%</div></div>
-      <div class="cg"><label>Body</label><input type="range" class="sp" data-p="cBody" min="0" max="100" value="35"><div class="rv">35%</div></div>
-      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="cDelay" min="0" max="30" value="0"><div class="rv">0ms</div></div>
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="mLvl" min="0" max="100" value="90"><div class="rv">90%</div></div>
+      <div class="cg"><label>Pitch</label><input type="range" class="sp" data-p="mFreq" min="40" max="4000" value="220"><div class="rv">220Hz</div></div>
+      <div class="cg"><label>Decay</label><input type="range" class="sp" data-p="mDecay" min="0" max="100" value="45"><div class="rv">45%</div></div>
+      <div class="cg"><label>Stretch</label><input type="range" class="sp" data-p="mBody" min="0" max="100" value="30"><div class="rv">30%</div></div>
+      <div class="cg"><label>Modes</label><input type="range" class="sp" data-p="mModes" min="1" max="32" value="16"><div class="rv">16</div></div>
+      <div class="cg"><label>Strike</label><input type="range" class="sp" data-p="mVary" min="0" max="100" value="45"><div class="rv">45%</div></div>
     </div>
   </div>
 
-  <div class="layer" style="border-color:#fb923c;background:rgba(251,146,60,0.04)" data-layer="slap">
+  <div class="layer" style="border-color:#fb923c;background:rgba(251,146,60,0.04)" data-layer="accel">
     <div class="lh">
-      <span class="lt" style="background:#c2410c;border-color:#fb923c" data-toggle="slap">SLAP</span>
-      <span class="ll">Trapped air squirt &mdash; flat faces clap, points don't</span>
-      <span class="badge" id="slapBadge">FLAT 30%</span>
+      <span class="lt" style="background:#c2410c;border-color:#fb923c" data-toggle="accel">ACCEL</span>
+      <span class="ll">Acceleration noise &mdash; the body shoving air. Small stiff things ARE this.</span>
     </div>
     <div class="lc lc-6">
-      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="sLvl" min="0" max="100" value="40"><div class="rv">40%</div></div>
-      <div class="cg"><label>Length</label><input type="range" class="sp" data-p="sLen" min="1" max="60" value="9"><div class="rv">9ms</div></div>
-      <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="sTone" min="0" max="100" value="45"><div class="rv">45%</div></div>
-      <div class="cg"><label>Squirt</label><input type="range" class="sp" data-p="sSquirt" min="0" max="100" value="60"><div class="rv">60%</div></div>
-      <div class="cg"><label>Snap</label><input type="range" class="sp" data-p="sSnap" min="0" max="100" value="70"><div class="rv">70%</div></div>
-      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="sDelay" min="0" max="30" value="0"><div class="rv">0ms</div></div>
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="cLvl" min="0" max="100" value="35"><div class="rv">35%</div></div>
+      <div class="cg"><label>Squish</label><input type="range" class="sp" data-p="cSquish" min="15" max="400" value="100"><div class="rv">1.00x</div></div>
+      <div class="cg"><label>Tilt</label><input type="range" class="sp" data-p="cTilt" min="300" max="19000" value="9000"><div class="rv">9000Hz</div></div>
+      <div class="cg"><label>Bite</label><input type="range" class="sp" data-p="cBite" min="0" max="100" value="15"><div class="rv">15%</div></div>
+      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="cDelay" min="0" max="20" value="0"><div class="rv">0ms</div></div>
     </div>
   </div>
 
@@ -283,47 +290,30 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
       <span class="ll">Surface roughness &mdash; a thousand micro-contacts</span>
     </div>
     <div class="lc lc-6">
-      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="gLvl" min="0" max="100" value="35"><div class="rv">35%</div></div>
-      <div class="cg"><label>Length</label><input type="range" class="sp" data-p="gLen" min="1" max="120" value="18"><div class="rv">18ms</div></div>
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="gLvl" min="0" max="100" value="30"><div class="rv">30%</div></div>
+      <div class="cg"><label>Length</label><input type="range" class="sp" data-p="gLen" min="1" max="60" value="10"><div class="rv">10ms</div></div>
       <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="gTone" min="0" max="100" value="55"><div class="rv">55%</div></div>
       <div class="cg"><label>Coarse</label><input type="range" class="sp" data-p="gCoarse" min="0" max="100" value="30"><div class="rv">30%</div></div>
-      <div class="cg"><label>Sweep</label><input type="range" class="sp" data-p="gSweep" min="0" max="100" value="55"><div class="rv">55%</div></div>
-      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="gDelay" min="0" max="30" value="0"><div class="rv">0ms</div></div>
+      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="gDelay" min="0" max="20" value="0"><div class="rv">0ms</div></div>
     </div>
   </div>
 
-  <div class="layer" style="border-color:#a855f7;background:rgba(168,85,247,0.04)" data-layer="punch">
+  <div class="layer" style="border-color:#22d3ee;background:rgba(34,211,238,0.04)" data-layer="slap">
     <div class="lh">
-      <span class="lt" style="background:#6b21a8;border-color:#a855f7" data-toggle="punch">PUNCH</span>
-      <span class="ll">Momentum dumped &mdash; the low-end weight of the blow</span>
-      <span class="badge" id="punchBadge">91Hz</span>
+      <span class="lt" style="background:#0e7490;border-color:#22d3ee" data-toggle="slap">SLAP</span>
+      <span class="ll">Trapped air squirt &mdash; scales with how flat the face is</span>
+      <span class="badge" id="slapBadge">FLAT 30%</span>
     </div>
     <div class="lc lc-6">
-      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="pLvl" min="0" max="100" value="50"><div class="rv">50%</div></div>
-      <div class="cg"><label>Tune</label><input type="range" class="sp" data-p="pTune" min="25" max="400" value="100"><div class="rv">1.00x</div></div>
-      <div class="cg"><label>Length</label><input type="range" class="sp" data-p="pLen" min="10" max="400" value="90"><div class="rv">90ms</div></div>
-      <div class="cg"><label>Bend</label><input type="range" class="sp" data-p="pBend" min="0" max="100" value="45"><div class="rv">45%</div></div>
-      <div class="cg"><label>Click</label><input type="range" class="sp" data-p="pClick" min="0" max="100" value="30"><div class="rv">30%</div></div>
-      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="pDelay" min="0" max="30" value="1"><div class="rv">1ms</div></div>
-    </div>
-  </div>
-
-  <div class="layer" style="border-color:#4ade80;background:rgba(74,222,128,0.04)" data-layer="ring">
-    <div class="lh">
-      <span class="lt" style="background:#166534;border-color:#4ade80" data-toggle="ring">RING</span>
-      <span class="ll">The projectile itself resonating &mdash; steel sings, jelly doesn't</span>
-      <span class="badge" id="ringBadge">&mdash;</span>
-    </div>
-    <div class="lc lc-6">
-      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="rLvl" min="0" max="100" value="18"><div class="rv">18%</div></div>
-      <div class="cg"><label>Tune</label><input type="range" class="sp" data-p="rTune" min="10" max="400" value="100"><div class="rv">1.00x</div></div>
-      <div class="cg"><label>Decay</label><input type="range" class="sp" data-p="rDecay" min="10" max="400" value="100"><div class="rv">1.00x</div></div>
-      <div class="cg"><label>Spread</label><input type="range" class="sp" data-p="rSpread" min="0" max="100" value="50"><div class="rv">50%</div></div>
-      <div class="cg"><label>Metal</label><input type="range" class="sp" data-p="rMetal" min="0" max="100" value="50"><div class="rv">50%</div></div>
-      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="rDelay" min="0" max="30" value="0"><div class="rv">0ms</div></div>
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="sLvl" min="0" max="100" value="35"><div class="rv">35%</div></div>
+      <div class="cg"><label>Length</label><input type="range" class="sp" data-p="sLen" min="1" max="40" value="7"><div class="rv">7ms</div></div>
+      <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="sTone" min="0" max="100" value="45"><div class="rv">45%</div></div>
+      <div class="cg"><label>Snap</label><input type="range" class="sp" data-p="sSnap" min="0" max="100" value="70"><div class="rv">70%</div></div>
+      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="sDelay" min="0" max="20" value="0"><div class="rv">0ms</div></div>
     </div>
   </div>
 </div>
+
 
 <!-- ═══════════ MIX ═══════════ -->
 <div class="tab-panel" data-panel="mix" style="display:none">
@@ -343,9 +333,11 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
     <div class="lc" style="grid-template-columns:repeat(2,1fr)">
       <div class="cg"><label>Max Length</label>
         <select class="btn-select" id="pMaxLen">
-          <option value="250">250 ms</option>
-          <option value="500">500 ms</option>
-          <option value="750" selected>750 ms</option>
+          <option value="100">100 ms</option>
+          <option value="150">150 ms</option>
+          <option value="250" selected>250 ms</option>
+          <option value="400">400 ms</option>
+          <option value="600">600 ms</option>
           <option value="1000">1000 ms</option>
           <option value="1500">1500 ms</option>
         </select>
@@ -381,6 +373,7 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
 
 <script>
 var SR=48000, C=343;
+var BUILD='v2-modal';
 var curBuf=null, curImpactN=0, nGen=0;
 var layerOff={};
 var pRanges={};
@@ -484,13 +477,16 @@ function svfTick(s, x, fc, Q){
   s.bp=v1; s.lp=v2; s.hp=x-k*v1-v2;
   return s;
 }
-function drive(buf, amt){
+// Gentle. At 18x this was hard-clipping a broadband transient into dense
+// odd-harmonic intermodulation — audible as digital fizz, not as "bite".
+function driveAmt(buf, amt){
   if(amt<=0.01) return buf;
-  var g=1+amt*18;
+  var g=1+amt*6;
   var t=Math.tanh(g);
   for(var i=0;i<buf.length;i++) buf[i]=Math.tanh(buf[i]*g)/t;
   return buf;
 }
+var drive=driveAmt;
 
 // ═══════════════════════════════════════════════════
 //  STAGE 1 — AIR : the approach
@@ -608,201 +604,200 @@ function genPush(p, ph, geo){
 // ═══════════════════════════════════════════════════
 //  STAGE 2 — IMPACT : the contact event
 // ═══════════════════════════════════════════════════
-// The whole tool hangs off this function.
+// The model, corrected against the literature:
 //
-// Hertz gives a force pulse F(t) ≈ Fmax·sin(πt/τ)^1.5 over the contact.
-// Radiated pressure follows the RATE OF CHANGE of that force, so the sound
-// is dF/dt — a bipolar pulse whose width is τ. Hence:
-//    τ = 7ms  → ~140Hz blob   → soft WUMPH
-//    τ = 3ms  → ~330Hz        → rubber THUD
-//    τ = 35µs → wideband spike → steel TICK
+//   radiated = modal_response(excitation) + acceleration_noise(force)
 //
-// Shape morphs the exponent 1.5 (Hertzian point) → 0.25 (flat plate).
-// A near-rectangular force pulse differentiates into two edge spikes,
-// which is precisely what a slap is. The physics does the sound design.
-function genContact(p, ph){
-  var tau=ph.tau*(p.cSquish/100);
-  // Floor is PHYSICAL (8µs — harder than diamond), not sample-rate-driven.
-  // A 3-sample floor at 48k silently welded steel, lead and ceramic into the
-  // same click and killed the whole top of the Hardness range.
-  tau=Math.max(8e-6, Math.min(0.09, tau));
+// The contact force is NOT what you hear. van den Doel, Kry & Pai
+// (FoleyAutomatic, SIGGRAPH 2001) §4: the audio-force "will not be heard
+// directly, but is used to excite resonance models". What radiates is the
+// object's surface vibration — its modal response. Shipping the force pulse
+// itself as audio is what made v1 sound thin and electronic.
+//
+// The force still matters, through its SPECTRUM: contact time τ is the lowpass
+// on the excitation, so it decides WHICH modes get energy. That is why hardness
+// is audible. Short/hard contact = broadband = everything rings = clang.
+// Long/soft contact = no high content to give = only low modes speak = thud.
+//
+// The second term is real too: Chadwick, Zheng & James (SIGGRAPH 2012) show
+// modal synthesis alone gives "no sound from rigid-body acceleration", and for
+// small stiff objects whose modes sit above hearing it "produce[s] no sound
+// whatsoever" — there, acceleration noise IS the sound.
 
-  // A pulse only has a shape if it spans enough samples to have one. Short
-  // contacts get rendered oversampled, then filtered back down.
+// ── The exciter ────────────────────────────────────
+// Returns {exc, accel}: the resonator drive signal, and the direct radiator.
+function genExcite(p, ph){
+  var tau=ph.tau*(p.cSquish/100);
+  tau=Math.max(8e-6, Math.min(0.05, tau));   // >50ms stops reading as an impact
   var OS=1;
   while(tau*SR*OS < 24 && OS < 16) OS*=2;
   var srOS=SR*OS;
-
   var tauN=Math.max(4, Math.round(tau*srOS));
-  // 1.5 = Hertzian (F ∝ δ^1.5) — a point contact, one clean bipolar swing.
-  // Toward 0 the force pulse goes rectangular, and differentiating a rectangle
-  // gives two edge spikes: that IS a slap. The floor sits low enough that the
-  // second edge emerges across the top third of the knob, not only at 100.
-  var expo=Math.max(0.12, 1.5-ph.shp*1.45);
+
+  // Hertz: F ∝ δ^1.5. The exponent is contact geometry, not a knob — v1 morphed
+  // it toward a rectangle to fake a "slap" and got two synthetic edge spikes for
+  // its trouble. Shape acts through τ (the contact patch) alone.
   var padOS=Math.round(srOS*0.004);
   var N=tauN+padOS;
-
   var F=new Float32Array(N);
   var w=Math.PI/tauN;
   for(var i=0;i<tauN;i++){
     var s=Math.sin(w*i);
     if(s<0) s=0;
-    F[i]=Math.pow(s,expo);
+    F[i]=Math.pow(s,1.5);
   }
-  // Radiated pressure follows the rate of change of contact force.
-  var d=new Float32Array(N), prev=0;
-  for(var i=0;i<N;i++){ d[i]=F[i]-prev; prev=F[i]; }
+
+  // Excitation = the rapidly-varying part of the force (FoleyAutomatic Fig.3),
+  // i.e. force minus its own slow trend. NOT dF/dt — differentiating tilts the
+  // spectrum +6dB/oct, over-driving the high modes and thinning the result.
+  var slow=biquadLP(F, 0.25/tau, 0.707, srOS);
+  var exc=new Float32Array(N);
+  for(var i=0;i<N;i++) exc[i]=F[i]-slow[i];
+
+  // Acceleration noise = the direct (non-modal) radiator.
+  var acc=new Float32Array(N), prev=0;
+  for(var i=0;i<N;i++){ acc[i]=F[i]-prev; prev=F[i]; }
 
   if(OS>1){
-    // 6th-order anti-alias before decimating — the differentiator's edges are
-    // broadband and would fold straight back into the audible band.
-    d=biquadLP(d, 20000, 0.52, srOS);
-    d=biquadLP(d, 20000, 0.71, srOS);
-    d=biquadLP(d, 20000, 1.93, srOS);
-    var M=Math.ceil(N/OS), dec=new Float32Array(M);
-    for(var i=0;i<M;i++) dec[i]=d[i*OS];
-    d=dec;
+    exc=biquadLP(exc,20000,0.52,srOS); exc=biquadLP(exc,20000,0.71,srOS); exc=biquadLP(exc,20000,1.93,srOS);
+    acc=biquadLP(acc,20000,0.52,srOS); acc=biquadLP(acc,20000,0.71,srOS); acc=biquadLP(acc,20000,1.93,srOS);
+    var M=Math.ceil(N/OS);
+    var e2=new Float32Array(M), a2=new Float32Array(M);
+    for(var i=0;i<M;i++){ e2[i]=exc[i*OS]; a2[i]=acc[i*OS]; }
+    exc=e2; acc=a2;
   }
-  var out=biquadLP(d, p.cTilt, 0.707);
-  normTo1(out);
-  drive(out, p.cBite/100);
-
-  // Body: a touch of the undifferentiated force pulse back in. Restores the
-  // low-frequency shove that dF/dt subtracts out — reads as mass behind the hit.
-  var body=p.cBody/100;
-  if(body>0.01){
-    var lf=biquadLP(F, Math.max(45, 0.55/tau), 0.6, srOS);
-    if(OS>1){
-      var M2=Math.ceil(lf.length/OS), l2=new Float32Array(M2);
-      for(var i=0;i<M2;i++) l2[i]=lf[i*OS];
-      lf=l2;
-    }
-    dcBlock(lf,18); normTo1(lf);
-    var L=Math.min(out.length, lf.length);
-    for(var i=0;i<L;i++) out[i]+=lf[i]*body*0.85;
-    normTo1(out);
-  }
-  return out;
+  acc=biquadLP(acc, p.cTilt, 0.707);
+  driveAmt(acc, p.cBite/100);
+  return {exc:exc, accel:acc, tau:tau};
 }
 
+// ── The radiator: parallel 2-pole reson bank ───────
+// van den Doel & Pai (Modal Synthesis for Vibrating Objects) §2.2 derive that
+// the modal bank IS a bank of reson filters driven by the contact force, Eq.6:
+//   v(m) = 2R·cos(θ)·v(m-1) − R²·v(m-2) + a·R·sin(θ)·F(m-1)
+// Convolving the exciter through resonators (rather than summing damped sines
+// against a wavetable) also gives correct per-mode phase for free — and
+// all-modes-start-at-phase-0 is the loudest additive-synth tell there is.
+// NOTE ON PITCH: this is deliberately a dial, not a derivation. The thing that
+// rings at an impact is overwhelmingly the TARGET, not the projectile — you hear
+// the shield, not the sword. A 26mm steel sword's own body mode (cmat/2d) is
+// 66kHz: physically real, completely inaudible. Deriving f1 from the projectile
+// pinned every hard object to the 12kHz clamp where exactly ONE mode fits below
+// Nyquist — i.e. a sine ping, the very thing this rewrite exists to kill.
+// Stage 3 (TARGET) is what should drive this. Until then you dial it honestly.
+function genModal(p, ph, exc){
+  var f1=Math.max(40, Math.min(12000, p.mFreq));
+  var M=Math.round(p.mModes);
+  var q=1.0+(p.mBody/100);          // 1.0 = harmonic-ish, 2.0 = bar-like stretch
+  var vary=p.mVary/100;
+
+  // Damping, frequency-dependent — the law that makes the tone darken as it
+  // decays WITHOUT any filter moving. Highs die first because d ∝ f.
+  //   d_n = π·f_n·tanφ + 1/τ0     (van den Doel & Pai, Presence 1998, Eq.12-13)
+  // tanφ is the loss tangent = the material. Reference: steel 2e-4, glass 1e-3,
+  // wood 0.02, plastic 0.03, rubber 0.20.
+  var tanPhi=0.30*Math.pow(2e-4/0.30, p.hardness/100);
+  // τ0 is the global external-damping term. Presence 1998 §4 adds it precisely
+  // to "adjust the length of the emitted sound, while maintaining its material
+  // character" — the sanctioned answer to "too long". Without it, steel at
+  // tanφ=2e-4 rings for ELEVEN SECONDS, which is correct and useless.
+  var tau0=0.008*Math.pow(80, p.mDecay/100);   // 8ms .. 640ms
+
+  var freqs=[], damps=[], amps=[], sum=0;
+  for(var n=1;n<=M;n++){
+    var jit=1+(rnd()-0.5)*0.06;      // ±3% — exact ratios are the synth-bell tell
+    var f=f1*Math.pow(n,q)*jit;
+    if(f>SR*0.45) break;
+    var d=Math.PI*f*tanPhi + 1/tau0;
+    if(d>SR*0.5) continue;
+    // Gains stand in for striking the object at a random spot each time
+    // (Lloyd, Raghuvanshi & Govindaraju, I3D 2011 §3.1).
+    var a=(1/n)*(1-vary+vary*2*rnd());
+    freqs.push(f); damps.push(d); amps.push(a); sum+=a;
+  }
+  if(!freqs.length) return new Float32Array(1);
+  for(var k=0;k<amps.length;k++) amps[k]/=sum;
+
+  // Length follows the slowest mode, so we never render silence.
+  var dMin=Infinity;
+  for(var k=0;k<damps.length;k++) dMin=Math.min(dMin,damps[k]);
+  var N=exc.length+Math.round(6.908/dMin*SR);
+  N=Math.min(N, Math.round(SR*1.5));
+  var out=new Float32Array(N);
+
+  for(var k=0;k<freqs.length;k++){
+    var R=Math.exp(-damps[k]/SR);
+    var th=2*Math.PI*freqs[k]/SR;
+    var c1=2*R*Math.cos(th), c2=-R*R;
+    var g=amps[k]*R*Math.sin(th);
+    var v1=0, v2=0;
+    for(var i=0;i<N;i++){
+      var x=i<exc.length?exc[i]:0;
+      var v=c1*v1+c2*v2+g*x;
+      out[i]+=v;
+      v2=v1; v1=v;
+    }
+  }
+  return dcBlock(out,18);
+}
+
+// ── Trapped air ────────────────────────────────────
+// A flat face traps air and squirts it out. No sweep: v1 swept the band 3350Hz
+// →603Hz over 9ms, which is a laser noise, not an impact. Nothing in contact
+// mechanics moves a resonance downward over 9ms.
 function genSlap(p, ph){
   var lenN=Math.max(8, Math.round(p.sLen/1000*SR));
   var N=lenN+Math.round(SR*0.002);
   var out=new Float32Array(N);
   var tone=p.sTone/100;
-  var squirt=p.sSquirt/100;
   var snap=p.sSnap/100;
   var f0=350+tone*4200;
-  var fEnd=f0*(1-squirt*0.82);
   var atkN=Math.max(2, Math.round(lenN*(1-snap)*0.25)+2);
   var s1=svf(), s2=svf();
   for(var i=0;i<lenN;i++){
-    var t=i/lenN;
     var n=rnd()*2-1;
-    var fc=f0+(fEnd-f0)*t;
-    svfTick(s1,n,fc,1.1+tone*2.2);
-    svfTick(s2,s1.bp,Math.max(120,fc*0.5),0.8);
+    svfTick(s1,n,f0,1.1+tone*2.2);
+    svfTick(s2,s1.bp,Math.max(120,f0*0.5),0.8);
     var env;
     if(i<atkN){ var a=i/atkN; env=a*a; }
     else       { env=Math.exp(-(i-atkN)/(lenN*0.22)); }
     out[i]=(s1.bp*0.75+s2.bp*0.45)*env;
   }
-  normTo1(out);
+  // Only a flat face traps air. A point doesn't.
+  var shapeGain=ph.shp*ph.shp;
+  for(var i=0;i<N;i++) out[i]*=shapeGain;
   return dcBlock(out,40);
 }
 
+// ── Contact grit ───────────────────────────────────
+// Surface roughness scattering the contact into micro-events. The sweep is gone
+// for the same reason as SLAP's; two fixed bands plus differential decay give
+// the darkening honestly.
 function genGrit(p, ph){
   var lenN=Math.max(8, Math.round(p.gLen/1000*SR));
-  var N=lenN;
-  var out=new Float32Array(N);
+  var out=new Float32Array(lenN);
   var tone=p.gTone/100;
   var coarse=p.gCoarse/100;
-  var sweep=p.gSweep/100;
-  // Hard surfaces scatter brighter grit than soft ones.
   var hard=Math.min(1, Math.log(ph.E/1e6)/Math.log(4e5));
-  var fStart=600+tone*9000+hard*3000;
-  var fEnd=fStart*(1-sweep*0.85);
-  var s1=svf();
-  var hold=0, holdN=1+Math.round(coarse*14);   // sample-hold = coarser grain
-  var hv=0;
+  var fHi=900+tone*8000+hard*3000;
+  var fLo=fHi*0.28;
+  var s1=svf(), s2=svf();
+  var hold=0, holdN=1+Math.round(coarse*14), hv=0;
   for(var i=0;i<lenN;i++){
     var t=i/lenN;
     if(hold<=0){ hv=rnd()*2-1; hold=holdN; }
     hold--;
-    var fc=fStart+(fEnd-fStart)*t;
-    svfTick(s1,hv,fc,0.8+coarse*1.5);
-    var env=Math.exp(-t*4.2)*(1-t);
-    var atk=Math.min(1, i/6);
-    out[i]=s1.bp*env*atk;
+    svfTick(s1,hv,fHi,0.9+coarse*1.4);
+    svfTick(s2,hv,fLo,0.9);
+    // Two fixed bands, the upper decaying faster. The centroid falls because
+    // high content dies first — same mechanism as the modal damping law, no
+    // moving filter anywhere.
+    var eHi=Math.exp(-t*11);
+    var eLo=Math.exp(-t*4.2);
+    var atk=Math.min(1, i/5);
+    out[i]=(s1.bp*eHi*0.8 + s2.bp*eLo*0.5)*atk;
   }
-  normTo1(out);
   return dcBlock(out,50);
-}
-
-function genPunch(p, ph){
-  var lenN=Math.max(16, Math.round(p.pLen/1000*SR));
-  var N=lenN;
-  var out=new Float32Array(N);
-  // Bigger and heavier lands lower. 9mm → ~270Hz snap, 480mm → ~29Hz boom.
-  var f0=900/Math.pow(Math.max(4,p.size), 0.55)*(p.pTune/100);
-  f0=Math.max(18, Math.min(600, f0));
-  var bend=p.pBend/100;
-  var click=p.pClick/100;
-  var fTop=f0*(1+bend*3.2);
-  var acc=0;
-  var bendN=Math.max(4, lenN*0.16);
-  for(var i=0;i<lenN;i++){
-    var t=i/lenN;
-    var f=f0+(fTop-f0)*Math.exp(-i/bendN);
-    acc+=2*Math.PI*f/SR;
-    var env=Math.exp(-t*4.5);
-    var atk=Math.min(1, i/3);
-    out[i]=Math.sin(acc)*env*atk;
-  }
-  if(click>0.01){
-    var cN=Math.round(SR*0.003);
-    for(var i=0;i<cN&&i<N;i++){
-      out[i]+=(rnd()*2-1)*Math.exp(-i/(cN*0.18))*click*0.5;
-    }
-  }
-  normTo1(out);
-  return dcBlock(out,12);
-}
-
-// The projectile's own body ringing after it's been struck.
-// f ≈ c_material / 2d, where c = sqrt(E/rho). A small steel ball rings
-// way above hearing (so it just ticks); a big steel plate sings. That's
-// real — and it's why Tune exists, for when reality is boring.
-function genRing(p, ph){
-  var f1=ph.ringF*(p.rTune/100);
-  f1=Math.max(45, Math.min(11000, f1));
-  var metal=p.rMetal/100;
-  var spread=p.rSpread/100;
-  // Soft things simply do not ring. Hardness drives the decay by orders.
-  var dec=0.0015*Math.pow(1200, p.hardness/100)*(p.rDecay/100);
-  dec=Math.max(0.0008, Math.min(1.6, dec));
-  var N=Math.max(32, Math.round(dec*4.5*SR));
-  N=Math.min(N, Math.round(SR*1.2));
-  var out=new Float32Array(N);
-  // Inharmonic bar/plate ratios → metal. Pulled toward harmonic → wood-ish.
-  var barR=[1, 2.756, 5.404, 8.933];
-  var harR=[1, 2.0, 3.0, 4.0];
-  for(var k=0;k<4;k++){
-    var ratio=harR[k]+(barR[k]-harR[k])*metal;
-    var f=f1*(1+(ratio-1)*(0.35+spread*1.3));
-    if(f>SR*0.45) continue;
-    var amp=1/Math.pow(k+1, 1.3-metal*0.5);
-    var d=dec/(1+k*(0.35+metal*0.5));
-    var w=2*Math.PI*f/SR;
-    var jit=1+(rnd()-0.5)*0.01;
-    for(var i=0;i<N;i++){
-      out[i]+=Math.sin(w*i*jit)*Math.exp(-i/(d*SR))*amp;
-    }
-  }
-  var atk=Math.max(2, Math.round(SR*0.0004));
-  for(var i=0;i<atk;i++) out[i]*=i/atk;
-  normTo1(out);
-  return dcBlock(out,18);
 }
 
 // ═══════════════════════════════════════════════════
@@ -866,34 +861,45 @@ function genOne(rawP){
   var maxN=Math.round(maxLenMs()/1000*SR);
 
   // ── impact section (t=0 is the moment of contact) ──
+  // One contact event drives everything: a single force pulse, one exciter.
+  // v1 generated five independent layers and peak-normalised each one, which
+  // threw away every physical relative level projPhys had worked out and left
+  // five equally-loud things stacked at t=0 — a layered synth patch, not one
+  // event. Levels here are relative gains into a single bus, normalised once.
+  var ex=genExcite(p, ph);
   var imps=[];
-  function addImp(key, gen, lvlKey, delKey, defLvl){
+  function addImp(key, buf, lvlKey, delKey, defLvl){
     if(layerOff[key]) return;
     var lvl=(p[lvlKey]!==undefined?p[lvlKey]:defLvl)/100*secImp;
     if(lvl<=0.0005) return;
-    var b=delayBuf(gen(p,ph), p[delKey]||0);
-    imps.push({b:b, l:lvl});
+    imps.push({b:delayBuf(buf, p[delKey]||0), l:lvl});
   }
-  addImp('contact', genContact, 'cLvl', 'cDelay', 85);
-  addImp('slap',    genSlap,    'sLvl', 'sDelay', 40);
-  addImp('grit',    genGrit,    'gLvl', 'gDelay', 35);
-  addImp('punch',   genPunch,   'pLvl', 'pDelay', 50);
-  addImp('ring',    genRing,    'rLvl', 'rDelay', 18);
+  addImp('modal', genModal(p,ph,ex.exc), 'mLvl', 'mDelay', 90);
+  addImp('accel', ex.accel,              'cLvl', 'cDelay', 35);
+  addImp('grit',  genGrit(p,ph),         'gLvl', 'gDelay', 30);
+  addImp('slap',  genSlap(p,ph),         'sLvl', 'sDelay', 35);
 
   var impNat=0;
   for(var i=0;i<imps.length;i++) impNat=Math.max(impNat, imps[i].b.length);
   impNat=Math.max(impNat, Math.round(SR*0.01));
 
-  // ── budget split ───────────────────────────────────
-  // The approach is a duration you dialed on purpose; the impact's tail is a
-  // decay that fades to nothing anyway. So the air gets the length it asked
-  // for (capped at 60% of the file, so the hit always keeps a real body) and
-  // the impact takes the rest. Truncating a ring-out is free; deleting the
-  // whole flyby is not.
-  var airN=Math.round((p.airLen||0)/1000*SR);
+  // ── the approach is DERIVED, not dialled ───────────
+  // The only window where 1/r and doppler do anything is the time the object
+  // spends within roughly one miss-distance of closest approach: t ≈ 2·miss/v.
+  // At the old defaults (v=30, miss=1.2m) that is 80ms — v1 generated 170ms and
+  // filled the surplus with noise that is inaudible in reality. That surplus was
+  // a big share of "far too long". At v=300 it collapses to 8ms: there is no
+  // whoosh, there is a crack.
   var tailN=Math.round(SR*0.018);
+  var airN;
+  if(airAuto()){
+    var miss=Math.max(0.05, p.airMiss/10);
+    airN=Math.round(Math.max(8, Math.min(250, 2000*miss/ph.v))/1000*SR);
+  } else {
+    airN=Math.round((p.airLen||0)/1000*SR);
+  }
   if(secAir<=0.0005) airN=0;
-  airN=Math.max(0, Math.min(airN, Math.floor(maxN*0.6)));
+  airN=Math.max(0, Math.min(airN, Math.max(0, maxN-Math.min(impNat, Math.round(SR*0.04)))));
   var impN=Math.min(impNat, maxN-airN);
 
   var total=airN+impN;
@@ -943,6 +949,24 @@ function genOne(rawP){
 
 function maxLenMs(){ return +document.getElementById('pMaxLen').value; }
 function trimOn(){ return document.getElementById('pTrim').value==='1'; }
+function airAuto(){ return document.getElementById('pAirAuto').value==='1'; }
+// The approach length is the one place the "one projectile drives everything"
+// philosophy was broken — a free slider decoupled from the same geometry that
+// drives doppler and 1/r. On AUTO it is derived like everything else.
+function syncAirAuto(){
+  var auto=airAuto();
+  var sl=document.querySelector('.sp[data-p="airLen"]');
+  sl.disabled=auto;
+  sl.style.opacity=auto?'0.35':'1';
+  var rv=document.getElementById('airLenRV');
+  if(auto){
+    var p=readP(), ph=projPhys(p);
+    var miss=Math.max(0.05,p.airMiss/10);
+    rv.textContent=Math.max(8,Math.min(250,2000*miss/ph.v)).toFixed(0)+'ms auto';
+  } else {
+    rv.textContent=sl.value+'ms';
+  }
+}
 
 // ═══════════════════════════════════════════════════
 //  WAV / ZIP / SAVE
@@ -1129,31 +1153,72 @@ function fmtM(kg){
   return kg.toFixed(2)+'kg';
 }
 
-// The physics strip is the teaching surface: move Hardness and watch
-// contact time fall off a cliff, and hear why it goes from thud to tick.
+// Material names for the loss tangent, so the Hardness slider reads as a
+// material and not a number. Reference values from van den Doel & Pai.
+function tanPhiOf(hardness){ return 0.30*Math.pow(2e-4/0.30, hardness/100); }
+function matName(tp){
+  return tp>0.12 ? 'RUBBER' : tp>0.045 ? 'SOFT' : tp>0.025 ? 'PLASTIC'
+       : tp>0.008 ? 'WOOD'  : tp>0.0025?'CERAMIC': tp>0.0006?'GLASS' : 'METAL';
+}
+
+// The physics strip is the teaching surface: move Hardness and watch contact
+// time fall off a cliff and the ring-out stretch by orders of magnitude.
 function updatePhys(){
   var p=readP(), ph=projPhys(p);
   var el=document.getElementById('physStrip');
   var contactChar = ph.tau>0.004 ? 'WUMPH' : ph.tau>0.0015 ? 'THUD'
                   : ph.tau>0.0004 ? 'KNOCK' : ph.tau>0.0001 ? 'CRACK' : 'TICK';
+  var tp=tanPhiOf(p.hardness);
+  var f1=Math.max(40,Math.min(12000,p.mFreq));
+  var tau0=0.008*Math.pow(80, p.mDecay/100);
+  // T60 of the fundamental, with the global damping term folded in.
+  var d1=Math.PI*f1*tp + 1/tau0;
+  var t60=6.908/d1;
   var sup=ph.v>C;
   el.innerHTML=
     '<span class="phys">MASS <b>'+fmtM(ph.m)+'</b></span>'+
     '<span class="phys hot">CONTACT <b>'+fmtT(ph.tau)+'</b></span>'+
     '<span class="phys hot">&rarr; <b>'+contactChar+'</b></span>'+
     '<span class="phys">ENERGY <b>'+(ph.ke<1000?ph.ke.toFixed(1)+'J':(ph.ke/1000).toFixed(1)+'kJ')+'</b></span>'+
-    '<span class="phys">ZIP <b>'+fmtHz(ph.aeol)+'</b></span>'+
-    '<span class="phys">SQUASH <b>'+(ph.dmax*1000).toFixed(2)+'mm</b></span>'+
+    '<span class="phys">tan&phi; <b>'+tp.toExponential(1)+' '+matName(tp)+'</b></span>'+
+    '<span class="phys hot">RING-OUT <b>'+(t60*1000).toFixed(0)+'ms</b></span>'+
+    '<span class="phys" title="The projectile&#39;s own body mode. Above ~16kHz you cannot hear it — which is why an impact is the sound of the TARGET, not the thing that hit it.">OWN MODE <b>'+
+      fmtHz(ph.ringF)+(ph.ringF>16000?' (inaudible)':'')+'</b></span>'+
     (sup?'<span class="phys hot">&#9888; <b>SUPERSONIC</b></span>':'');
-  document.getElementById('tauBadge').innerHTML='&tau; '+fmtT(ph.tau);
+
   document.getElementById('zipBadge').textContent=fmtHz(ph.aeol);
-  var rf=Math.max(45,Math.min(11000,ph.ringF*(p.rTune/100)));
-  document.getElementById('ringBadge').textContent=fmtHz(rf)+(ph.ringF>11000?' (clamped)':'');
-  document.getElementById('punchBadge').textContent=
-    fmtHz(Math.max(18,Math.min(600,900/Math.pow(Math.max(4,p.size),0.55)*(p.pTune/100))));
+  // Mode count in band is worth showing: one mode is a sine ping, not an object.
+  var q=1.0+(p.mBody/100), inBand=0;
+  for(var n=1;n<=p.mModes;n++){ if(f1*Math.pow(n,q)>SR*0.45) break; inBand++; }
+  var mb=document.getElementById('modalBadge');
+  mb.textContent=fmtHz(f1)+'  T60 '+(t60*1000).toFixed(0)+'ms  '+inBand+' modes';
+  mb.style.borderColor=inBand<3?'#f59e0b':'#22d3ee';
+  mb.style.color=inBand<3?'#f59e0b':'#22d3ee';
   var sb=document.getElementById('slapBadge');
   sb.textContent=(p.shape<25?'POINT ':p.shape>65?'FLAT ':'EDGE ')+p.shape+'%';
   sb.style.opacity=p.shape<15?'0.35':'1';
+
+  // Is the flyby physically real, or are we about to invent one?
+  // Strouhal f = 0.2v/d, and Aeolian intensity goes as v^6 — so slow things are
+  // not quiet, they are *gone*. Above ~M0.3 vortex shedding stops describing
+  // the flow at all and the whole tone is fiction.
+  var ar=document.getElementById('airReality');
+  var win=Math.max(8, Math.min(250, 2000*Math.max(0.05,p.airMiss/10)/ph.v));
+  var msg, col;
+  if(ph.v>100){
+    msg='&#9888; v &gt; M0.3 &mdash; vortex shedding no longer describes the flow. ZIP is fiction here; you want a crack, not a whistle.';
+    col='#f59e0b';
+  } else if(ph.aeol<25){
+    msg='&#9888; ZIP would land at '+fmtHz(ph.aeol)+' &mdash; infrasonic. This object physically CANNOT whoosh. (A fist at 9m/s = 18Hz.)';
+    col='#f59e0b';
+  } else if(ph.aeol<90){
+    msg='ZIP at '+fmtHz(ph.aeol)+' &mdash; technically audible, buried in practice. Near-field window '+win.toFixed(0)+'ms.';
+    col='#6b7280';
+  } else {
+    msg='&#10003; Thin + fast enough to whoosh. ZIP '+fmtHz(ph.aeol)+', near-field window '+win.toFixed(0)+'ms.';
+    col='#22d3ee';
+  }
+  ar.innerHTML=msg; ar.style.color=col; ar.style.borderColor=col;
 }
 
 var VAL_FMT={
@@ -1173,16 +1238,15 @@ var VAL_FMT={
   sDelay:    function(v){return v+'ms'},
   gLen:      function(v){return v+'ms'},
   gDelay:    function(v){return v+'ms'},
-  pTune:     function(v){return (v/100).toFixed(2)+'x'},
-  pLen:      function(v){return v+'ms'},
-  pDelay:    function(v){return v+'ms'},
-  rTune:     function(v){return (v/100).toFixed(2)+'x'},
-  rDecay:    function(v){return (v/100).toFixed(2)+'x'},
-  rDelay:    function(v){return v+'ms'},
+  mFreq:     function(v){return v+'Hz'},
+  mDelay:    function(v){return v+'ms'},
+  mModes:    function(v){return String(v)},
+  // Decay is the global damping term τ0, shown as the time it actually buys.
+  mDecay:    function(v){return (8*Math.pow(80,v/100)).toFixed(0)+'ms'},
   fadeIn:    function(v){return (v/10).toFixed(1)+'ms'},
   fadeOut:   function(v){return v+'ms'}
 };
-var PHYS_PARAMS={size:1,velocity:1,density:1,hardness:1,shape:1,rTune:1,pTune:1};
+var PHYS_PARAMS={size:1,velocity:1,density:1,hardness:1,shape:1,mFreq:1,mDecay:1,mBody:1,mModes:1,airMiss:1};
 
 function syncDup(pk,val){
   document.querySelectorAll('.sp[data-p="'+pk+'"]').forEach(function(el){
@@ -1196,8 +1260,10 @@ document.querySelectorAll('.sp').forEach(function(el){
     var v=+el.value, pk=el.dataset.p;
     syncDup(pk,v);
     if(PHYS_PARAMS[pk]) updatePhys();
+    if(pk==='airLen'||pk==='airMiss'||pk==='velocity'||pk==='size') syncAirAuto();
   });
 });
+document.getElementById('pAirAuto').addEventListener('change',syncAirAuto);
 document.querySelectorAll('.lt[data-toggle]').forEach(function(el){
   el.addEventListener('click',function(){
     var layer=el.dataset.toggle;
@@ -1335,57 +1401,68 @@ document.addEventListener('visibilitychange',function(){
 // ═══════════════════════════════════════════════════
 //  FACTORY PROJECTILES
 // ═══════════════════════════════════════════════════
-// Each one only states what makes it that thing. Everything unstated
-// falls out of the physics.
+// Lengths come from the measured literature, not taste. Ren, Yeh & Lin
+// (ACM TOG 2013) fitted damping to real recordings; T60 of a 1kHz mode is
+// ~110ms wood, ~160ms plastic, ~580ms glass, ~1.9s metal. And Fastl & Zwicker:
+// loudness temporal integration stops at ~200ms — past that you add no impact,
+// only room. Ringing metal is the exception you ask for, never a default.
+//
+// mDecay is τ0, the global damping term: 0→8ms, 45→60ms, 70→190ms, 100→640ms.
 var PROJECTILES=[
   {n:'BULLET 9MM',    v:{size:9,velocity:380,density:92,hardness:58,shape:12,
-      airLen:120,airMiss:8,airDop:80,zLvl:42,zPure:22,zQ:70,wLvl:38,wTone:70,puLvl:8,
-      cLvl:90,cSquish:80,cTilt:19000,cBite:45,cBody:15,sLvl:12,gLvl:48,gLen:9,gTone:82,
-      pLvl:30,pLen:45,pBend:60,rLvl:10,pMax:250}},
-  {n:'ARROW',         v:{size:9,velocity:62,density:52,hardness:66,shape:4,
-      airLen:220,airMiss:10,airDop:60,zLvl:30,zPure:38,zQ:62,wLvl:44,wTone:80,puLvl:10,
-      cLvl:88,cSquish:60,cTilt:16000,cBite:30,cBody:18,sLvl:8,gLvl:40,gLen:14,gTone:70,
-      pLvl:26,pLen:55,pBend:55,rLvl:22,rTune:140,pMax:500}},
-  {n:'FIST / FLESH',  v:{size:95,velocity:9,density:40,hardness:9,shape:66,
-      airLen:150,airMiss:6,airDop:35,zLvl:0,wLvl:34,wTone:35,puLvl:44,puFreq:70,
-      cLvl:80,cSquish:130,cTilt:3200,cBite:18,cBody:62,sLvl:58,sLen:16,sTone:30,
-      gLvl:22,gLen:26,gTone:28,pLvl:70,pLen:120,pBend:35,rLvl:0,pMax:500}},
-  {n:'BASEBALL',      v:{size:74,velocity:40,density:36,hardness:34,shape:24,
-      airLen:180,airMiss:12,airDop:55,zLvl:8,wLvl:48,wTone:55,puLvl:26,
-      cLvl:86,cSquish:95,cTilt:9000,cBite:28,cBody:40,sLvl:34,sLen:10,
-      gLvl:36,gLen:16,pLvl:52,pLen:85,rLvl:12,pMax:500}},
-  {n:'ROCK',          v:{size:120,velocity:18,density:62,hardness:74,shape:42,
-      airLen:200,airMiss:14,airDop:45,zLvl:5,wLvl:42,wTone:40,wFlutter:45,puLvl:34,
-      cLvl:88,cSquish:85,cTilt:14000,cBite:35,cBody:30,sLvl:30,
-      gLvl:58,gLen:30,gTone:60,gCoarse:55,pLvl:56,pLen:100,rLvl:16,rMetal:22,pMax:500}},
-  {n:'HAMMER',        v:{size:45,velocity:14,density:88,hardness:84,shape:78,
-      airLen:170,airMiss:8,airDop:40,zLvl:6,wLvl:40,wTone:45,wFlutter:30,puLvl:22,
-      cLvl:92,cSquish:70,cTilt:18000,cBite:48,cBody:26,sLvl:52,sLen:7,sTone:60,
-      gLvl:38,gLen:12,gTone:70,pLvl:60,pLen:75,pBend:52,rLvl:30,rMetal:80,rDecay:150,pMax:500}},
-  {n:'SWORD',         v:{size:26,velocity:24,density:84,hardness:80,shape:3,
-      airLen:260,airMiss:9,airDop:52,zLvl:26,zTune:150,zPure:30,wLvl:52,wTone:95,wFlutter:22,puLvl:14,
-      cLvl:86,cSquish:55,cTilt:19000,cBite:40,cBody:14,sLvl:10,
-      gLvl:44,gLen:11,gTone:78,pLvl:32,pLen:50,rLvl:38,rMetal:88,rDecay:220,rTune:120,pMax:750}},
-  {n:'BOULDER',       v:{size:520,velocity:13,density:60,hardness:70,shape:52,
-      airLen:420,airMiss:30,airDop:35,zLvl:0,wLvl:46,wTone:25,wFlutter:55,puLvl:62,puFreq:45,puFocus:180,
-      cLvl:82,cSquish:120,cTilt:7000,cBite:30,cBody:52,sLvl:36,sLen:26,sTone:25,
-      gLvl:54,gLen:60,gTone:38,gCoarse:70,pLvl:80,pLen:220,pBend:40,rLvl:14,pMax:1000}},
+      secAir:0,mLvl:70,mFreq:320,mDecay:18,mBody:45,mModes:14,mVary:60,
+      cLvl:85,cSquish:80,cTilt:19000,cBite:30,gLvl:55,gLen:7,gTone:85,gCoarse:45,
+      sLvl:6,sLen:4,pMax:150}},
+  {n:'ARROW / THUNK', v:{size:9,velocity:62,density:52,hardness:40,shape:4,
+      secAir:0,mLvl:92,mFreq:170,mDecay:38,mBody:25,mModes:18,mVary:55,
+      cLvl:35,cSquish:70,cTilt:12000,cBite:15,gLvl:40,gLen:10,gTone:60,gCoarse:40,
+      sLvl:5,sLen:5,pMax:250}},
+  {n:'FIST / FLESH',  v:{size:95,velocity:9,density:40,hardness:8,shape:66,
+      secAir:0,mLvl:90,mFreq:85,mDecay:30,mBody:15,mModes:10,mVary:50,
+      cLvl:30,cSquish:130,cTilt:2400,cBite:8,gLvl:18,gLen:14,gTone:22,gCoarse:25,
+      sLvl:55,sLen:12,sTone:26,sSnap:55,pMax:150}},
+  {n:'BASEBALL BAT',  v:{size:74,velocity:40,density:36,hardness:34,shape:24,
+      secAir:0,mLvl:90,mFreq:380,mDecay:35,mBody:40,mModes:16,mVary:55,
+      cLvl:40,cSquish:95,cTilt:9000,cBite:18,gLvl:35,gLen:9,gTone:50,gCoarse:35,
+      sLvl:22,sLen:6,pMax:250}},
+  {n:'ROCK / STONE',  v:{size:120,velocity:18,density:62,hardness:62,shape:42,
+      secAir:0,mLvl:88,mFreq:240,mDecay:26,mBody:55,mModes:22,mVary:70,
+      cLvl:45,cSquish:85,cTilt:13000,cBite:22,gLvl:60,gLen:16,gTone:58,gCoarse:60,
+      sLvl:20,sLen:6,pMax:150}},
+  {n:'HAMMER / METAL',v:{size:45,velocity:14,density:88,hardness:88,shape:78,
+      secAir:0,mLvl:92,mFreq:620,mDecay:40,mBody:60,mModes:20,mVary:45,
+      cLvl:45,cSquish:70,cTilt:18000,cBite:28,gLvl:32,gLen:7,gTone:70,gCoarse:30,
+      sLvl:40,sLen:5,sTone:58,pMax:400}},
+  {n:'SWORD / CLANG', v:{size:26,velocity:24,density:84,hardness:84,shape:3,
+      secAir:0,mLvl:92,mFreq:880,mDecay:38,mBody:65,mModes:24,mVary:50,
+      cLvl:38,cSquish:55,cTilt:19000,cBite:26,gLvl:38,gLen:6,gTone:78,gCoarse:28,
+      sLvl:4,sLen:4,pMax:400}},
+  {n:'BOULDER',       v:{size:520,velocity:13,density:60,hardness:55,shape:52,
+      secAir:0,mLvl:92,mFreq:52,mDecay:30,mBody:35,mModes:24,mVary:70,
+      cLvl:40,cSquish:120,cTilt:5000,cBite:18,gLvl:55,gLen:30,gTone:32,gCoarse:75,
+      sLvl:26,sLen:16,sTone:22,pMax:400}},
   {n:'WATER BALLOON', v:{size:110,velocity:15,density:34,hardness:1,shape:72,
-      airLen:150,airMiss:8,airDop:35,zLvl:0,wLvl:30,wTone:30,puLvl:30,
-      cLvl:78,cSquish:160,cTilt:2200,cBite:10,cBody:70,sLvl:66,sLen:24,sTone:38,sSquirt:80,
-      gLvl:44,gLen:70,gTone:35,gSweep:75,pLvl:58,pLen:130,pBend:30,rLvl:0,pMax:500}},
-  {n:'CANNONBALL',    v:{size:150,velocity:240,density:90,hardness:76,shape:28,
-      airLen:200,airMiss:25,airDop:85,zLvl:18,wLvl:58,wTone:38,puLvl:52,puFreq:55,
-      cLvl:92,cSquish:75,cTilt:17000,cBite:50,cBody:38,sLvl:34,
-      gLvl:50,gLen:24,gTone:64,pLvl:76,pLen:160,pBend:55,rLvl:22,rMetal:70,pMax:1000}},
-  {n:'PEBBLE / TINK', v:{size:12,velocity:12,density:64,hardness:78,shape:22,
-      airLen:80,airMiss:6,airDop:30,zLvl:6,wLvl:22,puLvl:4,
-      cLvl:88,cSquish:70,cTilt:19000,cBite:30,cBody:12,sLvl:14,
-      gLvl:34,gLen:7,gTone:78,pLvl:22,pLen:35,rLvl:34,rMetal:45,rDecay:70,pMax:250}},
+      secAir:0,mLvl:70,mFreq:105,mDecay:22,mBody:12,mModes:8,mVary:60,
+      cLvl:28,cSquish:160,cTilt:1800,cBite:5,gLvl:45,gLen:26,gTone:30,gCoarse:20,
+      sLvl:70,sLen:16,sTone:34,sSnap:45,pMax:250}},
+  {n:'CANNONBALL',    v:{size:150,velocity:240,density:90,hardness:70,shape:28,
+      secAir:0,mLvl:92,mFreq:70,mDecay:32,mBody:45,mModes:22,mVary:60,
+      cLvl:55,cSquish:75,cTilt:16000,cBite:32,gLvl:48,gLen:16,gTone:55,gCoarse:55,
+      sLvl:24,sLen:8,pMax:400}},
+  {n:'PEBBLE / TINK', v:{size:12,velocity:12,density:64,hardness:80,shape:22,
+      secAir:0,mLvl:90,mFreq:2400,mDecay:14,mBody:55,mModes:12,mVary:65,
+      cLvl:45,cSquish:70,cTilt:19000,cBite:20,gLvl:30,gLen:4,gTone:80,gCoarse:35,
+      sLvl:8,sLen:3,pMax:100}},
   {n:'SUPER HARD',    v:{size:40,velocity:120,density:95,hardness:100,shape:8,
-      airLen:120,airMiss:8,airDop:75,zLvl:22,wLvl:40,wTone:70,puLvl:14,
-      cLvl:95,cSquish:40,cTilt:19000,cBite:65,cBody:10,sLvl:8,
-      gLvl:52,gLen:8,gTone:92,pLvl:34,pLen:40,pBend:70,rLvl:42,rMetal:95,rDecay:260,pMax:500}}
+      secAir:0,mLvl:88,mFreq:1700,mDecay:52,mBody:70,mModes:26,mVary:40,
+      cLvl:70,cSquish:40,cTilt:19000,cBite:45,gLvl:45,gLen:5,gTone:92,gCoarse:25,
+      sLvl:5,sLen:3,pMax:600}},
+  {n:'SWORD FLYBY',   v:{size:26,velocity:32,density:84,hardness:84,shape:3,
+      secAir:110,wLvl:60,wTone:150,wWidth:45,wFlutter:18,wDrive:15,wHiss:35,
+      zLvl:30,zTune:100,zPure:0,zQ:55,zWarble:14,puLvl:8,airMiss:9,airDop:45,
+      mLvl:92,mFreq:880,mDecay:38,mBody:65,mModes:24,mVary:50,
+      cLvl:38,cSquish:55,cTilt:19000,cBite:26,gLvl:38,gLen:6,gTone:78,
+      sLvl:4,sLen:4,pMax:400}}
 ];
 
 function applyProjectile(v){
@@ -1447,7 +1524,8 @@ var store={
 };
 function collectState(){
   var s={sp:{},layerOff:{},maxLen:document.getElementById('pMaxLen').value,
-         trim:document.getElementById('pTrim').value};
+         trim:document.getElementById('pTrim').value,
+         airAuto:document.getElementById('pAirAuto').value};
   document.querySelectorAll('.sp').forEach(function(el){ s.sp[el.dataset.p]=+el.value; });
   for(var k in layerOff) if(layerOff[k]) s.layerOff[k]=1;
   return s;
@@ -1461,9 +1539,10 @@ function applyState(s){
     el.classList.toggle('off',off);
     el.closest('.layer').classList.toggle('off',off);
   });
-  if(s.maxLen) document.getElementById('pMaxLen').value=s.maxLen;
-  if(s.trim)   document.getElementById('pTrim').value=s.trim;
-  updatePhys();
+  if(s.maxLen)  document.getElementById('pMaxLen').value=s.maxLen;
+  if(s.trim)    document.getElementById('pTrim').value=s.trim;
+  if(s.airAuto) document.getElementById('pAirAuto').value=s.airAuto;
+  updatePhys(); syncAirAuto();
 }
 var presets=[];
 function refreshPresetSel(sel){
@@ -1508,6 +1587,7 @@ initRanges();
 updateDownloadLabel();
 document.querySelectorAll('.sp').forEach(function(el){ syncDup(el.dataset.p, +el.value); });
 updatePhys();
+syncAirAuto();
 if(IS_APP) document.getElementById('pPack').options[1].textContent='FOLDER';
 store.loadPresets().then(function(p){ presets=p; refreshPresetSel(''); });
 store.loadLast().then(function(s){ if(s) applyState(s); });
