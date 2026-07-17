@@ -281,6 +281,21 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
     </div>
   </div>
 
+  <div class="layer" style="border-color:#a855f7;background:rgba(168,85,247,0.05)" data-layer="sub">
+    <div class="lh">
+      <span class="lt" style="background:#6b21a8;border-color:#a855f7" data-toggle="sub">SUB</span>
+      <span class="ll">Felt body &mdash; the deep thud of mass. Off for small things, ON for heavy.</span>
+      <span class="badge" id="subBadge">off</span>
+    </div>
+    <div class="lc lc-6">
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="subLvl" min="0" max="100" value="0"><div class="rv">0%</div></div>
+      <div class="cg"><label>Freq</label><input type="range" class="sp" data-p="subFreq" min="24" max="180" value="58"><div class="rv">58Hz</div></div>
+      <div class="cg"><label>Decay</label><input type="range" class="sp" data-p="subDecay" min="0" max="100" value="45"><div class="rv">45%</div></div>
+      <div class="cg"><label>Drive</label><input type="range" class="sp" data-p="subDrive" min="0" max="100" value="20"><div class="rv">20%</div></div>
+      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="subDelay" min="0" max="20" value="0"><div class="rv">0ms</div></div>
+    </div>
+  </div>
+
   <div class="layer" style="border-color:#facc15;background:rgba(250,204,21,0.04)" data-layer="grit">
     <div class="lh">
       <span class="lt" style="background:#a16207;border-color:#facc15" data-toggle="grit">GRIT</span>
@@ -365,12 +380,12 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
 <div class="status-bar">
   <div class="status-dot" id="statusDot"></div>
   <span id="statusText">Ready</span>
-  <span class="right">IMPACT FORGE v2 &mdash; stages 1-2</span>
+  <span class="right">IMPACT FORGE v3 &mdash; stages 1-2</span>
 </div>
 
 <script>
 var SR=48000, C=343;
-var BUILD='v7-framedroll';
+var BUILD='v3-materials';
 var curBuf=null, curImpactN=0, nGen=0;
 var layerOff={};
 var pRanges={};
@@ -897,6 +912,33 @@ function genGrit(p, ph){
   return dcBlock(out,50);
 }
 
+// ── Sub: the felt low-frequency body of a heavy impact ──
+// A big/heavy hit is judged big by four cues (research: LOW fundamental + high
+// loudness + LONG low-frequency tail + LOW centroid). MODAL and ACCEL give the
+// first three only weakly for a dense-pattern object, because the energy is
+// scattered across many inharmonic modes. This is the deep thud you feel in the
+// chest — physically the bulk low-frequency response of the ground / large mass,
+// a single low mode driven by the same contact force. NOT an 808: fixed pitch,
+// no bend. Off by default; the cannonball and solid metal lean on it.
+function genSub(p, ph, exc){
+  var f=Math.max(24, Math.min(180, p.subFreq));
+  var t60=0.010*Math.pow(20, p.subDecay/100);      // 10..200ms
+  var d=6.908/t60;
+  var R=Math.exp(-d/SR), th=2*Math.PI*f/SR;
+  var c1=2*R*Math.cos(th), c2=-R*R, g=R*Math.sin(th);
+  var N=Math.min(Math.round(t60*4.5*SR), Math.round(SR*0.5));
+  if(N<16) N=16;
+  var out=new Float32Array(N), v1=0, v2=0;
+  for(var i=0;i<N;i++){
+    var x=i<exc.length?exc[i]:0;
+    var v=c1*v1+c2*v2+g*x;
+    out[i]=v; v2=v1; v1=v;
+  }
+  normTo1(out);
+  driveAmt(out, p.subDrive/100);                    // a little grit = weight, not a pure sine
+  return dcBlock(out,8);
+}
+
 // ═══════════════════════════════════════════════════
 //  ASSEMBLY
 // ═══════════════════════════════════════════════════
@@ -973,6 +1015,7 @@ function genOne(rawP){
   }
   addImp('modal', genModal(p,ph,ex.exc), 'mLvl', 'mDelay', 90);
   addImp('accel', ex.accel,              'cLvl', 'cDelay', 35);
+  addImp('sub',   genSub(p,ph,ex.exc),   'subLvl','subDelay', 0);
   addImp('grit',  genGrit(p,ph),         'gLvl', 'gDelay', 30);
   addImp('slap',  genSlap(p,ph),         'sLvl', 'sDelay', 35);
 
@@ -1283,6 +1326,12 @@ function updatePhys(){
   var sb=document.getElementById('slapBadge');
   sb.textContent=(p.shape<25?'POINT ':p.shape>65?'FLAT ':'EDGE ')+p.shape+'%';
   sb.style.opacity=p.shape<15?'0.35':'1';
+  var subb=document.getElementById('subBadge');
+  if(subb){
+    var on=(p.subLvl>0.5) && !layerOff.sub;
+    subb.textContent=on?(p.subFreq+'Hz body'):'off';
+    subb.style.opacity=on?'1':'0.4';
+  }
 
   // This is the last few ms of air before contact — not a flyby. Distance,
   // Doppler and Curve shape its character; Length is just its length.
@@ -1314,6 +1363,9 @@ var VAL_FMT={
   cSquish:   function(v){return (v/100).toFixed(2)+'x'},
   cTilt:     function(v){return v+'Hz'},
   cDelay:    function(v){return v+'ms'},
+  subFreq:   function(v){return v+'Hz'},
+  subDecay:  function(v){return (10*Math.pow(20,v/100)).toFixed(0)+'ms'},
+  subDelay:  function(v){return v+'ms'},
   sLen:      function(v){return v+'ms'},
   sDelay:    function(v){return v+'ms'},
   gLen:      function(v){return v+'ms'},
@@ -1328,7 +1380,7 @@ var VAL_FMT={
   fadeIn:    function(v){return (v/10).toFixed(1)+'ms'},
   fadeOut:   function(v){return v+'ms'}
 };
-var PHYS_PARAMS={size:1,velocity:1,density:1,hardness:1,shape:1,mFreq:1,mDecay:1,mTilt:1,mPat:1,mHP:1,mModes:1,airMiss:1,airLen:1};
+var PHYS_PARAMS={size:1,velocity:1,density:1,hardness:1,shape:1,mFreq:1,mDecay:1,mTilt:1,mPat:1,mHP:1,mModes:1,subLvl:1,subFreq:1,airMiss:1,airLen:1};
 
 function syncDup(pk,val){
   document.querySelectorAll('.sp[data-p="'+pk+'"]').forEach(function(el){
@@ -1548,82 +1600,88 @@ document.addEventListener('visibilitychange',function(){
 // ═══════════════════════════════════════════════════
 //  FACTORY PROJECTILES
 // ═══════════════════════════════════════════════════
-// "everything feels woody" was my doing: Hi Damp sat at 74-88 on every preset,
-// which kills the upper modes on everything — and dull IS woody. Metals now run
-// Hi Damp LOW (25-45) so the sheen survives, with a SHORT Decay so it lands as
-// DONK / SHTINK rather than SHWWWING or booongggg. Loud and brief, not ringing.
-//
-// mDecay is the fundamental's T60: 0->5ms, 20->11ms, 40->26ms, 60->58ms,
-// 70->98ms, 100->300ms. Hi Damp is the high-mode slope, and hardness scales it
-// (steel ~0.5x, wood ~1.1x, rubber ~2.2x) — that is what material MEANS here.
+// Grounded in a real material table (E, density, loss tangent from the
+// literature). Pitch tracks size (f ∝ c/L): big = LOW, small/thin = HIGH.
+// Material lives in the damping slope via Hardness->tanφ (steel 2e-4 .. rubber
+// 0.30). mDecay is the fundamental T60, capped at 50ms. SUB is the felt low body
+// of heavy things — off for small ones.
 var PROJECTILES=[
-  // Almost no modal — a bullet strike is acceleration noise and grit.
-  {n:'BULLET 9MM',    v:{size:9,velocity:380,density:92,hardness:58,shape:12,
-      secAir:0,mLvl:22,mFreq:150,mDecay:43,mTilt:70,mPat:0,mModes:10,mVary:70,
-      cLvl:95,cSquish:80,cTilt:19000,cBite:32,gLvl:70,gLen:6,gTone:80,gCoarse:30,
-      sLvl:8,sLen:3,pMax:100}},
+  // ── bullets: a sub-ms broadband spall click exciting the TARGET; the surface
+  //    is carried almost entirely by MODAL DECAY (steel rings ~1000x concrete).
+  {n:'BULLET · HARD',  v:{size:9,velocity:380,density:92,hardness:58,shape:12,
+      secAir:0,mLvl:20,mFreq:220,mDecay:20,mTilt:66,mPat:5,mModes:8,mVary:70,
+      cLvl:95,cSquish:80,cTilt:17000,cBite:34,gLvl:72,gLen:8,gTone:78,gCoarse:45,
+      sLvl:8,sLen:3,subLvl:0,pMax:100}},
+  {n:'BULLET · FLESH', v:{size:9,velocity:380,density:92,hardness:6,shape:22,
+      secAir:0,mLvl:15,mFreq:90,mDecay:15,mTilt:82,mPat:0,mModes:8,mVary:60,
+      cLvl:60,cSquish:120,cTilt:2600,cBite:12,gLvl:30,gLen:10,gTone:20,gCoarse:40,
+      sLvl:45,sLen:12,sTone:24,sSnap:50,subLvl:42,subFreq:70,subDecay:40,subDrive:15,
+      secImpact:106,pMax:150}},
   {n:'ARROW / THUNK', v:{size:9,velocity:62,density:52,hardness:40,shape:4,
       secAir:0,mLvl:92,mFreq:130,mDecay:82,mTilt:72,mPat:2,mModes:16,mVary:55,
       cLvl:35,cSquish:70,cTilt:12000,cBite:15,gLvl:40,gLen:10,gTone:60,gCoarse:40,
-      sLvl:10,sLen:5,pMax:150}},
+      sLvl:10,sLen:5,subLvl:0,pMax:150}},
   {n:'FIST / FLESH',  v:{size:95,velocity:9,density:40,hardness:8,shape:66,
       secAir:0,mLvl:90,mFreq:78,mDecay:98,mTilt:80,mPat:0,mModes:10,mVary:50,
       cLvl:30,cSquish:130,cTilt:2400,cBite:8,gLvl:18,gLen:14,gTone:22,gCoarse:35,
-      sLvl:55,sLen:12,sTone:26,sSnap:55,pMax:150}},
+      sLvl:55,sLen:12,sTone:26,sSnap:55,subLvl:0,pMax:150}},
   {n:'WOOD',          v:{size:74,velocity:40,density:36,hardness:34,shape:24,
       secAir:0,mLvl:90,mFreq:165,mDecay:100,mTilt:74,mPat:2,mModes:16,mVary:55,
       cLvl:45,cSquish:95,cTilt:9000,cBite:20,gLvl:38,gLen:8,gTone:50,gCoarse:40,
-      sLvl:25,sLen:6,pMax:150}},
+      sLvl:25,sLen:6,subLvl:0,pMax:150}},
   {n:'ROCK / STONE',  v:{size:120,velocity:18,density:62,hardness:62,shape:42,
       secAir:0,mLvl:52,mFreq:200,mDecay:92,mTilt:64,mPat:5,mModes:26,mVary:70,
       cLvl:58,cSquish:85,cTilt:13000,cBite:24,gLvl:78,gLen:16,gTone:58,gCoarse:55,
-      sLvl:22,sLen:6,pMax:150}},
-  // ── the metals ───────────────────────────────────
-  // Hi Damp LOW so the highs speak, Decay SHORT so they do not ring on.
-  {n:'HAMMER / METAL',v:{size:45,velocity:14,density:88,hardness:88,shape:78,
-      secAir:0,mLvl:90,mFreq:300,mDecay:100,mTilt:30,mPat:2,mModes:16,mVary:45,
-      cLvl:50,cSquish:70,cTilt:16000,cBite:30,gLvl:34,gLen:6,gTone:70,gCoarse:35,
-      sLvl:42,sLen:5,sTone:58,pMax:250}},
+      sLvl:22,sLen:6,subLvl:0,pMax:150}},
+  // ── the metal pair — thin PINGs, solid CLONKs. Separated by DECAY and
+  //    MODE DENSITY, exactly as the physics says (mass-loading kills the block).
+  {n:'THIN METAL',    v:{size:20,velocity:14,density:88,hardness:92,shape:15,
+      secAir:0,mLvl:90,mFreq:820,mDecay:100,mTilt:26,mBody:35,mPat:2,mModes:7,mVary:45,
+      cLvl:50,cSquish:70,cTilt:16000,cBite:30,gLvl:30,gLen:6,gTone:72,gCoarse:35,
+      sLvl:12,sLen:4,subLvl:0,pMax:250}},
+  {n:'SOLID METAL',   v:{size:60,velocity:30,density:96,hardness:94,shape:20,
+      secAir:0,mLvl:70,mFreq:210,mDecay:58,mTilt:52,mBody:30,mPat:2,mModes:4,mVary:35,
+      cLvl:88,cSquish:55,cTilt:6500,cBite:36,gLvl:24,gLen:5,gTone:55,gCoarse:30,
+      sLvl:10,sLen:3,subLvl:40,subFreq:80,subDecay:35,subDrive:18,
+      secImpact:125,pMax:150}},
   {n:'SWORD / CLANG', v:{size:26,velocity:24,density:84,hardness:84,shape:3,
-      secAir:0,mLvl:90,mFreq:260,mDecay:100,mTilt:27,mPat:2,mModes:18,mVary:50,
+      secAir:0,mLvl:90,mFreq:360,mDecay:100,mTilt:27,mBody:60,mPat:2,mModes:12,mVary:50,
       cLvl:42,cSquish:55,cTilt:18000,cBite:28,gLvl:40,gLen:6,gTone:78,gCoarse:30,
-      sLvl:8,sLen:4,pMax:250}},
-  // A pipe is the one thing here that SHOULD hold a pitch: few modes, near
-  // harmonic, and a real (but short) tonal resonance. TONK, not BONG.
+      sLvl:8,sLen:4,subLvl:0,pMax:250}},
   {n:'HOLLOW PIPE',   v:{size:60,velocity:16,density:80,hardness:86,shape:35,
-      secAir:0,mLvl:94,mFreq:175,mDecay:100,mTilt:24,mPat:1,mModes:8,mVary:35,
+      secAir:0,mLvl:94,mFreq:175,mDecay:100,mTilt:24,mBody:6,mPat:1,mModes:8,mVary:35,
       cLvl:40,cSquish:80,cTilt:12000,cBite:22,gLvl:26,gLen:6,gTone:62,gCoarse:30,
-      sLvl:18,sLen:5,pMax:250}},
-  // "a clump of dense metal, super impactful, short, nothing" — mass damps it
-  // to death. Almost all the energy is the contact itself, and the ACCEL is
-  // pulled down to 7kHz because at 19k it read as a slap, not a solid DONK.
+      sLvl:18,sLen:5,subLvl:0,pMax:250}},
   {n:'SUPER HARD',    v:{size:40,velocity:120,density:95,hardness:100,shape:8,
-      secAir:0,mLvl:62,mFreq:330,mDecay:53,mTilt:44,mPat:2,mModes:10,mVary:40,
+      secAir:0,mLvl:62,mFreq:330,mDecay:53,mTilt:44,mBody:45,mPat:2,mModes:10,mVary:40,
       cLvl:95,cSquish:45,cTilt:7000,cBite:30,gLvl:40,gLen:4,gTone:62,gCoarse:35,
-      sLvl:5,sLen:2,pMax:100}},
+      sLvl:5,sLen:2,subLvl:0,pMax:100}},
+  // ── the heavy things — SUB carries the felt low body ──
   {n:'BOULDER',       v:{size:520,velocity:13,density:60,hardness:55,shape:52,
       secAir:0,mLvl:58,mFreq:48,mDecay:100,mTilt:76,mPat:5,mModes:26,mVary:70,
       cLvl:52,cSquish:120,cTilt:5000,cBite:18,gLvl:74,gLen:34,gTone:32,gCoarse:70,
-      sLvl:28,sLen:16,sTone:22,pMax:250}},
+      sLvl:28,sLen:16,sTone:22,subLvl:52,subFreq:44,subDecay:60,subDrive:20,
+      secImpact:120,pMax:250}},
   {n:'WATER BALLOON', v:{size:110,velocity:15,density:34,hardness:1,shape:72,
       secAir:0,mLvl:70,mFreq:92,mDecay:76,mTilt:84,mPat:0,mModes:8,mVary:60,
       cLvl:28,cSquish:160,cTilt:1800,cBite:5,gLvl:48,gLen:24,gTone:30,gCoarse:45,
-      sLvl:72,sLen:16,sTone:34,sSnap:45,pMax:150}},
-  {n:'CANNONBALL',    v:{size:150,velocity:240,density:90,hardness:70,shape:28,
-      secAir:0,mLvl:70,mFreq:62,mDecay:100,mTilt:62,mPat:5,mModes:26,mVary:55,
-      cLvl:70,cSquish:75,cTilt:16000,cBite:34,gLvl:66,gLen:15,gTone:52,gCoarse:60,
-      sLvl:26,sLen:8,pMax:250}},
+      sLvl:72,sLen:16,sTone:34,sSnap:45,subLvl:0,pMax:150}},
+  {n:'CANNONBALL',    v:{size:150,velocity:240,density:95,hardness:74,shape:30,
+      secAir:0,mLvl:78,mFreq:48,mDecay:100,mTilt:72,mBody:22,mPat:5,mModes:26,mVary:55,
+      cLvl:60,cSquish:85,cTilt:5500,cBite:26,gLvl:58,gLen:22,gTone:34,gCoarse:62,
+      sLvl:20,sLen:8,subLvl:64,subFreq:58,subDecay:71,subDrive:22,
+      secImpact:130,pMax:250}},
   {n:'PEBBLE / TINK', v:{size:12,velocity:12,density:64,hardness:80,shape:22,
       secAir:0,mLvl:80,mFreq:1250,mDecay:49,mTilt:46,mPat:2,mModes:8,mVary:65,
       cLvl:60,cSquish:70,cTilt:19000,cBite:22,gLvl:36,gLen:4,gTone:80,gCoarse:25,
-      sLvl:10,sLen:3,pMax:100}},
+      sLvl:10,sLen:3,subLvl:0,pMax:100}},
   // Pre-impact air only — the last few ms before contact, not a whoosh.
   {n:'SWING + HIT',   v:{size:26,velocity:32,density:84,hardness:84,shape:3,
       secAir:70,airLen:30,airMiss:9,airDop:40,airCurve:130,
       wLvl:45,wTone:140,wWidth:35,wFlutter:12,wDrive:10,wHiss:25,zLvl:0,puLvl:10,
-      mLvl:90,mFreq:260,mDecay:100,mTilt:27,mPat:2,mModes:18,mVary:50,
+      mLvl:90,mFreq:360,mDecay:100,mTilt:27,mBody:60,mPat:2,mModes:12,mVary:50,
       cLvl:42,cSquish:55,cTilt:18000,cBite:28,gLvl:40,gLen:6,gTone:78,gCoarse:30,
-      sLvl:8,sLen:4,pMax:250}}
+      sLvl:8,sLen:4,subLvl:0,pMax:250}}
 ];
 
 function applyProjectile(v){
