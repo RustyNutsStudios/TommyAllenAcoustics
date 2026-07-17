@@ -369,7 +369,7 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
 
 <script>
 var SR=48000, C=343;
-var BUILD='v3-aramaki-d';
+var BUILD='v4-metal-r';
 var curBuf=null, curImpactN=0, nGen=0;
 var layerOff={};
 var pRanges={};
@@ -700,7 +700,14 @@ function genModal(p, ph, exc){
   // at any length. α_G sets how long; α_R sets how much faster highs die. They
   // are independent, which is the whole point.
   var t60f=0.005*Math.pow(60, p.mDecay/100);        // fundamental T60: 5..300ms
-  var aR=(p.mTilt/100)*2.0e-4;                      // high-frequency slope
+  // MATERIAL belongs in the slope. When this moved to Aramaki, hardness stopped
+  // touching the modal damping at all — it only set contact time — so metal and
+  // wood got identical decay and every object came out woody. The loss tangent
+  // is the whole difference: steel 2e-4 barely damps its highs (that is the
+  // metallic sheen), rubber 0.30 murders them.
+  var tanPhi=0.30*Math.pow(2e-4/0.30, p.hardness/100);
+  var matSlope=0.35+1.85*Math.pow(tanPhi/0.30, 0.35);   // steel ~0.49x, rubber ~2.2x
+  var aR=(p.mTilt/100)*2.0e-4*matSlope;             // high-frequency slope
   var w1=2*Math.PI*f1;
   // Anchor α_G so Decay always means the fundamental's T60, whatever the tilt.
   var aG=Math.log(6.908/t60f) - aR*w1;
@@ -712,11 +719,14 @@ function genModal(p, ph, exc){
     if(f>SR*0.45) break;
     var d=Math.exp(aG + aR*2*Math.PI*f);
     if(d>SR*0.5) continue;
-    // Amplitude falls as 1/n² — the fundamental dominates and the upper modes
-    // are barely there. v2 used 1/n, which is far too flat: it put real energy
-    // into modes that in a real object you only hear with your ear against it.
-    // Ting a glass and you hear the fundamental; the rest is a hint.
-    var a=(1/(n*n))*(1-vary+vary*2*rnd());
+    // Amplitude = which modes get EXCITED. Damping = how fast each one dies.
+    // Those are different jobs and 1/n² conflated them: "you hear the
+    // fundamental most" is true of the SUSTAIN, but 1/n² also gutted the ATTACK,
+    // and a metallic SHTINK *is* a bright attack that dies instantly. The
+    // fundamental now wins over time via the damping law, not by silencing the
+    // upper modes before they ever speak. The exciter's own spectrum (set by
+    // contact time τ) already decides how much high content there is to give.
+    var a=(1/Math.pow(n,1.15))*(1-vary+vary*2*rnd());
     freqs.push(f); damps.push(d); amps.push(a); sum+=a;
   }
   if(!freqs.length) return new Float32Array(1);
@@ -1486,21 +1496,18 @@ document.addEventListener('visibilitychange',function(){
 // ═══════════════════════════════════════════════════
 //  FACTORY PROJECTILES
 // ═══════════════════════════════════════════════════
-// Retuned on the ear's verdict, and the ear was right about the physics:
+// "everything feels woody" was my doing: Hi Damp sat at 74-88 on every preset,
+// which kills the upper modes on everything — and dull IS woody. Metals now run
+// Hi Damp LOW (25-45) so the sheen survives, with a SHORT Decay so it lands as
+// DONK / SHTINK rather than SHWWWING or booongggg. Loud and brief, not ringing.
 //
-// "the projectile is usually SMALLER than the object, so the tails need to be
-//  mega short — the amount of energy for such a high pitch ring to reach the
-//  ears never happens. But a hollow pipe, maybe a short tonal resonance, low
-//  pitched, and it should die off quick."
-//
-// So: pitches are LOW (a struck object's fundamental, not a bell), tails are
-// SHORT, and Hi Damp is HIGH so the upper modes are a hint rather than a chime.
-// mDecay is the fundamental's T60: 0->5ms, 30->15ms, 50->39ms, 70->98ms, 100->300ms.
+// mDecay is the fundamental's T60: 0->5ms, 20->11ms, 40->26ms, 60->58ms,
+// 70->98ms, 100->300ms. Hi Damp is the high-mode slope, and hardness scales it
+// (steel ~0.5x, wood ~1.1x, rubber ~2.2x) — that is what material MEANS here.
 var PROJECTILES=[
-  // Almost no modal at all — a bullet strike is acceleration noise and grit.
-  // The old one was "awful" because it had a 320Hz tuned body ringing under it.
+  // Almost no modal — a bullet strike is acceleration noise and grit.
   {n:'BULLET 9MM',    v:{size:9,velocity:380,density:92,hardness:58,shape:12,
-      secAir:0,mLvl:22,mFreq:150,mDecay:17,mTilt:88,mBody:40,mModes:10,mVary:70,
+      secAir:0,mLvl:22,mFreq:150,mDecay:17,mTilt:70,mBody:40,mModes:10,mVary:70,
       cLvl:95,cSquish:80,cTilt:19000,cBite:32,gLvl:70,gLen:6,gTone:80,gCoarse:30,
       sLvl:8,sLen:3,pMax:100}},
   {n:'ARROW / THUNK', v:{size:9,velocity:62,density:52,hardness:40,shape:4,
@@ -1511,57 +1518,59 @@ var PROJECTILES=[
       secAir:0,mLvl:90,mFreq:78,mDecay:55,mTilt:80,mBody:15,mModes:10,mVary:50,
       cLvl:30,cSquish:130,cTilt:2400,cBite:8,gLvl:18,gLen:14,gTone:22,gCoarse:35,
       sLvl:55,sLen:12,sTone:26,sSnap:55,pMax:150}},
-  // "this is your wood, it's too high pitched" — a bat is a big lump of ash.
   {n:'BASEBALL BAT',  v:{size:74,velocity:40,density:36,hardness:34,shape:24,
       secAir:0,mLvl:90,mFreq:165,mDecay:72,mTilt:74,mBody:40,mModes:16,mVary:55,
       cLvl:45,cSquish:95,cTilt:9000,cBite:20,gLvl:38,gLen:8,gTone:50,gCoarse:40,
       sLvl:25,sLen:6,pMax:150}},
   {n:'ROCK / STONE',  v:{size:120,velocity:18,density:62,hardness:62,shape:42,
-      secAir:0,mLvl:86,mFreq:200,mDecay:51,mTilt:82,mBody:50,mModes:18,mVary:70,
+      secAir:0,mLvl:86,mFreq:200,mDecay:51,mTilt:64,mBody:50,mModes:18,mVary:70,
       cLvl:50,cSquish:85,cTilt:13000,cBite:24,gLvl:62,gLen:14,gTone:58,gCoarse:55,
       sLvl:22,sLen:6,pMax:150}},
-  // Hollow-ish metal: a SHORT low tonal resonance, not a bell.
+  // ── the metals ───────────────────────────────────
+  // Hi Damp LOW so the highs speak, Decay SHORT so they do not ring on.
   {n:'HAMMER / METAL',v:{size:45,velocity:14,density:88,hardness:88,shape:78,
-      secAir:0,mLvl:90,mFreq:300,mDecay:72,mTilt:78,mBody:55,mModes:16,mVary:45,
-      cLvl:50,cSquish:70,cTilt:18000,cBite:30,gLvl:34,gLen:6,gTone:70,gCoarse:35,
+      secAir:0,mLvl:90,mFreq:300,mDecay:60,mTilt:30,mBody:55,mModes:16,mVary:45,
+      cLvl:50,cSquish:70,cTilt:16000,cBite:30,gLvl:34,gLen:6,gTone:70,gCoarse:35,
       sLvl:42,sLen:5,sTone:58,pMax:250}},
-  // "the ting FAR too high pitched — think about the object we are swinging"
   {n:'SWORD / CLANG', v:{size:26,velocity:24,density:84,hardness:84,shape:3,
-      secAir:0,mLvl:90,mFreq:260,mDecay:69,mTilt:74,mBody:60,mModes:18,mVary:50,
-      cLvl:42,cSquish:55,cTilt:19000,cBite:28,gLvl:40,gLen:6,gTone:78,gCoarse:30,
+      secAir:0,mLvl:90,mFreq:260,mDecay:57,mTilt:27,mBody:60,mModes:18,mVary:50,
+      cLvl:42,cSquish:55,cTilt:18000,cBite:28,gLvl:40,gLen:6,gTone:78,gCoarse:30,
       sLvl:8,sLen:4,pMax:250}},
+  // A pipe is the one thing here that SHOULD hold a pitch: few modes, near
+  // harmonic, and a real (but short) tonal resonance. TONK, not BONG.
+  {n:'HOLLOW PIPE',   v:{size:60,velocity:16,density:80,hardness:86,shape:35,
+      secAir:0,mLvl:94,mFreq:175,mDecay:68,mTilt:24,mBody:6,mModes:8,mVary:35,
+      cLvl:40,cSquish:80,cTilt:12000,cBite:22,gLvl:26,gLen:6,gTone:62,gCoarse:30,
+      sLvl:18,sLen:5,pMax:250}},
+  // "a clump of dense metal, super impactful, short, nothing" — mass damps it
+  // to death. Almost all the energy is the contact itself, and the ACCEL is
+  // pulled down to 7kHz because at 19k it read as a slap, not a solid DONK.
+  {n:'SUPER HARD',    v:{size:40,velocity:120,density:95,hardness:100,shape:8,
+      secAir:0,mLvl:62,mFreq:330,mDecay:24,mTilt:44,mBody:45,mModes:10,mVary:40,
+      cLvl:95,cSquish:45,cTilt:7000,cBite:30,gLvl:40,gLen:4,gTone:62,gCoarse:35,
+      sLvl:5,sLen:2,pMax:100}},
   {n:'BOULDER',       v:{size:520,velocity:13,density:60,hardness:55,shape:52,
-      secAir:0,mLvl:92,mFreq:48,mDecay:65,mTilt:86,mBody:30,mModes:14,mVary:70,
+      secAir:0,mLvl:92,mFreq:48,mDecay:65,mTilt:76,mBody:30,mModes:14,mVary:70,
       cLvl:42,cSquish:120,cTilt:5000,cBite:18,gLvl:58,gLen:28,gTone:32,gCoarse:70,
       sLvl:28,sLen:16,sTone:22,pMax:250}},
   {n:'WATER BALLOON', v:{size:110,velocity:15,density:34,hardness:1,shape:72,
       secAir:0,mLvl:70,mFreq:92,mDecay:40,mTilt:84,mBody:12,mModes:8,mVary:60,
       cLvl:28,cSquish:160,cTilt:1800,cBite:5,gLvl:48,gLen:24,gTone:30,gCoarse:45,
       sLvl:72,sLen:16,sTone:34,sSnap:45,pMax:150}},
-  // "sounds like a computer, nothing alike" — it was 22 dense modes at 70Hz
-  // beating against each other. A cannonball hit is a huge dull WHUMP.
   {n:'CANNONBALL',    v:{size:150,velocity:240,density:90,hardness:70,shape:28,
-      secAir:0,mLvl:88,mFreq:62,mDecay:61,mTilt:88,mBody:22,mModes:9,mVary:55,
+      secAir:0,mLvl:88,mFreq:62,mDecay:61,mTilt:62,mBody:22,mModes:9,mVary:55,
       cLvl:62,cSquish:75,cTilt:16000,cBite:34,gLvl:55,gLen:15,gTone:52,gCoarse:60,
       sLvl:26,sLen:8,pMax:250}},
-  // "nice pitch but it's instant, no high pitch rings out like that"
   {n:'PEBBLE / TINK', v:{size:12,velocity:12,density:64,hardness:80,shape:22,
-      secAir:0,mLvl:80,mFreq:1250,mDecay:21,mTilt:80,mBody:45,mModes:8,mVary:65,
+      secAir:0,mLvl:80,mFreq:1250,mDecay:21,mTilt:46,mBody:45,mModes:8,mVary:65,
       cLvl:60,cSquish:70,cTilt:19000,cBite:22,gLvl:36,gLen:4,gTone:80,gCoarse:25,
       sLvl:10,sLen:3,pMax:100}},
-  // "sounds like chime bells, absolutely stupid" — was 1700Hz with the tail
-  // swamping the frequency term so every mode rang equally. Now: brief, low.
-  {n:'SUPER HARD',    v:{size:40,velocity:120,density:95,hardness:100,shape:8,
-      secAir:0,mLvl:70,mFreq:420,mDecay:40,mTilt:82,mBody:50,mModes:12,mVary:40,
-      cLvl:88,cSquish:40,cTilt:19000,cBite:48,gLvl:52,gLen:5,gTone:90,gCoarse:25,
-      sLvl:8,sLen:3,pMax:150}},
-  // The only preset that uses the air, and only as the last few ms before
-  // contact — not a whoosh. Whooshes are a different event and a different tool.
+  // Pre-impact air only — the last few ms before contact, not a whoosh.
   {n:'SWING + HIT',   v:{size:26,velocity:32,density:84,hardness:84,shape:3,
       secAir:70,airLen:30,airMiss:9,airDop:40,airCurve:130,
       wLvl:45,wTone:140,wWidth:35,wFlutter:12,wDrive:10,wHiss:25,zLvl:0,puLvl:10,
-      mLvl:90,mFreq:260,mDecay:69,mTilt:74,mBody:60,mModes:18,mVary:50,
-      cLvl:42,cSquish:55,cTilt:19000,cBite:28,gLvl:40,gLen:6,gTone:78,gCoarse:30,
+      mLvl:90,mFreq:260,mDecay:57,mTilt:27,mBody:60,mModes:18,mVary:50,
+      cLvl:42,cSquish:55,cTilt:18000,cBite:28,gLvl:40,gLen:6,gTone:78,gCoarse:30,
       sLvl:8,sLen:4,pMax:250}}
 ];
 
