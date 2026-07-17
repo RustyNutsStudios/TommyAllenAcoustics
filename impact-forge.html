@@ -186,14 +186,8 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
   <div class="roadmap" style="text-align:left;border-color:#155e75" id="airReality">&nbsp;</div>
 
   <div class="flight-params">
-    <div class="cg"><label>Approach</label>
-      <select class="btn-select" id="pAirAuto" style="font-size:7px;padding:4px">
-        <option value="1" selected>AUTO</option>
-        <option value="0">MANUAL</option>
-      </select>
-    </div>
-    <div class="cg"><label>&nbsp;Len</label><input type="range" class="sp" data-p="airLen" min="0" max="400" value="80" disabled><div class="rv" id="airLenRV">auto</div></div>
-    <div class="cg"><label>Miss Dist</label><input type="range" class="sp" data-p="airMiss" min="1" max="120" value="12"><div class="rv">1.2m</div></div>
+    <div class="cg"><label>Length</label><input type="range" class="sp" data-p="airLen" min="0" max="50" value="22"><div class="rv">22ms</div></div>
+    <div class="cg"><label>Distance</label><input type="range" class="sp" data-p="airMiss" min="1" max="120" value="12"><div class="rv">1.2m</div></div>
     <div class="cg"><label>Doppler</label><input type="range" class="sp" data-p="airDop" min="0" max="100" value="35"><div class="rv">35%</div></div>
     <div class="cg"><label>Curve</label><input type="range" class="sp" data-p="airCurve" min="50" max="300" value="110"><div class="rv">1.10</div></div>
   </div>
@@ -263,8 +257,9 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
     </div>
     <div class="lc lc-6">
       <div class="cg"><label>Level</label><input type="range" class="sp" data-p="mLvl" min="0" max="100" value="90"><div class="rv">90%</div></div>
-      <div class="cg"><label>Pitch</label><input type="range" class="sp" data-p="mFreq" min="40" max="4000" value="220"><div class="rv">220Hz</div></div>
+      <div class="cg"><label>Pitch</label><input type="range" class="sp" data-p="mFreq" min="40" max="2000" value="180"><div class="rv">180Hz</div></div>
       <div class="cg"><label>Decay</label><input type="range" class="sp" data-p="mDecay" min="0" max="100" value="45"><div class="rv">45%</div></div>
+      <div class="cg"><label>Hi Damp</label><input type="range" class="sp" data-p="mTilt" min="0" max="100" value="70"><div class="rv">70%</div></div>
       <div class="cg"><label>Stretch</label><input type="range" class="sp" data-p="mBody" min="0" max="100" value="30"><div class="rv">30%</div></div>
       <div class="cg"><label>Modes</label><input type="range" class="sp" data-p="mModes" min="1" max="32" value="16"><div class="rv">16</div></div>
       <div class="cg"><label>Strike</label><input type="range" class="sp" data-p="mVary" min="0" max="100" value="45"><div class="rv">45%</div></div>
@@ -374,7 +369,7 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
 
 <script>
 var SR=48000, C=343;
-var BUILD='v2-modal';
+var BUILD='v3-aramaki-d';
 var curBuf=null, curImpactN=0, nGen=0;
 var layerOff={};
 var pRanges={};
@@ -692,28 +687,36 @@ function genModal(p, ph, exc){
   var q=1.0+(p.mBody/100);          // 1.0 = harmonic-ish, 2.0 = bar-like stretch
   var vary=p.mVary/100;
 
-  // Damping, frequency-dependent — the law that makes the tone darken as it
-  // decays WITHOUT any filter moving. Highs die first because d ∝ f.
-  //   d_n = π·f_n·tanφ + 1/τ0     (van den Doel & Pai, Presence 1998, Eq.12-13)
-  // tanφ is the loss tangent = the material. Reference: steel 2e-4, glass 1e-3,
-  // wood 0.02, plastic 0.03, rubber 0.20.
-  var tanPhi=0.30*Math.pow(2e-4/0.30, p.hardness/100);
-  // τ0 is the global external-damping term. Presence 1998 §4 adds it precisely
-  // to "adjust the length of the emitted sound, while maintaining its material
-  // character" — the sanctioned answer to "too long". Without it, steel at
-  // tanφ=2e-4 rings for ELEVEN SECONDS, which is correct and useless.
-  var tau0=0.008*Math.pow(80, p.mDecay/100);   // 8ms .. 640ms
+  // ── Damping: Aramaki's exponential law ────────────
+  //   α(ω) = exp(α_G + α_R·ω)   (Aramaki & Kronland-Martinet; IEEE TASLP 2011)
+  //
+  // This replaces van den Doel's ADDITIVE d = π·f·tanφ + 1/τ0, which has a fatal
+  // flaw for short sounds: τ0 sits OUTSIDE the frequency term, so a short tail
+  // makes 1/τ0 swamp it (on the old SUPER HARD: 12.8 vs 1.07, a 12x swamp) and
+  // every mode then decays at the SAME rate regardless of pitch. That is the
+  // definition of a chime bell, and it is exactly what it sounded like.
+  //
+  // The exponential form is multiplicative, so the high-frequency slope SURVIVES
+  // at any length. α_G sets how long; α_R sets how much faster highs die. They
+  // are independent, which is the whole point.
+  var t60f=0.005*Math.pow(60, p.mDecay/100);        // fundamental T60: 5..300ms
+  var aR=(p.mTilt/100)*2.0e-4;                      // high-frequency slope
+  var w1=2*Math.PI*f1;
+  // Anchor α_G so Decay always means the fundamental's T60, whatever the tilt.
+  var aG=Math.log(6.908/t60f) - aR*w1;
 
   var freqs=[], damps=[], amps=[], sum=0;
   for(var n=1;n<=M;n++){
     var jit=1+(rnd()-0.5)*0.06;      // ±3% — exact ratios are the synth-bell tell
     var f=f1*Math.pow(n,q)*jit;
     if(f>SR*0.45) break;
-    var d=Math.PI*f*tanPhi + 1/tau0;
+    var d=Math.exp(aG + aR*2*Math.PI*f);
     if(d>SR*0.5) continue;
-    // Gains stand in for striking the object at a random spot each time
-    // (Lloyd, Raghuvanshi & Govindaraju, I3D 2011 §3.1).
-    var a=(1/n)*(1-vary+vary*2*rnd());
+    // Amplitude falls as 1/n² — the fundamental dominates and the upper modes
+    // are barely there. v2 used 1/n, which is far too flat: it put real energy
+    // into modes that in a real object you only hear with your ear against it.
+    // Ting a glass and you hear the fundamental; the rest is a hint.
+    var a=(1/(n*n))*(1-vary+vary*2*rnd());
     freqs.push(f); damps.push(d); amps.push(a); sum+=a;
   }
   if(!freqs.length) return new Float32Array(1);
@@ -764,8 +767,10 @@ function genSlap(p, ph){
     else       { env=Math.exp(-(i-atkN)/(lenN*0.22)); }
     out[i]=(s1.bp*0.75+s2.bp*0.45)*env;
   }
-  // Only a flat face traps air. A point doesn't.
-  var shapeGain=ph.shp*ph.shp;
+  // A flat face traps air, a point doesn't — but shp² meant the default shape
+  // of 30 scaled this to 0.09, i.e. inaudible before the Level knob saw it.
+  // You could not hear what SLAP did because it was effectively muted.
+  var shapeGain=0.25+0.75*ph.shp;
   for(var i=0;i<N;i++) out[i]*=shapeGain;
   return dcBlock(out,40);
 }
@@ -782,14 +787,19 @@ function genGrit(p, ph){
   var hard=Math.min(1, Math.log(ph.E/1e6)/Math.log(4e5));
   var fHi=900+tone*8000+hard*3000;
   var fLo=fHi*0.28;
-  var s1=svf(), s2=svf();
-  var hold=0, holdN=1+Math.round(coarse*14), hv=0;
+  // COARSE is now a plain lowpass on the noise, not a sample-and-hold.
+  // S&H with a hold of N samples produces a TONE at SR/N — at Coarse 100 that
+  // was 48000/15 = 3.2kHz, which is precisely the "resonant, electronic" ring.
+  // A lowpass does the same perceptual job (fine dust -> chunky scatter) with
+  // no pitched artifact anywhere in the range.
+  var fCoarse=13000*Math.pow(0.07, coarse);   // 13kHz (fine) -> 900Hz (chunky)
+  var sN=svf(), s1=svf(), s2=svf();
   for(var i=0;i<lenN;i++){
     var t=i/lenN;
-    if(hold<=0){ hv=rnd()*2-1; hold=holdN; }
-    hold--;
-    svfTick(s1,hv,fHi,0.9+coarse*1.4);
-    svfTick(s2,hv,fLo,0.9);
+    svfTick(sN, rnd()*2-1, fCoarse, 0.7);
+    var n=sN.lp*(1+coarse*2.2);              // makeup for the lowpass loss
+    svfTick(s1,n,fHi,0.9);
+    svfTick(s2,n,fLo,0.9);
     // Two fixed bands, the upper decaying faster. The centroid falls because
     // high content dies first — same mechanism as the modal damping law, no
     // moving filter anywhere.
@@ -884,21 +894,14 @@ function genOne(rawP){
   for(var i=0;i<imps.length;i++) impNat=Math.max(impNat, imps[i].b.length);
   impNat=Math.max(impNat, Math.round(SR*0.01));
 
-  // ── the approach is DERIVED, not dialled ───────────
-  // The only window where 1/r and doppler do anything is the time the object
-  // spends within roughly one miss-distance of closest approach: t ≈ 2·miss/v.
-  // At the old defaults (v=30, miss=1.2m) that is 80ms — v1 generated 170ms and
-  // filled the surplus with noise that is inaudible in reality. That surplus was
-  // a big share of "far too long". At v=300 it collapses to 8ms: there is no
-  // whoosh, there is a crack.
-  var tailN=Math.round(SR*0.018);
-  var airN;
-  if(airAuto()){
-    var miss=Math.max(0.05, p.airMiss/10);
-    airN=Math.round(Math.max(8, Math.min(250, 2000*miss/ph.v))/1000*SR);
-  } else {
-    airN=Math.round((p.airLen||0)/1000*SR);
-  }
+  // ── air length is just a length ────────────────────
+  // Distance / Doppler / Curve shape the CHARACTER of the air, and nothing else.
+  // They used to also derive its duration (2·miss/v), which coupled "how far
+  // away is it" to "how long is my file" — physically defensible, and a genuinely
+  // confusing way to build a game asset. Length is now one honest 0-50ms slider.
+  // This is pre-impact air, not a flyby: whooshes are their own event.
+  var tailN=Math.round(SR*0.012);
+  var airN=Math.round((p.airLen||0)/1000*SR);
   if(secAir<=0.0005) airN=0;
   airN=Math.max(0, Math.min(airN, Math.max(0, maxN-Math.min(impNat, Math.round(SR*0.04)))));
   var impN=Math.min(impNat, maxN-airN);
@@ -950,24 +953,6 @@ function genOne(rawP){
 
 function maxLenMs(){ return +document.getElementById('pMaxLen').value; }
 function trimOn(){ return document.getElementById('pTrim').value==='1'; }
-function airAuto(){ return document.getElementById('pAirAuto').value==='1'; }
-// The approach length is the one place the "one projectile drives everything"
-// philosophy was broken — a free slider decoupled from the same geometry that
-// drives doppler and 1/r. On AUTO it is derived like everything else.
-function syncAirAuto(){
-  var auto=airAuto();
-  var sl=document.querySelector('.sp[data-p="airLen"]');
-  sl.disabled=auto;
-  sl.style.opacity=auto?'0.35':'1';
-  var rv=document.getElementById('airLenRV');
-  if(auto){
-    var p=readP(), ph=projPhys(p);
-    var miss=Math.max(0.05,p.airMiss/10);
-    rv.textContent=Math.max(8,Math.min(250,2000*miss/ph.v)).toFixed(0)+'ms auto';
-  } else {
-    rv.textContent=sl.value+'ms';
-  }
-}
 
 // ═══════════════════════════════════════════════════
 //  WAV / ZIP / SAVE
@@ -1171,10 +1156,14 @@ function updatePhys(){
                   : ph.tau>0.0004 ? 'KNOCK' : ph.tau>0.0001 ? 'CRACK' : 'TICK';
   var tp=tanPhiOf(p.hardness);
   var f1=Math.max(40,Math.min(12000,p.mFreq));
-  var tau0=0.008*Math.pow(80, p.mDecay/100);
-  // T60 of the fundamental, with the global damping term folded in.
-  var d1=Math.PI*f1*tp + 1/tau0;
-  var t60=6.908/d1;
+  // Aramaki: Decay IS the fundamental's T60; Hi Damp only steepens the slope.
+  var t60=0.005*Math.pow(60, p.mDecay/100);
+  var aR=(p.mTilt/100)*2.0e-4;
+  var aG=Math.log(6.908/t60)-aR*2*Math.PI*f1;
+  // What the 4th mode's T60 works out to — the "do highs ring on?" number.
+  var q4=1.0+(p.mBody/100);
+  var f4=f1*Math.pow(4,q4);
+  var t60hi=6.908/Math.exp(aG+aR*2*Math.PI*f4);
   var sup=ph.v>C;
   el.innerHTML=
     '<span class="phys">MASS <b>'+fmtM(ph.m)+'</b></span>'+
@@ -1183,6 +1172,8 @@ function updatePhys(){
     '<span class="phys">ENERGY <b>'+(ph.ke<1000?ph.ke.toFixed(1)+'J':(ph.ke/1000).toFixed(1)+'kJ')+'</b></span>'+
     '<span class="phys">tan&phi; <b>'+tp.toExponential(1)+' '+matName(tp)+'</b></span>'+
     '<span class="phys hot">RING-OUT <b>'+(t60*1000).toFixed(0)+'ms</b></span>'+
+    '<span class="phys" title="T60 of the 4th mode. Highs must die well before the fundamental or it reads as a chime.">HIGHS <b>'+
+      (t60hi*1000).toFixed(0)+'ms</b></span>'+
     '<span class="phys" title="The projectile&#39;s own body mode. Above ~16kHz you cannot hear it — which is why an impact is the sound of the TARGET, not the thing that hit it.">OWN MODE <b>'+
       fmtHz(ph.ringF)+(ph.ringF>16000?' (inaudible)':'')+'</b></span>'+
     (sup?'<span class="phys hot">&#9888; <b>SUPERSONIC</b></span>':'');
@@ -1192,32 +1183,33 @@ function updatePhys(){
   var q=1.0+(p.mBody/100), inBand=0;
   for(var n=1;n<=p.mModes;n++){ if(f1*Math.pow(n,q)>SR*0.45) break; inBand++; }
   var mb=document.getElementById('modalBadge');
-  mb.textContent=fmtHz(f1)+'  T60 '+(t60*1000).toFixed(0)+'ms  '+inBand+' modes';
-  mb.style.borderColor=inBand<3?'#f59e0b':'#22d3ee';
-  mb.style.color=inBand<3?'#f59e0b':'#22d3ee';
+  mb.textContent=fmtHz(f1)+'  '+(t60*1000).toFixed(0)+'ms &rarr; highs '+(t60hi*1000).toFixed(0)+'ms  '+inBand+' modes';
+  mb.innerHTML=fmtHz(f1)+' &middot; tail '+(t60*1000).toFixed(0)+'ms &middot; highs '+(t60hi*1000).toFixed(0)+'ms &middot; '+inBand+' modes';
+  // Only a genuinely HIGH mode ringing on reads as a chime. A boulder's 4th
+  // mode at 290Hz ringing for 55ms is not a chime, it is body — flagging that
+  // would be crying wolf. Aramaki's law is exponential in absolute ω, so a
+  // low-pitched object's modes sit close together and damp alike. Correctly.
+  var chime=(f4>1200 && t60hi>t60*0.4);
+  mb.style.borderColor=(inBand<3||chime)?'#f59e0b':'#22d3ee';
+  mb.style.color=(inBand<3||chime)?'#f59e0b':'#22d3ee';
+  mb.title=chime?'A '+fmtHz(f4)+' mode is ringing '+(t60hi*1000).toFixed(0)+'ms — nearly as long as the fundamental. That reads as a chime. Raise Hi Damp.':'';
   var sb=document.getElementById('slapBadge');
   sb.textContent=(p.shape<25?'POINT ':p.shape>65?'FLAT ':'EDGE ')+p.shape+'%';
   sb.style.opacity=p.shape<15?'0.35':'1';
 
-  // Is the flyby physically real, or are we about to invent one?
-  // Strouhal f = 0.2v/d, and Aeolian intensity goes as v^6 — so slow things are
-  // not quiet, they are *gone*. Above ~M0.3 vortex shedding stops describing
-  // the flow at all and the whole tone is fiction.
+  // This is the last few ms of air before contact — not a flyby. Distance,
+  // Doppler and Curve shape its character; Length is just its length.
   var ar=document.getElementById('airReality');
-  var win=Math.max(8, Math.min(250, 2000*Math.max(0.05,p.airMiss/10)/ph.v));
   var msg, col;
   if(ph.v>100){
-    msg='&#9888; v &gt; M0.3 &mdash; vortex shedding no longer describes the flow. ZIP is fiction here; you want a crack, not a whistle.';
+    msg='&#9888; v &gt; M0.3 &mdash; vortex shedding stops describing the flow. ZIP is fiction up here; you want a crack, not a whistle.';
     col='#f59e0b';
   } else if(ph.aeol<25){
-    msg='&#9888; ZIP would land at '+fmtHz(ph.aeol)+' &mdash; infrasonic. This object physically CANNOT whoosh. (A fist at 9m/s = 18Hz.)';
+    msg='&#9888; ZIP would land at '+fmtHz(ph.aeol)+' &mdash; infrasonic. This object cannot whistle. (A fist at 9m/s = 18Hz.) Use WHOOSH for air movement, not ZIP.';
     col='#f59e0b';
-  } else if(ph.aeol<90){
-    msg='ZIP at '+fmtHz(ph.aeol)+' &mdash; technically audible, buried in practice. Near-field window '+win.toFixed(0)+'ms.';
-    col='#6b7280';
   } else {
-    msg='&#10003; Thin + fast enough to whoosh. ZIP '+fmtHz(ph.aeol)+', near-field window '+win.toFixed(0)+'ms.';
-    col='#22d3ee';
+    msg='Pre-impact air only &mdash; the last '+p.airLen+'ms before contact. ZIP would sit at '+fmtHz(ph.aeol)+'. Full flybys are their own event, not part of a hit.';
+    col='#6b7280';
   }
   ar.innerHTML=msg; ar.style.color=col; ar.style.borderColor=col;
 }
@@ -1242,12 +1234,12 @@ var VAL_FMT={
   mFreq:     function(v){return v+'Hz'},
   mDelay:    function(v){return v+'ms'},
   mModes:    function(v){return String(v)},
-  // Decay is the global damping term τ0, shown as the time it actually buys.
-  mDecay:    function(v){return (8*Math.pow(80,v/100)).toFixed(0)+'ms'},
+  // Decay reads as what it is: the fundamental's T60.
+  mDecay:    function(v){return (5*Math.pow(60,v/100)).toFixed(0)+'ms'},
   fadeIn:    function(v){return (v/10).toFixed(1)+'ms'},
   fadeOut:   function(v){return v+'ms'}
 };
-var PHYS_PARAMS={size:1,velocity:1,density:1,hardness:1,shape:1,mFreq:1,mDecay:1,mBody:1,mModes:1,airMiss:1};
+var PHYS_PARAMS={size:1,velocity:1,density:1,hardness:1,shape:1,mFreq:1,mDecay:1,mTilt:1,mBody:1,mModes:1,airMiss:1,airLen:1};
 
 function syncDup(pk,val){
   document.querySelectorAll('.sp[data-p="'+pk+'"]').forEach(function(el){
@@ -1261,10 +1253,8 @@ document.querySelectorAll('.sp').forEach(function(el){
     var v=+el.value, pk=el.dataset.p;
     syncDup(pk,v);
     if(PHYS_PARAMS[pk]) updatePhys();
-    if(pk==='airLen'||pk==='airMiss'||pk==='velocity'||pk==='size') syncAirAuto();
   });
 });
-document.getElementById('pAirAuto').addEventListener('change',syncAirAuto);
 document.querySelectorAll('.lt[data-toggle]').forEach(function(el){
   el.addEventListener('click',function(){
     var layer=el.dataset.toggle;
@@ -1392,23 +1382,35 @@ document.getElementById('downloadBtn').addEventListener('click',function(){
 var RAND_SACRED={outLevel:1,fadeIn:1,fadeOut:1,variation:1};
 // The five sliders that ARE the projectile.
 var MATERIAL_PARAMS={size:1,velocity:1,density:1,hardness:1,shape:1};
+// Frequencies are heard in RATIOS, not in Hz. Nudging mFreq by a percentage of
+// its slider range meant +/-22% of (40..2000) = +/-431Hz — which on a 200Hz rock
+// is two octaves, and is exactly why a nudged rock stopped being a rock. These
+// get moved multiplicatively, in semitones.
+var LOG_PARAMS={mFreq:1, cTilt:1, puFreq:1};
 
 function nudgeSlider(el, frac){
-  var mn=+el.min, mx=+el.max, span=mx-mn;
-  var v=+el.value + (rnd()*2-1)*span*frac;
+  var mn=+el.min, mx=+el.max;
+  var v;
+  if(LOG_PARAMS[el.dataset.p]){
+    var semis=frac*36;                       // 0.08 -> ~3 semitones
+    v=+el.value * Math.pow(2, (rnd()*2-1)*semis/12);
+  } else {
+    v=+el.value + (rnd()*2-1)*(mx-mn)*frac;
+  }
   el.value=Math.round(Math.max(mn, Math.min(mx, v)));
   el.dispatchEvent(new Event('input'));
 }
 
-// RANDOMISE — jitter around whatever is loaded. The material moves only a
-// little (±8% of range) so a hammer still reads as a hammer; everything else
-// gets a wider ±22%. Layer on/off choices are yours and are left alone.
+// RANDOMISE — jitter around whatever is loaded. Deliberately tight: this is
+// "the same rock hit again", not "a different rock". Material moves least, the
+// pitch moves in semitones, everything else gets a modest ±14%. Layer on/off
+// choices are yours and are left alone.
 document.getElementById('randomBtn').addEventListener('click',function(){
   document.querySelectorAll('.sp').forEach(function(el){
     var pk=el.dataset.p;
     if(RAND_SACRED[pk]) return;
     if(pk==='secAir'||pk==='secImpact') return;
-    nudgeSlider(el, MATERIAL_PARAMS[pk] ? 0.08 : 0.22);
+    nudgeSlider(el, MATERIAL_PARAMS[pk] ? 0.06 : (pk==='mFreq' ? 0.07 : 0.14));
   });
   setS('Nudged');
   document.getElementById('generateBtn').click();
@@ -1451,6 +1453,16 @@ document.getElementById('megaBtn').addEventListener('click',function(){
   var guard=0;
   while(inBand()<4 && +mf.value>+mf.min && guard++<12) mf.value=Math.round(+mf.value*0.6);
   mf.dispatchEvent(new Event('input'));
+  // Keep Hi Damp high enough that a roll can't rebuild the chime bell. The
+  // higher the pitch, the harder the highs must be damped to stay believable.
+  var mt=document.querySelector('.sp[data-p="mTilt"]');
+  var floor=+mf.value>600?62:45;
+  if(+mt.value<floor){ mt.value=floor+Math.round(rnd()*(100-floor)); mt.dispatchEvent(new Event('input')); }
+  // High-pitched objects have no business ringing on — energy that high does
+  // not survive. Cap the tail as the pitch climbs.
+  var md=document.querySelector('.sp[data-p="mDecay"]');
+  var cap=+mf.value>900?45:(+mf.value>400?68:100);
+  if(+md.value>cap){ md.value=Math.round(cap*(0.55+rnd()*0.45)); md.dispatchEvent(new Event('input')); }
   // An impact needs a body. If the roll muted the air, don't leave it at some
   // random level pretending otherwise.
   syncDup('secImpact', 80+Math.round(rnd()*50));
@@ -1474,68 +1486,83 @@ document.addEventListener('visibilitychange',function(){
 // ═══════════════════════════════════════════════════
 //  FACTORY PROJECTILES
 // ═══════════════════════════════════════════════════
-// Lengths come from the measured literature, not taste. Ren, Yeh & Lin
-// (ACM TOG 2013) fitted damping to real recordings; T60 of a 1kHz mode is
-// ~110ms wood, ~160ms plastic, ~580ms glass, ~1.9s metal. And Fastl & Zwicker:
-// loudness temporal integration stops at ~200ms — past that you add no impact,
-// only room. Ringing metal is the exception you ask for, never a default.
+// Retuned on the ear's verdict, and the ear was right about the physics:
 //
-// mDecay is τ0, the global damping term: 0→8ms, 45→60ms, 70→190ms, 100→640ms.
+// "the projectile is usually SMALLER than the object, so the tails need to be
+//  mega short — the amount of energy for such a high pitch ring to reach the
+//  ears never happens. But a hollow pipe, maybe a short tonal resonance, low
+//  pitched, and it should die off quick."
+//
+// So: pitches are LOW (a struck object's fundamental, not a bell), tails are
+// SHORT, and Hi Damp is HIGH so the upper modes are a hint rather than a chime.
+// mDecay is the fundamental's T60: 0->5ms, 30->15ms, 50->39ms, 70->98ms, 100->300ms.
 var PROJECTILES=[
+  // Almost no modal at all — a bullet strike is acceleration noise and grit.
+  // The old one was "awful" because it had a 320Hz tuned body ringing under it.
   {n:'BULLET 9MM',    v:{size:9,velocity:380,density:92,hardness:58,shape:12,
-      secAir:0,mLvl:70,mFreq:320,mDecay:18,mBody:45,mModes:14,mVary:60,
-      cLvl:85,cSquish:80,cTilt:19000,cBite:30,gLvl:55,gLen:7,gTone:85,gCoarse:45,
-      sLvl:6,sLen:4,pMax:150}},
-  {n:'ARROW / THUNK', v:{size:9,velocity:62,density:52,hardness:40,shape:4,
-      secAir:0,mLvl:92,mFreq:170,mDecay:38,mBody:25,mModes:18,mVary:55,
-      cLvl:35,cSquish:70,cTilt:12000,cBite:15,gLvl:40,gLen:10,gTone:60,gCoarse:40,
-      sLvl:5,sLen:5,pMax:250}},
-  {n:'FIST / FLESH',  v:{size:95,velocity:9,density:40,hardness:8,shape:66,
-      secAir:0,mLvl:90,mFreq:85,mDecay:30,mBody:15,mModes:10,mVary:50,
-      cLvl:30,cSquish:130,cTilt:2400,cBite:8,gLvl:18,gLen:14,gTone:22,gCoarse:25,
-      sLvl:55,sLen:12,sTone:26,sSnap:55,pMax:150}},
-  {n:'BASEBALL BAT',  v:{size:74,velocity:40,density:36,hardness:34,shape:24,
-      secAir:0,mLvl:90,mFreq:380,mDecay:35,mBody:40,mModes:16,mVary:55,
-      cLvl:40,cSquish:95,cTilt:9000,cBite:18,gLvl:35,gLen:9,gTone:50,gCoarse:35,
-      sLvl:22,sLen:6,pMax:250}},
-  {n:'ROCK / STONE',  v:{size:120,velocity:18,density:62,hardness:62,shape:42,
-      secAir:0,mLvl:88,mFreq:240,mDecay:26,mBody:55,mModes:22,mVary:70,
-      cLvl:45,cSquish:85,cTilt:13000,cBite:22,gLvl:60,gLen:16,gTone:58,gCoarse:60,
-      sLvl:20,sLen:6,pMax:150}},
-  {n:'HAMMER / METAL',v:{size:45,velocity:14,density:88,hardness:88,shape:78,
-      secAir:0,mLvl:92,mFreq:620,mDecay:40,mBody:60,mModes:20,mVary:45,
-      cLvl:45,cSquish:70,cTilt:18000,cBite:28,gLvl:32,gLen:7,gTone:70,gCoarse:30,
-      sLvl:40,sLen:5,sTone:58,pMax:400}},
-  {n:'SWORD / CLANG', v:{size:26,velocity:24,density:84,hardness:84,shape:3,
-      secAir:0,mLvl:92,mFreq:880,mDecay:38,mBody:65,mModes:24,mVary:50,
-      cLvl:38,cSquish:55,cTilt:19000,cBite:26,gLvl:38,gLen:6,gTone:78,gCoarse:28,
-      sLvl:4,sLen:4,pMax:400}},
-  {n:'BOULDER',       v:{size:520,velocity:13,density:60,hardness:55,shape:52,
-      secAir:0,mLvl:92,mFreq:52,mDecay:30,mBody:35,mModes:24,mVary:70,
-      cLvl:40,cSquish:120,cTilt:5000,cBite:18,gLvl:55,gLen:30,gTone:32,gCoarse:75,
-      sLvl:26,sLen:16,sTone:22,pMax:400}},
-  {n:'WATER BALLOON', v:{size:110,velocity:15,density:34,hardness:1,shape:72,
-      secAir:0,mLvl:70,mFreq:105,mDecay:22,mBody:12,mModes:8,mVary:60,
-      cLvl:28,cSquish:160,cTilt:1800,cBite:5,gLvl:45,gLen:26,gTone:30,gCoarse:20,
-      sLvl:70,sLen:16,sTone:34,sSnap:45,pMax:250}},
-  {n:'CANNONBALL',    v:{size:150,velocity:240,density:90,hardness:70,shape:28,
-      secAir:0,mLvl:92,mFreq:70,mDecay:32,mBody:45,mModes:22,mVary:60,
-      cLvl:55,cSquish:75,cTilt:16000,cBite:32,gLvl:48,gLen:16,gTone:55,gCoarse:55,
-      sLvl:24,sLen:8,pMax:400}},
-  {n:'PEBBLE / TINK', v:{size:12,velocity:12,density:64,hardness:80,shape:22,
-      secAir:0,mLvl:90,mFreq:2400,mDecay:14,mBody:55,mModes:12,mVary:65,
-      cLvl:45,cSquish:70,cTilt:19000,cBite:20,gLvl:30,gLen:4,gTone:80,gCoarse:35,
+      secAir:0,mLvl:22,mFreq:150,mDecay:17,mTilt:88,mBody:40,mModes:10,mVary:70,
+      cLvl:95,cSquish:80,cTilt:19000,cBite:32,gLvl:70,gLen:6,gTone:80,gCoarse:30,
       sLvl:8,sLen:3,pMax:100}},
+  {n:'ARROW / THUNK', v:{size:9,velocity:62,density:52,hardness:40,shape:4,
+      secAir:0,mLvl:92,mFreq:130,mDecay:44,mTilt:72,mBody:25,mModes:16,mVary:55,
+      cLvl:35,cSquish:70,cTilt:12000,cBite:15,gLvl:40,gLen:10,gTone:60,gCoarse:40,
+      sLvl:10,sLen:5,pMax:150}},
+  {n:'FIST / FLESH',  v:{size:95,velocity:9,density:40,hardness:8,shape:66,
+      secAir:0,mLvl:90,mFreq:78,mDecay:55,mTilt:80,mBody:15,mModes:10,mVary:50,
+      cLvl:30,cSquish:130,cTilt:2400,cBite:8,gLvl:18,gLen:14,gTone:22,gCoarse:35,
+      sLvl:55,sLen:12,sTone:26,sSnap:55,pMax:150}},
+  // "this is your wood, it's too high pitched" — a bat is a big lump of ash.
+  {n:'BASEBALL BAT',  v:{size:74,velocity:40,density:36,hardness:34,shape:24,
+      secAir:0,mLvl:90,mFreq:165,mDecay:72,mTilt:74,mBody:40,mModes:16,mVary:55,
+      cLvl:45,cSquish:95,cTilt:9000,cBite:20,gLvl:38,gLen:8,gTone:50,gCoarse:40,
+      sLvl:25,sLen:6,pMax:150}},
+  {n:'ROCK / STONE',  v:{size:120,velocity:18,density:62,hardness:62,shape:42,
+      secAir:0,mLvl:86,mFreq:200,mDecay:51,mTilt:82,mBody:50,mModes:18,mVary:70,
+      cLvl:50,cSquish:85,cTilt:13000,cBite:24,gLvl:62,gLen:14,gTone:58,gCoarse:55,
+      sLvl:22,sLen:6,pMax:150}},
+  // Hollow-ish metal: a SHORT low tonal resonance, not a bell.
+  {n:'HAMMER / METAL',v:{size:45,velocity:14,density:88,hardness:88,shape:78,
+      secAir:0,mLvl:90,mFreq:300,mDecay:72,mTilt:78,mBody:55,mModes:16,mVary:45,
+      cLvl:50,cSquish:70,cTilt:18000,cBite:30,gLvl:34,gLen:6,gTone:70,gCoarse:35,
+      sLvl:42,sLen:5,sTone:58,pMax:250}},
+  // "the ting FAR too high pitched — think about the object we are swinging"
+  {n:'SWORD / CLANG', v:{size:26,velocity:24,density:84,hardness:84,shape:3,
+      secAir:0,mLvl:90,mFreq:260,mDecay:69,mTilt:74,mBody:60,mModes:18,mVary:50,
+      cLvl:42,cSquish:55,cTilt:19000,cBite:28,gLvl:40,gLen:6,gTone:78,gCoarse:30,
+      sLvl:8,sLen:4,pMax:250}},
+  {n:'BOULDER',       v:{size:520,velocity:13,density:60,hardness:55,shape:52,
+      secAir:0,mLvl:92,mFreq:48,mDecay:65,mTilt:86,mBody:30,mModes:14,mVary:70,
+      cLvl:42,cSquish:120,cTilt:5000,cBite:18,gLvl:58,gLen:28,gTone:32,gCoarse:70,
+      sLvl:28,sLen:16,sTone:22,pMax:250}},
+  {n:'WATER BALLOON', v:{size:110,velocity:15,density:34,hardness:1,shape:72,
+      secAir:0,mLvl:70,mFreq:92,mDecay:40,mTilt:84,mBody:12,mModes:8,mVary:60,
+      cLvl:28,cSquish:160,cTilt:1800,cBite:5,gLvl:48,gLen:24,gTone:30,gCoarse:45,
+      sLvl:72,sLen:16,sTone:34,sSnap:45,pMax:150}},
+  // "sounds like a computer, nothing alike" — it was 22 dense modes at 70Hz
+  // beating against each other. A cannonball hit is a huge dull WHUMP.
+  {n:'CANNONBALL',    v:{size:150,velocity:240,density:90,hardness:70,shape:28,
+      secAir:0,mLvl:88,mFreq:62,mDecay:61,mTilt:88,mBody:22,mModes:9,mVary:55,
+      cLvl:62,cSquish:75,cTilt:16000,cBite:34,gLvl:55,gLen:15,gTone:52,gCoarse:60,
+      sLvl:26,sLen:8,pMax:250}},
+  // "nice pitch but it's instant, no high pitch rings out like that"
+  {n:'PEBBLE / TINK', v:{size:12,velocity:12,density:64,hardness:80,shape:22,
+      secAir:0,mLvl:80,mFreq:1250,mDecay:21,mTilt:80,mBody:45,mModes:8,mVary:65,
+      cLvl:60,cSquish:70,cTilt:19000,cBite:22,gLvl:36,gLen:4,gTone:80,gCoarse:25,
+      sLvl:10,sLen:3,pMax:100}},
+  // "sounds like chime bells, absolutely stupid" — was 1700Hz with the tail
+  // swamping the frequency term so every mode rang equally. Now: brief, low.
   {n:'SUPER HARD',    v:{size:40,velocity:120,density:95,hardness:100,shape:8,
-      secAir:0,mLvl:88,mFreq:1700,mDecay:52,mBody:70,mModes:26,mVary:40,
-      cLvl:70,cSquish:40,cTilt:19000,cBite:45,gLvl:45,gLen:5,gTone:92,gCoarse:25,
-      sLvl:5,sLen:3,pMax:600}},
-  {n:'SWORD FLYBY',   v:{size:26,velocity:32,density:84,hardness:84,shape:3,
-      secAir:110,wLvl:60,wTone:150,wWidth:45,wFlutter:18,wDrive:15,wHiss:35,
-      zLvl:30,zTune:100,zPure:0,zQ:55,zWarble:14,puLvl:8,airMiss:9,airDop:45,
-      mLvl:92,mFreq:880,mDecay:38,mBody:65,mModes:24,mVary:50,
-      cLvl:38,cSquish:55,cTilt:19000,cBite:26,gLvl:38,gLen:6,gTone:78,
-      sLvl:4,sLen:4,pMax:400}}
+      secAir:0,mLvl:70,mFreq:420,mDecay:40,mTilt:82,mBody:50,mModes:12,mVary:40,
+      cLvl:88,cSquish:40,cTilt:19000,cBite:48,gLvl:52,gLen:5,gTone:90,gCoarse:25,
+      sLvl:8,sLen:3,pMax:150}},
+  // The only preset that uses the air, and only as the last few ms before
+  // contact — not a whoosh. Whooshes are a different event and a different tool.
+  {n:'SWING + HIT',   v:{size:26,velocity:32,density:84,hardness:84,shape:3,
+      secAir:70,airLen:30,airMiss:9,airDop:40,airCurve:130,
+      wLvl:45,wTone:140,wWidth:35,wFlutter:12,wDrive:10,wHiss:25,zLvl:0,puLvl:10,
+      mLvl:90,mFreq:260,mDecay:69,mTilt:74,mBody:60,mModes:18,mVary:50,
+      cLvl:42,cSquish:55,cTilt:19000,cBite:28,gLvl:40,gLen:6,gTone:78,gCoarse:30,
+      sLvl:8,sLen:4,pMax:250}}
 ];
 
 function applyProjectile(v){
@@ -1597,8 +1624,7 @@ var store={
 };
 function collectState(){
   var s={sp:{},layerOff:{},maxLen:document.getElementById('pMaxLen').value,
-         trim:document.getElementById('pTrim').value,
-         airAuto:document.getElementById('pAirAuto').value};
+         trim:document.getElementById('pTrim').value};
   document.querySelectorAll('.sp').forEach(function(el){ s.sp[el.dataset.p]=+el.value; });
   for(var k in layerOff) if(layerOff[k]) s.layerOff[k]=1;
   return s;
@@ -1614,8 +1640,7 @@ function applyState(s){
   });
   if(s.maxLen)  document.getElementById('pMaxLen').value=s.maxLen;
   if(s.trim)    document.getElementById('pTrim').value=s.trim;
-  if(s.airAuto) document.getElementById('pAirAuto').value=s.airAuto;
-  updatePhys(); syncAirAuto();
+  updatePhys();
 }
 var presets=[];
 function refreshPresetSel(sel){
@@ -1660,7 +1685,6 @@ initRanges();
 updateDownloadLabel();
 document.querySelectorAll('.sp').forEach(function(el){ syncDup(el.dataset.p, +el.value); });
 updatePhys();
-syncAirAuto();
 if(IS_APP) document.getElementById('pPack').options[1].textContent='FOLDER';
 store.loadPresets().then(function(p){ presets=p; refreshPresetSel(''); });
 store.loadLast().then(function(s){ if(s) applyState(s); });
