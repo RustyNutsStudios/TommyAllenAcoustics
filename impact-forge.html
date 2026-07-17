@@ -139,14 +139,14 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
 <div class="mode-row" id="sectionTabs">
   <div class="mode-btn active" data-tab="air"    style="border-color:#22d3ee;color:#22d3ee">1 AIR</div>
   <div class="mode-btn"        data-tab="impact" style="border-color:#f59e0b;color:#f59e0b">2 IMPACT</div>
-  <div class="mode-btn soon">3 TARGET</div>
+  <div class="mode-btn"        data-tab="target" style="border-color:#f43f5e;color:#f43f5e">3 TARGET</div>
   <div class="mode-btn soon">4 MATERIAL</div>
   <div class="mode-btn soon">5 RESULT</div>
   <div class="mode-btn soon">6 DEBRIS</div>
   <div class="mode-btn"        data-tab="mix"    style="border-color:#a78bfa;color:#a78bfa">MIX</div>
 </div>
 <div class="roadmap">
-  BUILT: <b>the approach</b> &rarr; <b>the contact</b>. &nbsp;NEXT: what it hits &rarr; what that's made of &rarr; what the projectile does &rarr; the aftermath.
+  BUILT: <b>the approach</b> &rarr; <b>the contact</b> &rarr; <b>the target hit</b>. &nbsp;NEXT: what it's made of &rarr; what the projectile does &rarr; the aftermath.
 </div>
 
 <!-- GENERATE BAR -->
@@ -327,6 +327,49 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
 </div>
 
 
+<!-- ═══════════ TARGET ═══════════ -->
+<div class="tab-panel" data-panel="target" style="display:none">
+  <div class="sec-bar">
+    <button class="btn btn-r" style="font-size:7px;padding:5px 8px" data-rand-section="target">RAND</button>
+    <button class="btn btn-d" style="font-size:7px;padding:5px 8px" data-solo="target">SOLO</button>
+    <button class="btn btn-d" style="font-size:7px;padding:5px 8px" data-mute="target">MUTE</button>
+    <input type="range" class="sp" data-p="secTarget" min="0" max="150" value="100" style="width:70px">
+    <div class="rv" style="font-size:12px;min-width:34px">100%</div>
+    <span class="ll" style="margin-left:6px">the thing being hit &mdash; where most of the loudness lives</span>
+  </div>
+
+  <div class="layer" style="border-color:#dc2626;background:rgba(220,38,38,0.05)" data-layer="crack">
+    <div class="lh">
+      <span class="lt" style="background:#991b1b;border-color:#dc2626" data-toggle="crack">CRACK</span>
+      <span class="ll">The pressure front &mdash; near-instant bipolar slam. The SNAP of a hit.</span>
+    </div>
+    <div class="lc lc-6">
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="crkLvl" min="0" max="100" value="0"><div class="rv">0%</div></div>
+      <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="crkTone" min="0" max="100" value="60"><div class="rv">60%</div></div>
+      <div class="cg"><label>Neg</label><input type="range" class="sp" data-p="crkNeg" min="0" max="100" value="60"><div class="rv">60%</div></div>
+      <div class="cg"><label>Width</label><input type="range" class="sp" data-p="crkLen" min="1" max="8" value="3"><div class="rv">3ms</div></div>
+      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="crkDelay" min="0" max="20" value="0"><div class="rv">0ms</div></div>
+    </div>
+  </div>
+
+  <div class="layer" style="border-color:#fb7185;background:rgba(251,113,133,0.05)" data-layer="blast">
+    <div class="lh">
+      <span class="lt" style="background:#be123c;border-color:#fb7185" data-toggle="blast">BLAST</span>
+      <span class="ll">The noise erupting out &mdash; messy, large, violent. Where big lives.</span>
+      <span class="badge" id="blastBadge">off</span>
+    </div>
+    <div class="lc lc-6">
+      <div class="cg"><label>Level</label><input type="range" class="sp" data-p="blLvl" min="0" max="100" value="0"><div class="rv">0%</div></div>
+      <div class="cg"><label>Size</label><input type="range" class="sp" data-p="blSize" min="0" max="100" value="50"><div class="rv">50%</div></div>
+      <div class="cg"><label>Tone</label><input type="range" class="sp" data-p="blTone" min="0" max="100" value="55"><div class="rv">55%</div></div>
+      <div class="cg"><label>Length</label><input type="range" class="sp" data-p="blLen" min="4" max="120" value="32"><div class="rv">32ms</div></div>
+      <div class="cg"><label>Drive</label><input type="range" class="sp" data-p="blDrive" min="0" max="100" value="30"><div class="rv">30%</div></div>
+      <div class="cg"><label>Delay</label><input type="range" class="sp" data-p="blDelay" min="0" max="20" value="0"><div class="rv">0ms</div></div>
+    </div>
+  </div>
+</div>
+
+
 <!-- ═══════════ MIX ═══════════ -->
 <div class="tab-panel" data-panel="mix" style="display:none">
   <div class="layer" style="border-color:#a78bfa">
@@ -338,6 +381,7 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
       <div class="cg"><label>Variation</label><input type="range" class="sp" data-p="variation" min="0" max="60" value="12"><div class="rv">12%</div></div>
       <div class="cg"><label>Air Vol</label><input type="range" class="sp" data-p="secAir" min="0" max="150" value="100"><div class="rv">100%</div></div>
       <div class="cg"><label>Impact Vol</label><input type="range" class="sp" data-p="secImpact" min="0" max="150" value="100"><div class="rv">100%</div></div>
+      <div class="cg"><label>Target Vol</label><input type="range" class="sp" data-p="secTarget" min="0" max="150" value="100"><div class="rv">100%</div></div>
     </div>
   </div>
   <div class="layer" style="border-color:#22d3ee">
@@ -380,12 +424,12 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
 <div class="status-bar">
   <div class="status-dot" id="statusDot"></div>
   <span id="statusText">Ready</span>
-  <span class="right">IMPACT FORGE v3 &mdash; stages 1-2</span>
+  <span class="right">IMPACT FORGE v4 &mdash; stages 1-3</span>
 </div>
 
 <script>
 var SR=48000, C=343;
-var BUILD='v3-materials';
+var BUILD='v4-target';
 var curBuf=null, curImpactN=0, nGen=0;
 var layerOff={};
 var pRanges={};
@@ -940,6 +984,79 @@ function genSub(p, ph, exc){
 }
 
 // ═══════════════════════════════════════════════════
+//  STAGE 3 — TARGET : the thing being hit
+// ═══════════════════════════════════════════════════
+// This is where most of the loudness lives — the pressure release of something
+// being STRUCK. It is what tells the ear "something got hit". Two components,
+// both lifted from the original Shot Forge muzzle-blast tech (which is exactly
+// this problem: a violent broadband pressure event):
+//   CRACK — the near-instant bipolar pressure front (Shot Forge's PFFF). The snap.
+//   BLAST — the messy broadband noise that blasts out after it (Shot Forge's FFFF).
+// Target Size and Material shape them; for now that is the layer knobs. Later
+// (stage 4) a target macro should drive these + the modal pitch together.
+
+// The snap: a squared bipolar shockwave. Near-instant rise to +1, a positive
+// pressure wall, a fast fall through zero to a negative rarefaction, short tail.
+// Differentiate-free — it IS the pressure, so it reads as a physical SLAM.
+function genCrack(p, ph){
+  var widthMs=Math.max(0.3, p.crkLen!==undefined?p.crkLen:3);
+  var neg=(p.crkNeg!==undefined?p.crkNeg:60)/100;
+  var tone=(p.crkTone!==undefined?p.crkTone:60)/100;
+  var totalS=Math.max(4, Math.round(widthMs/1000*SR));
+  var posS=Math.round(totalS*0.4);
+  var tailS=Math.round(SR*0.0008);
+  var N=totalS+tailS;
+  var out=new Float32Array(N);
+  // Rise time = snap. Brighter/harder target = sharper edge = snappier crack.
+  var riseS=Math.max(1, Math.round(SR*(0.00003+(1-tone)*0.0005)));
+  for(var i=0;i<N;i++){
+    var s;
+    if(i<riseS)            s=i/riseS;
+    else if(i<posS)        s=1.0;
+    else if(i<posS+riseS){ var t=(i-posS)/riseS; s=1.0-t*(1.0+neg); }
+    else if(i<totalS)      s=-neg;
+    else { var dt=i-totalS; s=-neg*Math.exp(-dt/(tailS*0.3)); }
+    s += (rnd()*2-1)*0.08*Math.abs(s);       // edge turbulence — organic, not a square
+    out[i]=s;
+  }
+  out=biquadLP(out, 1500+tone*16000, 0.7);   // dark = a thud-slam, bright = a sharp crack
+  normTo1(out);
+  return dcBlock(out,20);
+}
+
+// The blast: broadband noise that erupts after the front. A HIGH crack band that
+// dies fast over a LOW body band that lingers (the differential-decay trick, no
+// sweep). Size lowers + lengthens the body (big target = big roar); Drive
+// saturates it into something messy and violent. Snappy attack, always.
+function genBlast(p, ph){
+  var size=(p.blSize!==undefined?p.blSize:50)/100;
+  var tone=(p.blTone!==undefined?p.blTone:55)/100;
+  var baseLen=Math.max(4, p.blLen!==undefined?p.blLen:32);
+  var lenN=Math.round(baseLen*(0.7+size*1.6)/1000*SR);
+  var N=lenN+Math.round(SR*0.003);
+  var out=new Float32Array(N);
+  var fHi=1200+tone*13000;
+  var fLo=70+(1-size)*300;                   // big target = lower body
+  var sHi=svf(), sLo=svf();
+  var decHi=6+(1-size)*8;                     // crack band dies fast
+  var decLo=2.4+size*1.6;                     // body lingers, longer when big
+  var atkN=Math.max(2, Math.round(SR*0.0004));
+  for(var i=0;i<lenN;i++){
+    var t=i/lenN;
+    var n=rnd()*2-1;
+    svfTick(sHi,n,fHi,0.7);
+    svfTick(sLo,n,fLo,0.85);
+    var eHi=Math.exp(-t*decHi);
+    var eLo=Math.exp(-t*decLo);
+    var atk=Math.min(1, i/atkN);
+    out[i]=(sHi.bp*eHi*(0.4+tone*0.9) + sLo.lp*eLo*(0.5+size*1.5))*atk;
+  }
+  normTo1(out);
+  driveAmt(out, (p.blDrive!==undefined?p.blDrive:0)/100);   // messiness / violence
+  return dcBlock(out,25);
+}
+
+// ═══════════════════════════════════════════════════
 //  ASSEMBLY
 // ═══════════════════════════════════════════════════
 function delayBuf(buf, ms){
@@ -965,7 +1082,7 @@ function applyFades(buf,fiMs,foMs){
   return buf;
 }
 
-var VARY_EXCLUDE={outLevel:1,fadeIn:1,fadeOut:1,variation:1,secAir:1,secImpact:1};
+var VARY_EXCLUDE={outLevel:1,fadeIn:1,fadeOut:1,variation:1,secAir:1,secImpact:1,secTarget:1};
 function varyP(p,vari){
   if(vari<=0) return p;
   var vp={}; for(var k in p) vp[k]=p[k];
@@ -980,7 +1097,7 @@ function varyP(p,vari){
   return vp;
 }
 
-var sectionMuted={air:false,impact:false};
+var sectionMuted={air:false,impact:false,target:false};
 var sectionSoloed=null;
 
 function genOne(rawP){
@@ -990,34 +1107,40 @@ function genOne(rawP){
 
   var secAir=(p.secAir!==undefined?p.secAir:100)/100;
   var secImp=(p.secImpact!==undefined?p.secImpact:100)/100;
+  var secTgt=(p.secTarget!==undefined?p.secTarget:100)/100;
   if(sectionSoloed){
     if(sectionSoloed!=='air')    secAir=0;
     if(sectionSoloed!=='impact') secImp=0;
+    if(sectionSoloed!=='target') secTgt=0;
   }
   if(sectionMuted.air)    secAir=0;
   if(sectionMuted.impact) secImp=0;
+  if(sectionMuted.target) secTgt=0;
 
   var maxN=Math.round(maxLenMs()/1000*SR);
 
-  // ── impact section (t=0 is the moment of contact) ──
+  // ── impact + target sections (t=0 is the moment of contact) ──
   // One contact event drives everything: a single force pulse, one exciter.
-  // v1 generated five independent layers and peak-normalised each one, which
-  // threw away every physical relative level projPhys had worked out and left
-  // five equally-loud things stacked at t=0 — a layered synth patch, not one
-  // event. Levels here are relative gains into a single bus, normalised once.
+  // v1 generated independent layers and peak-normalised each one, which threw
+  // away every physical relative level projPhys had worked out and left them
+  // all equally loud at t=0 — a layered synth patch, not one event. Levels here
+  // are relative gains into a single bus, normalised once. IMPACT is the contact
+  // (the projectile hitting); TARGET is the struck thing's pressure release.
   var ex=genExcite(p, ph);
   var imps=[];
-  function addImp(key, buf, lvlKey, delKey, defLvl){
+  function addLayer(key, buf, lvlKey, delKey, defLvl, gain){
     if(layerOff[key]) return;
-    var lvl=(p[lvlKey]!==undefined?p[lvlKey]:defLvl)/100*secImp;
+    var lvl=(p[lvlKey]!==undefined?p[lvlKey]:defLvl)/100*gain;
     if(lvl<=0.0005) return;
     imps.push({b:delayBuf(buf, p[delKey]||0), l:lvl});
   }
-  addImp('modal', genModal(p,ph,ex.exc), 'mLvl', 'mDelay', 90);
-  addImp('accel', ex.accel,              'cLvl', 'cDelay', 35);
-  addImp('sub',   genSub(p,ph,ex.exc),   'subLvl','subDelay', 0);
-  addImp('grit',  genGrit(p,ph),         'gLvl', 'gDelay', 30);
-  addImp('slap',  genSlap(p,ph),         'sLvl', 'sDelay', 35);
+  addLayer('modal', genModal(p,ph,ex.exc), 'mLvl', 'mDelay',  90, secImp);
+  addLayer('accel', ex.accel,              'cLvl', 'cDelay',  35, secImp);
+  addLayer('sub',   genSub(p,ph,ex.exc),   'subLvl','subDelay', 0, secImp);
+  addLayer('grit',  genGrit(p,ph),         'gLvl', 'gDelay',  30, secImp);
+  addLayer('slap',  genSlap(p,ph),         'sLvl', 'sDelay',  35, secImp);
+  addLayer('crack', genCrack(p,ph),        'crkLvl','crkDelay', 0, secTgt);
+  addLayer('blast', genBlast(p,ph),        'blLvl','blDelay',   0, secTgt);
 
   var impNat=0;
   for(var i=0;i<imps.length;i++) impNat=Math.max(impNat, imps[i].b.length);
@@ -1332,6 +1455,12 @@ function updatePhys(){
     subb.textContent=on?(p.subFreq+'Hz body'):'off';
     subb.style.opacity=on?'1':'0.4';
   }
+  var blb=document.getElementById('blastBadge');
+  if(blb){
+    var bon=(p.blLvl>0.5) && !layerOff.blast;
+    blb.textContent=bon?(p.blSize>60?'BIG':p.blSize<35?'tight':'blast'):'off';
+    blb.style.opacity=bon?'1':'0.4';
+  }
 
   // This is the last few ms of air before contact — not a flyby. Distance,
   // Doppler and Curve shape its character; Length is just its length.
@@ -1366,6 +1495,10 @@ var VAL_FMT={
   subFreq:   function(v){return v+'Hz'},
   subDecay:  function(v){return (10*Math.pow(20,v/100)).toFixed(0)+'ms'},
   subDelay:  function(v){return v+'ms'},
+  crkLen:    function(v){return v+'ms'},
+  crkDelay:  function(v){return v+'ms'},
+  blLen:     function(v){return v+'ms'},
+  blDelay:   function(v){return v+'ms'},
   sLen:      function(v){return v+'ms'},
   sDelay:    function(v){return v+'ms'},
   gLen:      function(v){return v+'ms'},
@@ -1380,7 +1513,7 @@ var VAL_FMT={
   fadeIn:    function(v){return (v/10).toFixed(1)+'ms'},
   fadeOut:   function(v){return v+'ms'}
 };
-var PHYS_PARAMS={size:1,velocity:1,density:1,hardness:1,shape:1,mFreq:1,mDecay:1,mTilt:1,mPat:1,mHP:1,mModes:1,subLvl:1,subFreq:1,airMiss:1,airLen:1};
+var PHYS_PARAMS={size:1,velocity:1,density:1,hardness:1,shape:1,mFreq:1,mDecay:1,mTilt:1,mPat:1,mHP:1,mModes:1,subLvl:1,subFreq:1,blLvl:1,blSize:1,airMiss:1,airLen:1};
 
 function syncDup(pk,val){
   document.querySelectorAll('.sp[data-p="'+pk+'"]').forEach(function(el){
@@ -1439,14 +1572,14 @@ document.querySelectorAll('[data-mute]').forEach(function(b){
 });
 
 // Section RAND — reroll only the layers on this tab, keep the rest of the rig.
-var SECTION_PANELS={air:'air', impact:'impact'};
+var SECTION_PANELS={air:'air', impact:'impact', target:'target'};
 document.querySelectorAll('[data-rand-section]').forEach(function(b){
   b.addEventListener('click',function(){
     var panel=document.querySelector('.tab-panel[data-panel="'+SECTION_PANELS[b.dataset.randSection]+'"]');
     if(!panel) return;
     panel.querySelectorAll('.sp').forEach(function(el){
       var pk=el.dataset.p;
-      if(pk==='secAir'||pk==='secImpact') return;
+      if(pk==='secAir'||pk==='secImpact'||pk==='secTarget') return;
       var mn=+el.min,mx=+el.max;
       el.value=Math.round(mn+rnd()*(mx-mn));
       el.dispatchEvent(new Event('input'));
@@ -1552,7 +1685,7 @@ document.getElementById('randomBtn').addEventListener('click',function(){
   document.querySelectorAll('.sp').forEach(function(el){
     var pk=el.dataset.p;
     if(RAND_SACRED[pk]) return;
-    if(pk==='secAir'||pk==='secImpact') return;
+    if(pk==='secAir'||pk==='secImpact'||pk==='secTarget') return;
     nudgeSlider(el, MATERIAL_PARAMS[pk] ? 0.06 : (pk==='mFreq' ? 0.07 : 0.14));
   });
   setS('Nudged');
@@ -1581,7 +1714,7 @@ document.getElementById('megaBtn').addEventListener('click',function(){
   document.querySelectorAll('.sp').forEach(function(el){
     var pk=el.dataset.p;
     if(RAND_SACRED[pk]) return;
-    if(pk==='secAir'||pk==='secImpact') return;   // keep the preset's balance
+    if(pk==='secAir'||pk==='secImpact'||pk==='secTarget') return;   // keep the preset's balance
     nudgeSlider(el, MATERIAL_PARAMS[pk] ? 0.05 : (pk==='mFreq' ? 0.06 : 0.16));
   });
   document.getElementById('projSel').value='';    // a variation, not the named thing
@@ -1600,88 +1733,103 @@ document.addEventListener('visibilitychange',function(){
 // ═══════════════════════════════════════════════════
 //  FACTORY PROJECTILES
 // ═══════════════════════════════════════════════════
-// Grounded in a real material table (E, density, loss tangent from the
-// literature). Pitch tracks size (f ∝ c/L): big = LOW, small/thin = HIGH.
-// Material lives in the damping slope via Hardness->tanφ (steel 2e-4 .. rubber
-// 0.30). mDecay is the fundamental T60, capped at 50ms. SUB is the felt low body
-// of heavy things — off for small ones.
+// Grounded in a real material table (E, density, loss tangent). Pitch tracks
+// size (f ∝ c/L): big = LOW, small/thin = HIGH. Material lives in the damping
+// slope via Hardness->tanφ. mDecay is the fundamental T60, capped 50ms.
+// SUB = felt low body of heavy things. CRACK/BLAST (stage 3, the TARGET) = the
+// pressure release of the struck thing — the "something got hit" sound, where
+// most of the loudness lives. Off (crkLvl/blLvl 0) for delicate presets.
 var PROJECTILES=[
-  // ── bullets: a sub-ms broadband spall click exciting the TARGET; the surface
-  //    is carried almost entirely by MODAL DECAY (steel rings ~1000x concrete).
+  // bullets: a sub-ms broadband spall click exciting the TARGET; surface = decay.
   {n:'BULLET · HARD',  v:{size:9,velocity:380,density:92,hardness:58,shape:12,
       secAir:0,mLvl:20,mFreq:220,mDecay:20,mTilt:66,mPat:5,mModes:8,mVary:70,
-      cLvl:95,cSquish:80,cTilt:17000,cBite:34,gLvl:72,gLen:8,gTone:78,gCoarse:45,
-      sLvl:8,sLen:3,subLvl:0,pMax:100}},
+      cLvl:88,cSquish:80,cTilt:17000,cBite:34,gLvl:66,gLen:8,gTone:78,gCoarse:45,
+      sLvl:8,sLen:3,subLvl:0,
+      crkLvl:52,crkTone:70,crkNeg:55,crkLen:2,blLvl:44,blSize:38,blTone:72,blLen:14,blDrive:42,pMax:150}},
   {n:'BULLET · FLESH', v:{size:9,velocity:380,density:92,hardness:6,shape:22,
       secAir:0,mLvl:15,mFreq:90,mDecay:15,mTilt:82,mPat:0,mModes:8,mVary:60,
-      cLvl:60,cSquish:120,cTilt:2600,cBite:12,gLvl:30,gLen:10,gTone:20,gCoarse:40,
+      cLvl:55,cSquish:120,cTilt:2600,cBite:12,gLvl:28,gLen:10,gTone:20,gCoarse:40,
       sLvl:45,sLen:12,sTone:24,sSnap:50,subLvl:42,subFreq:70,subDecay:40,subDrive:15,
+      crkLvl:18,crkTone:24,crkNeg:55,crkLen:4,blLvl:38,blSize:56,blTone:24,blLen:24,blDrive:26,
       secImpact:106,pMax:150}},
   {n:'ARROW / THUNK', v:{size:9,velocity:62,density:52,hardness:40,shape:4,
       secAir:0,mLvl:92,mFreq:130,mDecay:82,mTilt:72,mPat:2,mModes:16,mVary:55,
       cLvl:35,cSquish:70,cTilt:12000,cBite:15,gLvl:40,gLen:10,gTone:60,gCoarse:40,
-      sLvl:10,sLen:5,subLvl:0,pMax:150}},
+      sLvl:10,sLen:5,subLvl:0,
+      crkLvl:24,crkTone:52,crkNeg:55,crkLen:3,blLvl:16,blSize:26,blTone:50,blLen:12,blDrive:22,pMax:150}},
   {n:'FIST / FLESH',  v:{size:95,velocity:9,density:40,hardness:8,shape:66,
       secAir:0,mLvl:90,mFreq:78,mDecay:98,mTilt:80,mPat:0,mModes:10,mVary:50,
       cLvl:30,cSquish:130,cTilt:2400,cBite:8,gLvl:18,gLen:14,gTone:22,gCoarse:35,
-      sLvl:55,sLen:12,sTone:26,sSnap:55,subLvl:0,pMax:150}},
+      sLvl:55,sLen:12,sTone:26,sSnap:55,subLvl:0,
+      crkLvl:26,crkTone:22,crkNeg:60,crkLen:5,blLvl:32,blSize:46,blTone:24,blLen:20,blDrive:26,pMax:150}},
   {n:'WOOD',          v:{size:74,velocity:40,density:36,hardness:34,shape:24,
       secAir:0,mLvl:90,mFreq:165,mDecay:100,mTilt:74,mPat:2,mModes:16,mVary:55,
       cLvl:45,cSquish:95,cTilt:9000,cBite:20,gLvl:38,gLen:8,gTone:50,gCoarse:40,
-      sLvl:25,sLen:6,subLvl:0,pMax:150}},
+      sLvl:25,sLen:6,subLvl:0,
+      crkLvl:34,crkTone:50,crkNeg:55,crkLen:3,blLvl:30,blSize:36,blTone:46,blLen:16,blDrive:30,pMax:150}},
   {n:'ROCK / STONE',  v:{size:120,velocity:18,density:62,hardness:62,shape:42,
       secAir:0,mLvl:52,mFreq:200,mDecay:92,mTilt:64,mPat:5,mModes:26,mVary:70,
-      cLvl:58,cSquish:85,cTilt:13000,cBite:24,gLvl:78,gLen:16,gTone:58,gCoarse:55,
-      sLvl:22,sLen:6,subLvl:0,pMax:150}},
-  // ── the metal pair — thin PINGs, solid CLONKs. Separated by DECAY and
-  //    MODE DENSITY, exactly as the physics says (mass-loading kills the block).
+      cLvl:56,cSquish:85,cTilt:13000,cBite:24,gLvl:74,gLen:16,gTone:58,gCoarse:55,
+      sLvl:22,sLen:6,subLvl:0,
+      crkLvl:44,crkTone:54,crkNeg:58,crkLen:3,blLvl:50,blSize:56,blTone:48,blLen:22,blDrive:38,pMax:150}},
+  // the metal pair — thin PINGs, solid CLONKs.
   {n:'THIN METAL',    v:{size:20,velocity:14,density:88,hardness:92,shape:15,
       secAir:0,mLvl:90,mFreq:820,mDecay:100,mTilt:26,mBody:35,mPat:2,mModes:7,mVary:45,
       cLvl:50,cSquish:70,cTilt:16000,cBite:30,gLvl:30,gLen:6,gTone:72,gCoarse:35,
-      sLvl:12,sLen:4,subLvl:0,pMax:250}},
+      sLvl:12,sLen:4,subLvl:0,
+      crkLvl:30,crkTone:84,crkNeg:50,crkLen:1,blLvl:14,blSize:20,blTone:80,blLen:8,blDrive:24,pMax:250}},
   {n:'SOLID METAL',   v:{size:60,velocity:30,density:96,hardness:94,shape:20,
       secAir:0,mLvl:70,mFreq:210,mDecay:58,mTilt:52,mBody:30,mPat:2,mModes:4,mVary:35,
-      cLvl:88,cSquish:55,cTilt:6500,cBite:36,gLvl:24,gLen:5,gTone:55,gCoarse:30,
+      cLvl:80,cSquish:55,cTilt:6500,cBite:36,gLvl:24,gLen:5,gTone:55,gCoarse:30,
       sLvl:10,sLen:3,subLvl:40,subFreq:80,subDecay:35,subDrive:18,
+      crkLvl:60,crkTone:76,crkNeg:55,crkLen:2,blLvl:34,blSize:36,blTone:68,blLen:16,blDrive:34,
       secImpact:125,pMax:150}},
   {n:'SWORD / CLANG', v:{size:26,velocity:24,density:84,hardness:84,shape:3,
       secAir:0,mLvl:90,mFreq:360,mDecay:100,mTilt:27,mBody:60,mPat:2,mModes:12,mVary:50,
       cLvl:42,cSquish:55,cTilt:18000,cBite:28,gLvl:40,gLen:6,gTone:78,gCoarse:30,
-      sLvl:8,sLen:4,subLvl:0,pMax:250}},
+      sLvl:8,sLen:4,subLvl:0,
+      crkLvl:46,crkTone:80,crkNeg:52,crkLen:2,blLvl:24,blSize:30,blTone:76,blLen:14,blDrive:30,pMax:250}},
   {n:'HOLLOW PIPE',   v:{size:60,velocity:16,density:80,hardness:86,shape:35,
       secAir:0,mLvl:94,mFreq:175,mDecay:100,mTilt:24,mBody:6,mPat:1,mModes:8,mVary:35,
       cLvl:40,cSquish:80,cTilt:12000,cBite:22,gLvl:26,gLen:6,gTone:62,gCoarse:30,
-      sLvl:18,sLen:5,subLvl:0,pMax:250}},
+      sLvl:18,sLen:5,subLvl:0,
+      crkLvl:34,crkTone:70,crkNeg:52,crkLen:2,blLvl:18,blSize:30,blTone:64,blLen:12,blDrive:26,pMax:250}},
   {n:'SUPER HARD',    v:{size:40,velocity:120,density:95,hardness:100,shape:8,
-      secAir:0,mLvl:62,mFreq:330,mDecay:53,mTilt:44,mBody:45,mPat:2,mModes:10,mVary:40,
-      cLvl:95,cSquish:45,cTilt:7000,cBite:30,gLvl:40,gLen:4,gTone:62,gCoarse:35,
-      sLvl:5,sLen:2,subLvl:0,pMax:100}},
-  // ── the heavy things — SUB carries the felt low body ──
+      secAir:0,mLvl:58,mFreq:330,mDecay:53,mTilt:44,mBody:45,mPat:2,mModes:10,mVary:40,
+      cLvl:88,cSquish:45,cTilt:7000,cBite:30,gLvl:40,gLen:4,gTone:62,gCoarse:35,
+      sLvl:5,sLen:2,subLvl:0,
+      crkLvl:70,crkTone:90,crkNeg:48,crkLen:1,blLvl:32,blSize:26,blTone:84,blLen:10,blDrive:38,pMax:100}},
+  // the heavy things — SUB carries the felt body, BLAST carries the size.
   {n:'BOULDER',       v:{size:520,velocity:13,density:60,hardness:55,shape:52,
-      secAir:0,mLvl:58,mFreq:48,mDecay:100,mTilt:76,mPat:5,mModes:26,mVary:70,
-      cLvl:52,cSquish:120,cTilt:5000,cBite:18,gLvl:74,gLen:34,gTone:32,gCoarse:70,
+      secAir:0,mLvl:52,mFreq:48,mDecay:100,mTilt:76,mPat:5,mModes:26,mVary:70,
+      cLvl:48,cSquish:120,cTilt:5000,cBite:18,gLvl:70,gLen:34,gTone:32,gCoarse:70,
       sLvl:28,sLen:16,sTone:22,subLvl:52,subFreq:44,subDecay:60,subDrive:20,
+      crkLvl:40,crkTone:34,crkNeg:62,crkLen:6,blLvl:62,blSize:90,blTone:30,blLen:72,blDrive:42,
       secImpact:120,pMax:250}},
   {n:'WATER BALLOON', v:{size:110,velocity:15,density:34,hardness:1,shape:72,
       secAir:0,mLvl:70,mFreq:92,mDecay:76,mTilt:84,mPat:0,mModes:8,mVary:60,
       cLvl:28,cSquish:160,cTilt:1800,cBite:5,gLvl:48,gLen:24,gTone:30,gCoarse:45,
-      sLvl:72,sLen:16,sTone:34,sSnap:45,subLvl:0,pMax:150}},
+      sLvl:72,sLen:16,sTone:34,sSnap:45,subLvl:0,
+      crkLvl:14,crkTone:16,crkNeg:60,crkLen:5,blLvl:40,blSize:52,blTone:20,blLen:28,blDrive:20,pMax:150}},
   {n:'CANNONBALL',    v:{size:150,velocity:240,density:95,hardness:74,shape:30,
-      secAir:0,mLvl:78,mFreq:48,mDecay:100,mTilt:72,mBody:22,mPat:5,mModes:26,mVary:55,
-      cLvl:60,cSquish:85,cTilt:5500,cBite:26,gLvl:58,gLen:22,gTone:34,gCoarse:62,
+      secAir:0,mLvl:70,mFreq:48,mDecay:100,mTilt:72,mBody:22,mPat:5,mModes:26,mVary:55,
+      cLvl:54,cSquish:85,cTilt:5500,cBite:26,gLvl:54,gLen:22,gTone:34,gCoarse:62,
       sLvl:20,sLen:8,subLvl:64,subFreq:58,subDecay:71,subDrive:22,
+      crkLvl:56,crkTone:44,crkNeg:62,crkLen:5,blLvl:72,blSize:86,blTone:40,blLen:64,blDrive:46,
       secImpact:130,pMax:250}},
   {n:'PEBBLE / TINK', v:{size:12,velocity:12,density:64,hardness:80,shape:22,
       secAir:0,mLvl:80,mFreq:1250,mDecay:49,mTilt:46,mPat:2,mModes:8,mVary:65,
       cLvl:60,cSquish:70,cTilt:19000,cBite:22,gLvl:36,gLen:4,gTone:80,gCoarse:25,
-      sLvl:10,sLen:3,subLvl:0,pMax:100}},
+      sLvl:10,sLen:3,subLvl:0,
+      crkLvl:24,crkTone:86,crkNeg:48,crkLen:1,blLvl:8,blSize:16,blTone:80,blLen:6,blDrive:20,pMax:100}},
   // Pre-impact air only — the last few ms before contact, not a whoosh.
   {n:'SWING + HIT',   v:{size:26,velocity:32,density:84,hardness:84,shape:3,
       secAir:70,airLen:30,airMiss:9,airDop:40,airCurve:130,
       wLvl:45,wTone:140,wWidth:35,wFlutter:12,wDrive:10,wHiss:25,zLvl:0,puLvl:10,
       mLvl:90,mFreq:360,mDecay:100,mTilt:27,mBody:60,mPat:2,mModes:12,mVary:50,
       cLvl:42,cSquish:55,cTilt:18000,cBite:28,gLvl:40,gLen:6,gTone:78,gCoarse:30,
-      sLvl:8,sLen:4,subLvl:0,pMax:250}}
+      sLvl:8,sLen:4,subLvl:0,
+      crkLvl:46,crkTone:80,crkNeg:52,crkLen:2,blLvl:24,blSize:30,blTone:76,blLen:14,blDrive:30,pMax:250}}
 ];
 
 function applyProjectile(v){
