@@ -167,7 +167,7 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
     <option value="files">FILES</option>
   </select>
   <button class="btn btn-r" id="randomBtn" title="Nudge the current patch — same object, different strike. Keeps the material and your layer choices.">RANDOMISE</button>
-  <button class="btn btn-t" id="megaBtn" title="The everything roll: new material, new object, flips layers on/off. Weighted so it stays an impact.">RANDOMISE ALL</button>
+  <button class="btn btn-t" id="megaBtn" title="A different random object every press — but always a believable one. Picks a material archetype and varies within its frame.">RANDOMISE ALL</button>
 </div>
 
 <div class="layers">
@@ -370,7 +370,7 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
 
 <script>
 var SR=48000, C=343;
-var BUILD='v6-patterns';
+var BUILD='v7-framedroll';
 var curBuf=null, curImpactN=0, nGen=0;
 var layerOff={};
 var pRanges={};
@@ -1273,14 +1273,13 @@ function updatePhys(){
   var mb=document.getElementById('modalBadge');
   var patName=(MODE_PATTERNS[patIdx4]||{name:'?'}).name;
   mb.innerHTML=patName+' &middot; '+fmtHz(f1)+' &middot; tail '+(t60*1000).toFixed(0)+'ms &middot; highs '+(t60hi*1000).toFixed(0)+'ms &middot; '+inBand+' modes';
-  // Only a genuinely HIGH mode ringing on reads as a chime. A boulder's 4th
-  // mode at 290Hz ringing for 55ms is not a chime, it is body — flagging that
-  // would be crying wolf. Aramaki's law is exponential in absolute ω, so a
-  // low-pitched object's modes sit close together and damp alike. Correctly.
-  var chime=(f4>1200 && t60hi>t60*0.4);
-  mb.style.borderColor=(inBand<3||chime)?'#f59e0b':'#22d3ee';
-  mb.style.color=(inBand<3||chime)?'#f59e0b':'#22d3ee';
-  mb.title=chime?'A '+fmtHz(f4)+' mode is ringing '+(t60hi*1000).toFixed(0)+'ms — nearly as long as the fundamental. That reads as a chime. Raise Hi Damp.':'';
+  // The only warning worth showing now is "too few modes = a sine ping". The
+  // old chime warning is obsolete: bright metals (HAMMER, SWORD, PIPE) trip it
+  // even though they sound right, and the 50ms decay cap structurally prevents
+  // the ringing-chime it was watching for. Removed rather than left crying wolf.
+  mb.style.borderColor=inBand<3?'#f59e0b':'#22d3ee';
+  mb.style.color=inBand<3?'#f59e0b':'#22d3ee';
+  mb.title=inBand<3?'Only '+inBand+' mode(s) in band — that is a sine ping, not an object. Lower the Pitch or raise Modes.':'';
   var sb=document.getElementById('slapBadge');
   sb.textContent=(p.shape<25?'POINT ':p.shape>65?'FLAT ':'EDGE ')+p.shape+'%';
   sb.style.opacity=p.shape<15?'0.35':'1';
@@ -1508,63 +1507,33 @@ document.getElementById('randomBtn').addEventListener('click',function(){
   document.getElementById('generateBtn').click();
 });
 
-// RANDOMISE ALL — new material, new object, layers flipped. Weighted so the
-// result is still an impact and not noise soup: MODAL is the sound, so it
-// almost always survives; the air layers are usually fiction (see the reality
-// strip) so they rarely come on.
+// RANDOMISE ALL — a different random object, but always a BELIEVABLE one.
+// The presets sound good because they are coherent sets: pattern, pitch,
+// material and decay all agree. Rolling every slider full-range independently
+// broke that — you got a metal pattern with rubber damping at 2kHz with a 300ms
+// tail, i.e. nonsense. So instead: pick a random archetype (the coherent
+// skeleton) and vary WITHIN its frame. "Still randomising, but a decent frame
+// for that material." Every roll is a fresh object that could actually exist.
 document.getElementById('megaBtn').addEventListener('click',function(){
-  var KEY_PROB={modal:0.97, accel:0.75, grit:0.7, slap:0.5, whoosh:0.25, zip:0.15, push:0.2};
+  var pr=PROJECTILES[Math.floor(rnd()*PROJECTILES.length)];
+  // Start every layer live, then let the archetype's own levels shape the mix
+  // (a preset that wants a layer silent sets its level to ~0).
   document.querySelectorAll('.lt[data-toggle]').forEach(function(t){
-    var want=rnd() < (KEY_PROB[t.dataset.toggle]!==undefined?KEY_PROB[t.dataset.toggle]:0.5);
-    if(want === t.classList.contains('off')) t.click();   // reuse the real handler
+    layerOff[t.dataset.toggle]=false;
+    t.classList.remove('off'); t.closest('.layer').classList.remove('off');
   });
+  applyProjectile(pr.v);
+  // Vary within the frame. Wider than the bounded RANDOMISE (this is meant to
+  // roam) but the identity params — material and mode pattern — still barely
+  // move, so a rolled hammer is still a hammer, just a different one.
   document.querySelectorAll('.sp').forEach(function(el){
     var pk=el.dataset.p;
     if(RAND_SACRED[pk]) return;
-    var mn=+el.min,mx=+el.max;
-    el.value=Math.round(mn+rnd()*(mx-mn));
-    el.dispatchEvent(new Event('input'));
+    if(pk==='secAir'||pk==='secImpact') return;   // keep the preset's balance
+    nudgeSlider(el, MATERIAL_PARAMS[pk] ? 0.05 : (pk==='mFreq' ? 0.06 : 0.16));
   });
-  // Chaos, but not self-sabotage: too few modes in band is a sine ping, the
-  // exact thing the modal rewrite exists to avoid.
-  var mm=document.querySelector('.sp[data-p="mModes"]');
-  if(+mm.value<5){ mm.value=5+Math.round(rnd()*12); mm.dispatchEvent(new Event('input')); }
-  // Pitch rolls LOG-uniform, not linear. A linear roll over 40-4000 medians at
-  // ~2kHz, where the upper modes fall off the end of the spectrum — and it is
-  // unrealistic besides: Aramaki et al. measured real objects at wood 277-415Hz,
-  // metal 330-1175Hz, glass 1047-2637Hz. Log-uniform medians near 400Hz.
-  var mf=document.querySelector('.sp[data-p="mFreq"]');
-  var lo=Math.log(+mf.min), hi=Math.log(+mf.max);
-  mf.value=Math.round(Math.exp(lo+rnd()*(hi-lo)));
-  // Guarantee an object, not a ping: drop the pitch until enough modes fit.
-  function inBand(){
-    var f1=+mf.value, pi=Math.round(+document.querySelector('.sp[data-p="mPat"]').value), c=0;
-    var st=MODE_PATTERNS[pi]&&MODE_PATTERNS[pi].stone;
-    for(var n=1;n<=+mm.value;n++){ if(f1*(st?2:modeRatio(pi,n))>SR*0.45) break; c++; }
-    return c;
-  }
-  var guard=0;
-  while(inBand()<4 && +mf.value>+mf.min && guard++<12) mf.value=Math.round(+mf.value*0.6);
-  mf.dispatchEvent(new Event('input'));
-  // Keep Hi Damp high enough that a roll can't rebuild the chime bell. The
-  // higher the pitch, the harder the highs must be damped to stay believable.
-  var mt=document.querySelector('.sp[data-p="mTilt"]');
-  var floor=+mf.value>600?62:45;
-  if(+mt.value<floor){ mt.value=floor+Math.round(rnd()*(100-floor)); mt.dispatchEvent(new Event('input')); }
-  // High-pitched objects have no business ringing on — energy that high does
-  // not survive. Cap the tail as the pitch climbs.
-  var md=document.querySelector('.sp[data-p="mDecay"]');
-  var cap=+mf.value>900?45:(+mf.value>400?68:100);
-  if(+md.value>cap){ md.value=Math.round(cap*(0.55+rnd()*0.45)); md.dispatchEvent(new Event('input')); }
-  // An impact needs a body. If the roll muted the air, don't leave it at some
-  // random level pretending otherwise.
-  syncDup('secImpact', 80+Math.round(rnd()*50));
-  if(!layerOff.whoosh || !layerOff.zip || !layerOff.push){
-    syncDup('secAir', Math.round(rnd()*90));
-  } else { syncDup('secAir', 0); }
-  // The patch is no longer the named thing — say so instead of lying about it.
-  document.getElementById('projSel').value='';
-  setS('Rolled a new object');
+  document.getElementById('projSel').value='';    // a variation, not the named thing
+  setS('Rolled: '+pr.n.replace(/ ?\/.*$/,'').toLowerCase());
   document.getElementById('generateBtn').click();
 });
 window.addEventListener('resize',function(){
