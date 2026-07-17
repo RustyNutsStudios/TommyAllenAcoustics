@@ -166,7 +166,8 @@ input[type="range"]::-moz-range-thumb{width:12px;height:16px;border-radius:0;bac
     <option value="zip" selected>ZIP</option>
     <option value="files">FILES</option>
   </select>
-  <button class="btn btn-r" id="randomBtn">RANDOMISE ALL</button>
+  <button class="btn btn-r" id="randomBtn" title="Nudge the current patch — same object, different strike. Keeps the material and your layer choices.">RANDOMISE</button>
+  <button class="btn btn-t" id="megaBtn" title="The everything roll: new material, new object, flips layers on/off. Weighted so it stays an impact.">RANDOMISE ALL</button>
 </div>
 
 <div class="layers">
@@ -1378,15 +1379,87 @@ document.getElementById('downloadBtn').addEventListener('click',function(){
   setS('BOUNCE 0/'+n);
   setTimeout(step,0);
 });
+// ── The two rolls ──────────────────────────────────
+// The projectile dropdown is a PRESET — it just writes slider values, nothing
+// is locked. Which is exactly why one all-or-nothing randomiser felt arbitrary:
+// Size/Velocity/Density/Hardness/Shape ARE the material, so scrambling them
+// full-range threw the object away while the dropdown still claimed "HAMMER".
+//
+//   RANDOMISE     — bounded. Same object, different strike.
+//   RANDOMISE ALL — the everything roll, including a new material.
+
+// Never touched by either roll: these are delivery, not sound.
+var RAND_SACRED={outLevel:1,fadeIn:1,fadeOut:1,variation:1};
+// The five sliders that ARE the projectile.
+var MATERIAL_PARAMS={size:1,velocity:1,density:1,hardness:1,shape:1};
+
+function nudgeSlider(el, frac){
+  var mn=+el.min, mx=+el.max, span=mx-mn;
+  var v=+el.value + (rnd()*2-1)*span*frac;
+  el.value=Math.round(Math.max(mn, Math.min(mx, v)));
+  el.dispatchEvent(new Event('input'));
+}
+
+// RANDOMISE — jitter around whatever is loaded. The material moves only a
+// little (±8% of range) so a hammer still reads as a hammer; everything else
+// gets a wider ±22%. Layer on/off choices are yours and are left alone.
 document.getElementById('randomBtn').addEventListener('click',function(){
   document.querySelectorAll('.sp').forEach(function(el){
     var pk=el.dataset.p;
-    if(pk==='outLevel'||pk==='fadeIn'||pk==='fadeOut'||pk==='variation') return;
+    if(RAND_SACRED[pk]) return;
     if(pk==='secAir'||pk==='secImpact') return;
+    nudgeSlider(el, MATERIAL_PARAMS[pk] ? 0.08 : 0.22);
+  });
+  setS('Nudged');
+  document.getElementById('generateBtn').click();
+});
+
+// RANDOMISE ALL — new material, new object, layers flipped. Weighted so the
+// result is still an impact and not noise soup: MODAL is the sound, so it
+// almost always survives; the air layers are usually fiction (see the reality
+// strip) so they rarely come on.
+document.getElementById('megaBtn').addEventListener('click',function(){
+  var KEY_PROB={modal:0.97, accel:0.75, grit:0.7, slap:0.5, whoosh:0.25, zip:0.15, push:0.2};
+  document.querySelectorAll('.lt[data-toggle]').forEach(function(t){
+    var want=rnd() < (KEY_PROB[t.dataset.toggle]!==undefined?KEY_PROB[t.dataset.toggle]:0.5);
+    if(want === t.classList.contains('off')) t.click();   // reuse the real handler
+  });
+  document.querySelectorAll('.sp').forEach(function(el){
+    var pk=el.dataset.p;
+    if(RAND_SACRED[pk]) return;
     var mn=+el.min,mx=+el.max;
     el.value=Math.round(mn+rnd()*(mx-mn));
     el.dispatchEvent(new Event('input'));
   });
+  // Chaos, but not self-sabotage: too few modes in band is a sine ping, the
+  // exact thing the modal rewrite exists to avoid.
+  var mm=document.querySelector('.sp[data-p="mModes"]');
+  if(+mm.value<5){ mm.value=5+Math.round(rnd()*12); mm.dispatchEvent(new Event('input')); }
+  // Pitch rolls LOG-uniform, not linear. A linear roll over 40-4000 medians at
+  // ~2kHz, where the upper modes fall off the end of the spectrum — and it is
+  // unrealistic besides: Aramaki et al. measured real objects at wood 277-415Hz,
+  // metal 330-1175Hz, glass 1047-2637Hz. Log-uniform medians near 400Hz.
+  var mf=document.querySelector('.sp[data-p="mFreq"]');
+  var lo=Math.log(+mf.min), hi=Math.log(+mf.max);
+  mf.value=Math.round(Math.exp(lo+rnd()*(hi-lo)));
+  // Guarantee an object, not a ping: drop the pitch until enough modes fit.
+  function inBand(){
+    var f1=+mf.value, q=1+(+document.querySelector('.sp[data-p="mBody"]').value/100), c=0;
+    for(var n=1;n<=+mm.value;n++){ if(f1*Math.pow(n,q)>SR*0.45) break; c++; }
+    return c;
+  }
+  var guard=0;
+  while(inBand()<4 && +mf.value>+mf.min && guard++<12) mf.value=Math.round(+mf.value*0.6);
+  mf.dispatchEvent(new Event('input'));
+  // An impact needs a body. If the roll muted the air, don't leave it at some
+  // random level pretending otherwise.
+  syncDup('secImpact', 80+Math.round(rnd()*50));
+  if(!layerOff.whoosh || !layerOff.zip || !layerOff.push){
+    syncDup('secAir', Math.round(rnd()*90));
+  } else { syncDup('secAir', 0); }
+  // The patch is no longer the named thing — say so instead of lying about it.
+  document.getElementById('projSel').value='';
+  setS('Rolled a new object');
   document.getElementById('generateBtn').click();
 });
 window.addEventListener('resize',function(){
