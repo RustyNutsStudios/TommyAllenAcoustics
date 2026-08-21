@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — Sci Forge</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Bungee+Shade&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0020;color:#ddd;font-family:'VT323',monospace;font-size:20px;min-height:100vh;overflow-x:hidden}
+  .bg{position:fixed;inset:0;z-index:0;background:
+    radial-gradient(ellipse at 20% 50%, rgba(139,92,246,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(6,182,212,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(217,70,239,0.05) 0%, transparent 50%)}
+  .scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);z-index:100;pointer-events:none}
+  .bar-top{position:fixed;top:0;left:0;right:0;height:4px;z-index:50;background:linear-gradient(90deg,#8b5cf6,#06b6d4,#d946ef,#f97316,#0f0,#8b5cf6);background-size:200% 100%;animation:barSlide 4s linear infinite}
+  @keyframes barSlide{0%{background-position:0% 0}100%{background-position:200% 0}}
+  .app{position:relative;z-index:10;max-width:860px;margin:0 auto;padding:30px 16px 80px}
+  .crumb{font-size:16px;color:#8b5cf6;margin-bottom:14px}
+  .crumb a{color:#06b6d4;text-decoration:none}.crumb a:hover{color:#fff}
+  .header{text-align:center;margin-bottom:14px;padding-bottom:14px;border-bottom:3px double #8b5cf6}
+  .header h1{font-family:'Bungee Shade',cursive;font-size:30px;color:#06b6d4;text-shadow:3px 3px 0 #8b5cf6,0 0 30px rgba(6,182,212,0.3);line-height:1.4}
+  .header .sub{font-size:19px;color:#a78bfa;letter-spacing:2px;margin-top:10px}
+  .hook{background:#1a0a2e;border:2px solid #ffcc00;padding:16px;margin-bottom:20px;text-align:center}
+  .hook p{color:#eee;font-size:20px;line-height:1.65}
+  .hook b{color:#ffcc00}
+  .shot{width:100%;display:block;border:2px solid #8b5cf6;margin-bottom:6px;background:#0f0520}
+  .cap{font-size:16px;color:#a78bfa;text-align:center;margin-bottom:20px}
+  .sec{margin-bottom:24px}
+  .sec h2{font-family:'Press Start 2P',monospace;font-size:11px;color:#ffcc00;letter-spacing:2px;margin-bottom:12px;padding-bottom:6px;border-bottom:2px dashed #8b5cf6;text-shadow:0 0 4px #ffcc00}
+  .box{background:#1a0a2e;border:2px solid #8b5cf6;padding:16px}
+  .box p{color:#ccc;font-size:19px;line-height:1.7;margin-bottom:10px}
+  .box p:last-child{margin-bottom:0}
+  .box b{color:#06b6d4}
+  .box code{background:#0f0520;border:1px solid #8b5cf6;padding:1px 6px;color:#0f0;font-size:17px}
+  .feat{list-style:none}
+  .feat li{color:#ccc;font-size:19px;line-height:1.6;padding:9px 0 9px 26px;border-bottom:1px dashed #2a1050;position:relative}
+  .feat li:last-child{border-bottom:none}
+  .feat li:before{content:"\25B8";position:absolute;left:4px;color:#d946ef}
+  .feat b{color:#06b6d4}
+  .cta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0}
+  .cta > a,.cta > span{display:block;text-align:center;padding:20px 14px;text-decoration:none;border:3px solid;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:2px;line-height:1.9}
+  .cta .try{border-color:#0f0;color:#0f0;background:#0f0520;text-shadow:0 0 6px #0f0}
+  .cta .try:hover{background:#0f0;color:#000;text-shadow:none}
+  .cta .buy{border-color:#ffcc00;color:#ffcc00;background:#1a0a2e;text-shadow:0 0 6px #ffcc00}
+  .cta .buy:hover{background:#ffcc00;color:#000;text-shadow:none}
+  .cta .soon{border-color:#8b5cf6;color:#8b5cf6;background:#0f0520;cursor:default}
+  .cta .small{display:block;border:none;padding:0;font-family:'VT323',monospace;font-size:17px;letter-spacing:0;margin-top:8px;color:#a78bfa}
+  .cta .try .small{color:#7ddb7d}
+  .cta .buy .small{color:#d9b45c}
+  .footer{text-align:center;margin-top:26px;padding-top:16px;border-top:2px solid #8b5cf6}
+  .back{display:inline-block;font-family:'Press Start 2P',monospace;font-size:9px;color:#ffcc00;text-decoration:none;letter-spacing:2px;border:2px solid #ffcc00;padding:10px 18px;background:#1a0a2e}
+  .back:hover{background:#ffcc00;color:#000}
+  .colophon{font-family:'Press Start 2P',monospace;font-size:8px;color:#8b5cf6;letter-spacing:2px;margin-top:12px;line-height:2.2}
+  @media(max-width:560px){.header h1{font-size:20px}.cta{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="scanlines"></div><div class="bar-top"></div>
+<div class="app">
+
+  <div class="crumb"><a href="home.html">&lt;&lt; back to the hub</a></div>
+
+  <div class="header">
+    <h1>Sci Forge</h1>
+    <div class="sub">SCI-FI WEAPON SOUND DESIGNER FOR UNREAL</div>
+  </div>
+
+  <div class="hook"><p>Build a plasma bolt, a railgun, a beam or a cryo weapon inside the Unreal Editor &mdash; charge-up, discharge, cooldown, dry fire &mdash; then press one button and it writes <b>ready-to-use SoundCue and MetaSound assets</b> into your open project. Pure synthesis, <b>44 layers</b>, sitting on real blast physics.</p></div>
+
+  <img class="shot" src="images/plugins/sci-12-design-in-unreal.jpg" alt="Sci Forge in the Unreal Editor">
+  <div class="cap">Designing a weapon without leaving the editor.</div>
+
+  <div class="cta">
+    <a class="try" href="scifi-shot-forge.html">&#9654; TRY IT FREE<span class="small">the browser sci-fi generator &mdash; runs in your browser, no install</span></a>
+    <span class="soon">&#9203; COMING TO FAB<span class="small">the Unreal plugin is in review</span></span>
+  </div>
+
+  <div class="sec">
+    <h2>&gt;&gt; WHAT IT DOES</h2>
+    <div class="box"><p>Open the Sci Forge tab, design a weapon, press <b>SEND TO UNREAL</b>. SoundWaves, a plain SoundCue that plays a random take per trigger, and a MetaSound built with Epic's own MetaSound Builder &mdash; one folder, named after your weapon.</p><p>The button follows the view: <b>SIMPLE</b> exports one shot, <b>DETAILED</b> a whole weapon, <b>DUAL FADE</b> two voices that crossfade as the cell drains.</p></div>
+  </div>
+
+  <div class="sec">
+    <h2>&gt;&gt; WHAT YOU GET</h2>
+    <div class="box"><ul class="feat"><li><b>The ENERGY stage</b> &mdash; CHARGE, SUCK, VACUUM, DUCK, COOLDOWN, BEAM, ARC, GOO, ICE. Nine layers no conventional gun has, over real blast physics so it has mass instead of sounding like a synth patch.</li><li><b>The Weapon Bench</b> &mdash; FIRST, NORMAL, LAST and EMPTY, with a cell that counts down.</li><li><b>Ammo-state export</b> &mdash; one cue per slot plus a MetaSound that routes a single trigger from the count.</li><li><b>Dual fade</b> &mdash; a rifle that goes from clean to unstable as the cell drains. Anything you can normalise to 0-1 drives it: heat, charge, damage.</li><li><b>44 layers, 223 parameters</b> &mdash; across TRANSIENT, ENERGY, SUBS, MECHS, VERB and MIX.</li><li><b>Variation sets</b> &mdash; 5, 10 or 15 distinct takes per import.</li><li><b>Royalty free</b> &mdash; every sound you generate is yours, any project, no attribution.</li></ul></div>
+  </div>
+
+  <div class="sec">
+    <h2>&gt;&gt; SEE IT</h2>
+    <img class="shot" src="images/plugins/sci-15-energy-stage.jpg" alt="The ENERGY stage &mdash; nine layers no firearm has.">
+    <div class="cap">The ENERGY stage &mdash; nine layers no firearm has.</div>
+    <img class="shot" src="images/plugins/sci-14-weapon-bench.jpg" alt="A cell that drains, instead of one WAV on repeat.">
+    <div class="cap">A cell that drains, instead of one WAV on repeat.</div>
+    <img class="shot" src="images/plugins/sci-16-ammo-metasound.jpg" alt="The ammo-routing MetaSound the tool writes for you.">
+    <div class="cap">The ammo-routing MetaSound the tool writes for you.</div>
+    <img class="shot" src="images/plugins/sci-09-soundcue.jpg" alt="A plain SoundCue &mdash; nothing custom, nothing locked.">
+    <div class="cap">A plain SoundCue &mdash; nothing custom, nothing locked.</div>
+    <img class="shot" src="images/plugins/sci-10-metasound.jpg" alt="Readable graphs, laid out on a grid with labelled bands.">
+    <div class="cap">Readable graphs, laid out on a grid with labelled bands.</div>
+  </div>
+
+  <div class="sec">
+    <h2>&gt;&gt; THE TECHNICAL BIT</h2>
+    <div class="box">
+      <p><b>Editor-only.</b> It adds nothing to your packaged game. The sounds it builds are
+      ordinary Unreal assets and ship like any other asset.</p>
+      <p><b>Unreal Engine 5.6, 5.7 and 5.8</b>, Windows editor. Each engine version has its own build.</p>
+      <p><b>Requires two plugins that ship with Unreal</b> &mdash; Python Editor Script Plugin
+      (runs the import) and MetaSound (the asset type it generates). Both are enabled
+      automatically. Nothing third-party to download.</p>
+      <p>Assets build under <code>/Game/TAA/SciForge/YourName/</code>.</p>
+    </div>
+  </div>
+
+  <div class="cta">
+    <a class="try" href="scifi-shot-forge.html">&#9654; TRY IT FREE<span class="small">no install, no account</span></a>
+    <span class="soon">&#9203; COMING TO FAB<span class="small">the Unreal plugin is in review</span></span>
+  </div>
+
+  <div class="footer">
+    <a class="back" href="home.html">&lt;&lt; BACK TO THE HUB</a>
+    <div class="colophon">&copy; 2025-2026 TOMMY ALLEN ACOUSTICS</div>
+  </div>
+
+</div>
+</body>
+</html>
