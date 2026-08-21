@@ -17,26 +17,34 @@
   PLACEHOLDER tag — so a placeholder cannot ship invisibly. To count what is
   left:
       grep -c 'data-ph=' unreal-variation-bench.html
-  23 right now (22 real placeholders + the line you are reading). It must
-  reach 1. At that point also delete the noindex meta above, the UNDER
-  CONSTRUCTION marquee div, and the [data-ph] CSS block.
+  20 right now (19 real placeholders + the line you are reading; started at
+  22 — the CTA wording and the support route were settled by the Director on
+  21 Aug). It must reach 1. At that point also delete the noindex meta above,
+  the UNDER CONSTRUCTION marquee div, and the [data-ph] CSS block.
 
-  NAME: "Variation Bench" is a WORKING TITLE (Tommy may rename, FOCUS-1
-  decision #1). It appears as  Variation Bench / VARIATION BENCH /
-  variation-bench  — find/replace those three spellings plus a git mv of
-  this file renames everything.
+  NAME: "Variation Bench" is a WORKING TITLE and the rename is TOMMY'S CALL,
+  still pending (Director, 21 Aug 2026 — keep the working title, no git mv
+  until he rules). It appears as  Variation Bench / VARIATION BENCH /
+  variation-bench  — find/replace those three spellings plus a git mv of this
+  file renames everything.
 
   WHO OWES WHAT (stated, not acted on — the Director routes):
     GRANT PITCH  -> hook, WHAT IT DOES, WHAT YOU GET, THE TECHNICAL BIT copy
     GRANT DEMO   -> the demo itself (variation-bench.html) and the real dial
                     names/ranges, after the Day 2 design gate
-    TOMMY        -> the video (Day 9) -> paste the ID into the iframe below
+    TOMMY        -> the video (Day 9) -> paste the ID into the iframe below;
+                    and the product name
     WEBSITE      -> hero + 3 gallery shots (images/plugins/vb-*.jpg, 16:9,
                     letterboxed if needed, NEVER stretched), and the hub card
-    DIRECTOR     -> the second CTA's wording, and the support route
+    SETTLED      -> the second CTA's wording (approved) and the support route
+                    (this page's own IF SOMETHING BREAKS block, nothing else)
 
-  HUB CARD (not added yet — the hub order is locked; placing it under UNREAL
-  ENGINE PLUGINS vs the free tools grid is the Director's call):
+  HUB CARD — placement RULED by the Director 21 Aug 2026: home.html, the
+  >> FREE BROWSER TOOLS section (h2 at line 94), TOP slot, i.e. immediately
+  after the <div class="nav-grid"> on line 95 and before the IMPACT FORGE
+  card. It is a free browser tool, not a plugin. Paste this in ONLY on Day 9
+  staging, once GRANT DEMO's variation-bench.html actually exists — until
+  then the page stays unlinked and noindex:
     <a href="unreal-variation-bench.html" class="nav-card"><span class="card-icon">&#127922;</span><span class="card-title">VARIATION BENCH</span><span class="card-desc">2 waves in, 30 out</span></a>
 -->
 <style>
@@ -135,7 +143,8 @@
   <!-- ===== CTA (top) ===== -->
   <div class="cta">
     <a class="try" data-ph="TRY IT FREE target — GRANT DEMO delivers variation-bench.html. This link 404s until it lands" href="variation-bench.html">&#9654; TRY IT FREE<span class="small">runs in your browser &mdash; no install, no account</span></a>
-    <span class="soon" data-ph="second button — there is no Fab listing; the Unreal plugin is a roadmap item in the proposal, not built. Wording is the Director's call">&#9203; COMING TO UNREAL<span class="small">the editor plugin is on the roadmap</span></span>
+    <!-- Wording APPROVED by the Director 21 Aug 2026: it matches the grant framing — browser demo now, plugin on the roadmap. Not a placeholder. -->
+    <span class="soon">&#9203; COMING TO UNREAL<span class="small">the editor plugin is on the roadmap</span></span>
   </div>
 
   <!-- ===== VIDEO — Tommy records Day 9, unlisted YouTube embedded here (FOCUS-1) ===== -->
@@ -195,16 +204,19 @@
       <div class="q">&#9658; My file will not load</div>
       <div class="a">The slots take <b>WAV</b> files. Convert anything else first.</div>
     </div>
-    <div class="help" data-ph="support route — a free browser tool has no Fab listing to carry support. Director decides where questions go">
-      <div class="lbl">&#9993; SUPPORT</div>
-      <p>Questions, bug reports and feature requests: <b>route TBC</b>.</p>
-    </div>
+    <!-- NO SUPPORT BOX, and that is deliberate (Director ruling, 21 Aug 2026).
+         A free browser tool routes support through this IF SOMETHING BREAKS
+         block and nothing else: no email, no support page. Verified against
+         the site — click-factory / shot-forge / scifi-shot-forge / impact-forge
+         / pewboy carry no help block and no mailto, and support.html was
+         deleted 21 Aug. The Fab support route exists only for paid listings.
+         Reviewer contact belongs in the grant dossier, not on this page. -->
   </div>
 
   <!-- ===== CTA (bottom) ===== -->
   <div class="cta">
     <a class="try" data-ph="same target as the top CTA" href="variation-bench.html">&#9654; TRY IT FREE<span class="small">no install, no account</span></a>
-    <span class="soon" data-ph="same as the top CTA">&#9203; COMING TO UNREAL<span class="small">the editor plugin is on the roadmap</span></span>
+    <span class="soon">&#9203; COMING TO UNREAL<span class="small">the editor plugin is on the roadmap</span></span>
   </div>
 
   <div class="footer">
