@@ -1,0 +1,2517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Charset first, which is good practice and costs nothing.
+     CORRECTION, 25 Aug: an earlier version of this comment claimed the late
+     position CAUSED mojibake in Unreal's CEF. THAT WAS WRONG, and it was my
+     error. Re-measured properly in a real 5.6 tab with byte-exact copies, the
+     same build renders correctly with the charset at byte 45, at 646 (inside
+     the sniff window) and at 1600 (outside it). Position never mattered here.
+     The mojibake I saw came from my own test harness: PowerShell's Get-Content
+     reads a BOM-less UTF-8 file as ANSI, so injecting a probe corrupted every
+     multi-byte character before the file ever reached the editor. The two
+     screenshots I compared differed in TWO variables, and I credited the wrong
+     one. Keeping the line here anyway - it is correct by spec - but nobody
+     should believe it fixed a bug. -->
+<meta charset="UTF-8">
+<!-- Copyright 2026 Tommy Allen Acoustics. All rights reserved.
+     TAA MINI RECORDER — tool 3 of the family, and the simplest one.
+     "just quickly getting in sounds". Pick an input, watch the meter, record,
+     trim, name it, send it. Everything that would slow that down is absent.
+
+     DEV: loads ../shared/vb-core.js by script tag. RELEASE: the build script
+     (Shared/scripts/build-tools.js) inlines everything into one self-contained
+     file — the single-file law is what we SHIP, not how we develop.
+     Boot flags: ?demo (a synthetic take, so it works with no microphone). -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAA Mini Recorder</title>
+<style>
+/* inlined: ../shared/vb-core.css */
+/* ══ VB-CORE.CSS — the S3 HARDWARE PANEL skin, shared by all three tools ══
+   One organising idea, and every rule obeys it:
+     PANELS ARE LIGHT HARDWARE. ANYTHING SHOWING AUDIO IS A DARK SCREEN INSET.
+   Swapping the :root block below re-skins every tool at once - that is the
+   whole reason the skin was built as tokens. */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+/* == SKIN: S3 HARDWARE PANEL (picked 25 Aug) ==============================
+   One organising idea, and every rule below obeys it:
+     PANELS ARE LIGHT HARDWARE.  ANYTHING SHOWING AUDIO IS A DARK SCREEN INSET.
+   So the chrome is a pale instrument face with engraved labels and physical
+   fader caps, and every waveform, meter and tile sits on a dark screen the way
+   it does on a real desk. Swapping this block is how the skin changes -
+   nothing below hard-codes a colour. */
+:root{
+  --bg:#d9d7d0; --panel:#e7e5df; --panel2:#cfcdc5; --line:#b3b0a6;
+  --ink:#1c1b18; --dim:#6e6b62; --dimmer:#8a877e;
+  --amber:#ff5a1f; --amber-dim:#8a8780; --green:#1c9e6a; --red:#e0341f;
+  /* the screen: where audio lives */
+  --screen:#232220; --screen-2:#2e2c28; --screen-line:#3a3833;
+  /* field = an editable inset */
+  --field:#f2f0ea;
+  /* layer identity: DARK on the panel, BRIGHT on the screen */
+  --A:#0f766e; --B:#a21caf; --C:#4d7c0f; --D:#b45309;
+  --Aw:#2dd4bf; --Bw:#f0abfc; --Cw:#a3e635; --Dw:#fbbf24;
+  --cap:linear-gradient(180deg,#fdfdfb,#d5d2c9);
+  --engrave:0 1px 0 rgba(255,255,255,.85);
+}
+body{background:var(--bg);color:var(--ink);font-family:'VT323',monospace;font-size:17px}
+.ttl,.lab,.btn,.seg b,.num,.badge{text-shadow:var(--engrave)}
+.px{font-family:'Press Start 2P',monospace}
+
+/* THE WHOLE WINDOW IS ONE GRID (APP-BLUEPRINT §4). minmax(0,1fr) is load-bearing:
+   an implicit auto column sizes to its content and pushes the UI off-screen. */
+.app{height:100vh;display:grid;grid-template-columns:minmax(0,1fr);
+     grid-template-rows:auto minmax(0,1fr) auto auto auto;gap:4px;padding:4px 6px}
+.panel{background:var(--panel);border:1px solid var(--line);min-width:0;min-height:0;
+       box-shadow:0 1px 0 rgba(255,255,255,.75) inset}
+.row{display:flex;align-items:center;gap:6px;min-width:0}
+.ttl{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--amber);letter-spacing:1px;white-space:nowrap}
+.lab{font-size:13px;color:var(--amber-dim);letter-spacing:1px;white-space:nowrap}
+.hint{font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 0;min-width:0}
+.sep{width:1px;height:18px;background:var(--line);flex:0 0 auto}
+
+/* controls — NEVER a native <select>/<input type=file> popup in the editor host
+   (APP-BLUEPRINT §6.5: a native popup HARD-CRASHES the editor) */
+.btn{font-family:'Press Start 2P',monospace;font-size:8px;padding:6px 9px;cursor:pointer;
+     border:1px solid var(--line);background:var(--field);color:var(--ink);white-space:nowrap;
+     box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 1px 2px rgba(0,0,0,.16)}
+.btn:hover{border-color:var(--amber);background:#fff}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.primary{background:linear-gradient(180deg,#ff7a45,#e04a12);color:#fff;border-color:#c9410f;
+             text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.btn.warn{border-color:var(--red);color:var(--red);background:#fdeeeb}
+.btn.sm{font-size:7px;padding:4px 6px}
+.seg{display:inline-flex;border:1px solid var(--line);flex:0 0 auto}
+.seg b{font-family:'Press Start 2P',monospace;font-size:7px;padding:5px 7px;cursor:pointer;
+       background:var(--field);color:var(--dim);font-weight:normal;user-select:none;
+       box-shadow:0 1px 0 rgba(255,255,255,.9) inset}
+.seg b.on{background:var(--amber);color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.seg.tiny b{font-size:6px;padding:4px 5px}
+.num{font-family:'Press Start 2P',monospace;font-size:8px;padding:5px 4px;background:var(--field);
+     border:1px solid var(--line);color:var(--ink);outline:none;text-align:center;width:52px;
+     box-shadow:0 1px 2px rgba(0,0,0,.12) inset}
+.num.wide{width:96px}
+input[type=range]{-webkit-appearance:none;height:5px;background:var(--line);
+  border:1px solid #9a978d;border-radius:3px;width:100%;cursor:pointer;display:block;margin:3px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:17px;
+  background:var(--cap);border:1px solid #8a8780;border-radius:2px;cursor:pointer;
+  box-shadow:0 1px 2px rgba(0,0,0,.32)}
+input[type=range]::-moz-range-thumb{width:12px;height:17px;background:#f0eee8;
+  border:1px solid #8a8780;border-radius:2px;cursor:pointer}
+
+/* ── toolbar ─────────────────────────────────────────────────────────── */
+.tb{padding:4px 7px}
+.brand{font-family:'Press Start 2P',monospace;font-size:12px;color:var(--amber);letter-spacing:1px}
+.brand small{color:var(--dim);font-size:7px;letter-spacing:0}
+
+/* ── mode panes ──────────────────────────────────────────────────────── */
+.pane{display:none;min-height:0;min-width:0;height:100%}
+.pane.on{display:block}
+#designPane{overflow:auto}
+.layers{display:flex;flex-direction:column;gap:4px;padding:4px}
+
+.status{border:1px solid #9a978d;background:var(--screen);padding:3px 9px;display:flex;align-items:center;
+        gap:8px;font-size:14px;color:#7dd3c8;box-shadow:0 1px 3px rgba(0,0,0,.30) inset}
+.dot{width:7px;height:7px;background:#5a5852;flex:0 0 auto;border-radius:50%}
+.dot.on{background:var(--amber);box-shadow:0 0 7px var(--amber)}
+.status .right{margin-left:auto;font-size:12px;color:#8a877e}
+
+/* the preset picker — drawn, because a native popup crashes the editor */
+.pick{position:fixed;z-index:240;background:var(--panel);border:1px solid var(--amber);
+      box-shadow:0 10px 30px rgba(0,0,0,.45);max-height:60vh;overflow:auto;min-width:230px;display:none}
+.pick.show{display:block}
+.pick .fold{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--dim);
+            padding:6px 8px 3px;letter-spacing:1px;background:var(--panel2)}
+.pick .item{padding:5px 9px;font-size:15px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.pick .item:hover{background:#f7f5ef}
+.pick .item b{color:var(--amber);font-weight:normal;margin-left:auto;font-size:12px}
+.dirty{color:var(--red)}
+
+/* ONE dialog does prompts AND the three-way guard. NOT window.confirm(): native
+   modals are the class of thing that crashed the editor on 5.6/5.7. */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:220;align-items:center;justify-content:center}
+.ov.show{display:flex}
+.dlg{background:var(--panel);border:1px solid var(--amber);padding:14px 16px;width:min(520px,92vw);
+     box-shadow:0 10px 34px rgba(0,0,0,.4);
+     display:flex;flex-direction:column;gap:11px}
+.dlg p{color:var(--ink);font-size:16px;white-space:pre-wrap;line-height:1.35;overflow-wrap:anywhere}
+.dlg .btns{display:flex;gap:6px;justify-content:flex-end}
+</style>
+<style>
+/* inlined: rec.css */
+/* MINI RECORDER — screen-specific rules. Tokens live in ../shared/vb-core.css */
+/* ── MINI RECORDER pane (tool 3) ───────────────────────────────────────
+   "just quickly getting in sounds". The fastest capture path, not a field
+   recorder: pick an input, watch the meter, press record, trim, name, send.
+   Bigger and emptier than the other two on purpose - at capture time this
+   screen has exactly one job. */
+#recPane{display:none;grid-template-rows:auto auto minmax(0,1fr) auto auto;gap:6px;padding:6px;height:100%}
+#recPane.on{display:grid}
+.rtop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 8px}
+.rdev{display:flex;gap:4px;flex-wrap:wrap;min-width:0}
+.rdev .btn{max-width:230px;overflow:hidden;text-overflow:ellipsis}
+.rmeterwrap{display:flex;align-items:center;gap:8px;padding:6px 8px}
+.rmeter{flex:1;height:16px;background:var(--screen);border:1px solid #9a978d;position:relative;
+        overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.3) inset;min-width:0}
+.rmeter b{position:absolute;left:0;top:0;bottom:0;width:0;
+          background:linear-gradient(90deg,#1c9e6a 0%,#1c9e6a 62%,#e8a33d 82%,#e0341f 100%)}
+.rmeter i{position:absolute;top:0;bottom:0;width:2px;background:#fff;left:0;display:none}
+.rstage{position:relative;background:var(--screen);border:1px solid #9a978d;min-height:0;
+        box-shadow:0 1px 3px rgba(0,0,0,.32) inset;display:flex;align-items:center;
+        justify-content:center;overflow:hidden}
+.rstage canvas{display:block;width:100%;height:100%}
+.rbig{font-family:'Press Start 2P',monospace;font-size:34px;color:#ffb38a;letter-spacing:2px}
+.rbadge{font-family:'Press Start 2P',monospace;font-size:9px;padding:5px 8px;color:#fff;
+        background:var(--red);border:1px solid #a02718}
+.rbadge.idle{background:var(--panel2);color:var(--dim);border-color:var(--line)}
+.rbadge.armed{background:var(--amber);border-color:#c9410f}
+.rstate{position:absolute;top:8px;left:8px;display:flex;gap:6px;align-items:center;z-index:3}
+.rhint{position:absolute;bottom:6px;left:8px;font-size:13px;color:#8a877e}
+.rbtns{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 8px}
+.rfoot{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 8px}
+.rbtns .big{font-size:11px;padding:11px 20px}
+/* Outside the trim is DIMMED, not deleted - the same idiom as the Variation
+   Designer's layer trim, so the muscle memory carries straight over. The kept
+   region used to be RECOLOURED instead, which reads as "highlighted" rather
+   than "the rest of your take is still there". */
+.rdim{position:absolute;top:0;bottom:0;background:rgba(8,7,5,.62);pointer-events:none;z-index:1}
+/* audition playhead - where you are inside the TRIMMED range */
+.rph{position:absolute;top:0;bottom:0;width:1px;background:#4ec9c9;
+     box-shadow:0 0 4px rgba(78,201,201,.8);pointer-events:none;z-index:2}
+.rcorner{position:absolute;top:8px;right:8px;font-size:12px;color:#ffb38a;
+         background:rgba(20,18,16,.82);padding:2px 6px;z-index:3;letter-spacing:.5px}
+.rhandle{position:absolute;top:0;bottom:0;width:7px;background:rgba(255,90,31,.55);cursor:ew-resize}
+.rhandle:hover{background:rgba(255,90,31,.9)}
+.rlab{position:absolute;top:30px;font-size:12px;color:#ffb38a;background:rgba(20,18,16,.8);padding:0 3px;z-index:2}
+.rwarn{font-size:13px;color:var(--red)}
+/* The CEF microphone question, worn on the tool's face. It is not an error
+   state and must not read as one - it is an OPEN QUESTION that stays visible
+   until a real Unreal panel settles it. */
+.micflag{font-family:'Press Start 2P',monospace;font-size:7px;line-height:1.5;
+         color:#7a2d12;background:#f6dfc4;border:1px solid #c9410f;
+         padding:5px 7px;letter-spacing:.5px;white-space:nowrap;cursor:help}
+/* STOP is the one control pressed under pressure, so it is the biggest thing
+   in the transport - the family sheet draws it oversized for exactly that
+   reason. ARM and RECORD are chosen deliberately; STOP is grabbed. */
+.rbtns #rStop{font-size:15px;padding:16px 34px;letter-spacing:1px}
+
+</style>
+<style>.app{grid-template-rows:auto minmax(0,1fr) auto}</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="panel tb">
+    <div class="row">
+      <span class="brand">MINI RECORDER<small> &nbsp;TAA</small></span>
+      <span class="sep"></span>
+      <button class="btn sm" id="undoBtn" title="Undo (Ctrl+Z)" disabled>&#8630;</button>
+      <button class="btn sm" id="redoBtn" title="Redo (Ctrl+Y)" disabled>&#8631;</button>
+      <button class="btn sm" id="presetBtn" title="Presets">&#9733; <span id="presetName">FACTORY / footstep gravel</span></button>
+      <button class="btn sm" id="saveBtn">SAVE</button>
+      <span class="hint" id="modeHint">arm &middot; record &middot; trim &middot; name &middot; send</span>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:0;position:relative">
+    <div class="pane on" id="recPane">
+      <div class="panel rtop">
+        <div class="ttl">&gt;&gt; INPUT</div>
+        <span class="seg" id="rSrcSeg"><b class="on" data-src="mic">MIC</b><b data-src="system">SYSTEM AUDIO</b></span>
+        <div class="rdev" id="rDevs"><button class="btn sm">scanning&hellip;</button></div>
+        <button class="btn sm" id="rRescan">RESCAN</button>
+        <span class="hint" id="rNote">48 kHz &middot; 24-bit &middot; mono &mdash; one path, no format menu</span>
+        <!-- The CEF microphone permission is an OPEN QUESTION, and it stays on
+             screen until a real Unreal panel answers it. A known gap must not
+             quietly become a claim just because a browser tab works. -->
+        <span class="micflag" id="rCef" title="getUserMedia works in a browser tab. Whether Unreal's embedded Chromium (CEF) grants the same permission, or needs a native call through the plugin bridge, is UNRESOLVED - flagged, not designed around.">&#9888; CEF MIC &mdash; UNRESOLVED</span>
+      </div>
+      <div class="panel rmeterwrap">
+        <span class="lab">LEVEL</span>
+        <div class="rmeter" id="rMeter"><b></b><i></i></div>
+        <span class="dled" id="rLed" style="width:14px;height:8px"></span>
+        <span class="lab" id="rPeak">&mdash;</span>
+      </div>
+      <div class="rstage" id="rStage">
+        <div class="rstate"><span class="rbadge idle" id="rBadge">IDLE</span>
+          <span class="hint" id="rSub" style="color:#8a877e"></span></div>
+        <div class="rbig" id="rBig">00:00.0</div>
+        <canvas id="rWave" style="display:none"></canvas>
+        <!-- Outside the handles is DIMMED, not deleted: drag them back out and
+             the audio is still there. Nothing is cut until you save. -->
+        <div class="rdim" id="rDimL" style="display:none"></div>
+        <div class="rdim" id="rDimR" style="display:none"></div>
+        <div class="rph" id="rPh" style="display:none"></div>
+        <div class="rhandle" id="rIn" style="display:none"></div>
+        <div class="rhandle" id="rOut" style="display:none"></div>
+        <div class="rlab" id="rInLab" style="display:none;left:2px"></div>
+        <div class="rlab" id="rOutLab" style="display:none;right:2px"></div>
+        <div class="rcorner" id="rTrimLen" style="display:none"></div>
+        <div class="rhint" id="rStageHint">press ARM to open the input, then RECORD</div>
+      </div>
+      <!-- TWO ROWS ON PURPOSE. Capture on top, what-to-do-with-it underneath -
+           the family sheet draws the same split. One row wrapped raggedly once
+           STOP became the big target it is supposed to be. -->
+      <div class="panel rbtns">
+        <button class="btn big" id="rArm">1 &middot; ARM</button>
+        <button class="btn big primary" id="rRec">2 &middot; RECORD</button>
+        <button class="btn big warn" id="rStop">3 &middot; STOP</button>
+        <span class="sep"></span>
+        <button class="btn" id="rPlay">&#9654; PLAY</button>
+        <button class="btn" id="rRedo">RE-RECORD</button>
+        <span class="hint" id="rKbd">SPACE arm &rarr; record &rarr; stop &middot; ESC discards</span>
+      </div>
+      <div class="panel rfoot">
+        <span class="lab">NAME</span>
+        <input class="num" id="rName" style="width:150px;text-align:left;padding-left:5px" value="take_01">
+        <button class="btn" id="rSave">SAVE WAV</button>
+        <span class="sep"></span>
+        <span class="lab">SEND TO</span>
+        <span class="seg tiny" id="rDestSeg"><b class="on" data-dest="daw">DAW TRACK</b><b data-dest="slot">VAR SLOT</b></span>
+        <span class="seg tiny" id="rSlotSeg"><b class="on" data-slot="0">A</b><b data-slot="1">B</b><b data-slot="2">C</b><b data-slot="3">D</b></span>
+        <button class="btn primary" id="rSend">SEND &rarr;</button>
+        <span class="hint" id="rMsg"></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="status">
+    <div class="dot" id="dot"></div><span id="statusText">ready</span>
+    <span class="right" id="verLbl"></span>
+  </div>
+</div>
+
+<div class="pick" id="pick"></div>
+<div class="ov" id="ov"><div class="dlg">
+  <p id="dlgMsg"></p>
+  <div class="btns">
+    <button class="btn" id="dlgYes">OK</button>
+    <button class="btn warn" id="dlgAlt" style="display:none">DISCARD</button>
+    <button class="btn" id="dlgNo">CANCEL</button>
+  </div>
+</div></div>
+
+<script>
+/* inlined: ../shared/vb-core.js */
+/* ══════════════════════════════════════════════════════════════════════════
+   VB-CORE — the shared engine for all three TAA tools.
+   Mini Recorder · Mini DAW · Variation Designer all load this file; none of
+   them owns it. If a change here breaks one tool it breaks all three, which is
+   exactly the property that makes it worth having in one place.
+
+   WHAT IS IN HERE: the design constants, the seeded draw law, the layer state,
+   the render chain, the mix, the ONE AudioContext, WAV + zip writing, file
+   decode, presets and undo, the dialog, and the shared half of window.VB.
+   WHAT IS NOT: anything that knows what a screen looks like. Tools paint
+   themselves and register a repaint with VBUI.onChange().
+   ══════════════════════════════════════════════════════════════════════════ */
+'use strict';
+var VERSION='v0.2', DESIGN_REF='DESIGN.md signed 24 Aug 2026';
+var SR=48000;
+
+/* ══ SPEC — every design constant in one place, section noted ══════════════
+   TESTER's vb-spec.js compares against VB.spec(); if a number moves it moves
+   here and nowhere else. */
+var SPEC={
+  variation:35, count:12, trim:-1, normalise:'set', tailFade:10, maxLength:0,
+  rate:48000, bits:24, channels:1,
+  offset:15, pitch:40, gain:2, tone:1.0, spread:0, reverse:0, start:0,      /* §4.2 */
+  level:0, delay:0, pan:0, lp:20000, hp:20,                                  /* §4.1 */
+  offsetMode:'+/-', pick:'RANDOM',                                           /* §4.2 §5 */
+  HEAD_MS:30,                                                                /* §4.1 */
+  TRIM_FADE_IN_MS:2, TRIM_FADE_OUT_MS:5, TRIM_FADE_MAX_PCT:10, MIN_TRIM_MS:5, /* §14.2 */
+  ORDER:'trim -> trimfades -> start -> reverse -> pitch -> tone -> lp/hp -> gain -> place(head+delay+offset)' /* §14.1 */
+};
+var HEAD_N=Math.round(SR*SPEC.HEAD_MS/1000);
+
+/* ══ SEEDED IDENTITY (§6) ══════════════════════════════════════════════════
+   Every draw is DERIVED from (seed, take, roll, slot, param) — never streamed.
+   That is what makes the knob SCALE draws in place instead of reshuffling them,
+   and it is why a kept take survives a knob move. Nothing in the render path
+   reads Math.random(); only DICE and the audition SHUFFLE do. */
+function mulberry32(a){return function(){a|=0;a=(a+0x6D2B79F5)|0;var t=Math.imul(a^(a>>>15),1|a);
+  t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+function hashTag(s){var h=2166136261>>>0;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function drawU(seed,take,roll,slot,param){
+  return mulberry32((seed>>>0)^hashTag(take+'|'+roll+'|'+slot+'|'+param))();
+}
+function uni(u){return u*2-1;}
+function newSeed(){return (Math.random()*0xFFFFFFFF)>>>0;}
+
+/* ══ STATE ════════════════════════════════════════════════════════════════ */
+var SLOT_IDS=['A','B','C','D'];
+/* PANEL colours (badges, chips) are dark so they read on the pale face; SCREEN
+   colours (waveforms, ticks) are bright so they read on the dark inset. Same
+   identity, two surfaces - S3's whole idea in one pair of arrays. */
+var SLOT_COL=['#0f766e','#a21caf','#4d7c0f','#b45309'];
+var SLOT_WAVE=['#2dd4bf','#f0abfc','#a3e635','#fbbf24'];
+function mkLayer(i){
+  return {id:SLOT_IDS[i], col:SLOT_COL[i], wave:SLOT_WAVE[i], name:'', files:[], pick:SPEC.pick, fixedIdx:0,
+    on:true, solo:false, mute:false,
+    level:SPEC.level, delay:SPEC.delay, pan:SPEC.pan, lp:SPEC.lp, hp:SPEC.hp,
+    pitchNom:0,                                 /* §4.1 - static, NOT knob-scaled */
+    trimIn:0, trimOut:-1,                       /* ms; -1 = to the end (§14) */
+    r:{offset:SPEC.offset, pitch:SPEC.pitch, gain:SPEC.gain, tone:SPEC.tone,
+       spread:SPEC.spread, reverse:SPEC.reverse, start:SPEC.start}};
+}
+var L=[mkLayer(0),mkLayer(1),mkLayer(2),mkLayer(3)];
+var M={ seed:newSeed(), knob:SPEC.variation, count:SPEC.count, trim:SPEC.trim,
+        normalise:SPEC.normalise, tailFade:SPEC.tailFade, maxLength:SPEC.maxLength,
+        rate:SPEC.rate, bits:SPEC.bits, channels:SPEC.channels, name:'variation' };
+var rolls=[], marks=[], latchGain=null, sel=0, mode='design', mixView='summed';
+/* RULING 25 Aug: a dial change NEVER silently re-latches. It marks the level
+   STALE and the sheet says so; only BOUNCE and an explicit RE-NORMALISE move
+   the latch. Before this, nudging any dial did RE-NORMALISE's job without
+   RE-NORMALISE's ceremony, which is how a designer's approved takes changed
+   under them. */
+var latchStale=false;
+
+function markStale(){ if(latchGain!==null && M.normalise==='set') latchStale=true; }
+function resetSheet(n){
+  M.count=n||M.count; rolls=[]; marks=[];
+  for(var i=0;i<M.count;i++){rolls.push(0);marks.push('open');}
+  latchGain=null; latchStale=false; sel=0;
+}
+resetSheet(M.count);
+function anyLoaded(){for(var i=0;i<4;i++) if(L[i].files.length) return true; return false;}
+/* MUTE / SOLO PRECEDENCE (§16.4). SOLO BEATS MUTE: when anything is soloed,
+   solo membership alone decides, so a soloed-AND-muted track SOUNDS. Otherwise
+   the user hunts for a mute they cannot see. Mute only speaks when nothing is
+   soloed. Both windows call this shape, so they agree by construction. */
+function audibleSlot(l){
+  if(!l.files.length || !l.on) return false;
+  var soloed=L.some(function(x){return x.solo;});
+  return soloed ? !!l.solo : !l.mute;
+}
+function liveSlots(){
+  return L.map(function(l,i){return {l:l,i:i};}).filter(function(o){ return audibleSlot(o.l); });
+}
+
+/* ══ THE RECIPE (§4.2, §5, §6) ════════════════════════════════════════════ */
+function pickFile(si,ti){
+  var l=L[si], n=l.files.length; if(!n) return 0;
+  if(l.pick==='FIXED') return Math.min(l.fixedIdx,n-1);
+  if(l.pick==='ORDER') return ti%n;
+  /* RANDOM: a shuffle-bag - every file used once before any repeats (Wwise's
+     "Shuffle"). §5.
+     EACH BAG GETS ITS OWN SHUFFLE. This used to shuffle once per (seed, slot)
+     and then walk that ONE permutation forever, so a 5-file slot bouncing 30
+     takes played the same five-file order six times - the exact repetition this
+     product exists to kill, arriving from the tool meant to prevent it. The bag
+     index is part of the key now. Determinism is untouched: §6 promises the same
+     seed gives the same set, not that the set is one repeating loop.
+     A re-rolled take adds its roll to the key, so it draws from a different
+     permutation than its bag-mates - which can repeat a file inside one bag, and
+     that is correct: a re-roll is a request for something else. */
+  var bagIdx=Math.floor(ti/n), roll=rolls[ti]||0;
+  var rng=mulberry32(((M.seed>>>0)^hashTag('bag|'+l.id+'|'+bagIdx+'|'+roll))>>>0);
+  var bag=[], k, tmp;
+  for(k=0;k<n;k++) bag.push(k);
+  for(k=n-1;k>0;k--){ var j=Math.floor(rng()*(k+1)); tmp=bag[k]; bag[k]=bag[j]; bag[j]=tmp; }
+  return bag[ti%n];
+}
+function effOf(si,dial){ return L[si].r[dial]*M.knob/100; }   /* §4: range x k/100 */
+
+function recipeOne(si,ti){
+  var l=L[si], r=rolls[ti]||0, k=M.knob/100, fi=pickFile(si,ti);
+  var f=l.files[fi];
+  var off=uni(drawU(M.seed,ti,r,l.id,'offset'))*l.r.offset*k;
+  if(l.r.offset>0){
+    if(SPEC.offsetMode==='+') off=Math.abs(off);
+    else if(SPEC.offsetMode==='-') off=-Math.abs(off);
+  }
+  return {
+    slot:l.id, slotIdx:si, name:l.name, col:l.col,
+    file:f?f.name:'', fileIdx:fi,
+    delayMs:l.delay, offsetMs:off,
+    /* RULING 25 Aug: the range varies AROUND the nominal, exactly as OFFSET
+       varies around DELAY. Splitting these is what lets the DAW own the nominal
+       without touching the variation. */
+    cents: (l.pitchNom||0) + uni(drawU(M.seed,ti,r,l.id,'pitch'))*l.r.pitch*k,
+    dB:    uni(drawU(M.seed,ti,r,l.id,'gain')) *l.r.gain *k,
+    toneOct:   drawU(M.seed,ti,r,l.id,'tone')  *l.r.tone *k,
+    pan:   l.pan + uni(drawU(M.seed,ti,r,l.id,'pan'))*l.r.spread*k,
+    startMs:   drawU(M.seed,ti,r,l.id,'start') *l.r.start*k,
+    reversed:  drawU(M.seed,ti,r,l.id,'rev') < (l.r.reverse*k)/100,
+    levelDb:l.level
+  };
+}
+function recipe(ti){
+  var out=[]; liveSlots().forEach(function(o){ out.push(recipeOne(o.i,ti)); }); return out;
+}
+
+/* ══ PER-LAYER RENDER — the §14.1 order, and nothing out of order ═════════ */
+function trimRegion(l,src){
+  var n=src.length;
+  var a=Math.max(0,Math.round(l.trimIn/1000*SR));
+  var b=(l.trimOut<0)?n:Math.min(n,Math.round(l.trimOut/1000*SR));
+  var minN=Math.round(SPEC.MIN_TRIM_MS/1000*SR);
+  if(b-a<minN) b=Math.min(n,a+minN);
+  if(b<=a){a=0;b=n;}
+  return {a:a,b:b,trimmedIn:a>0,trimmedOut:b<n};
+}
+function layerSamples(ti,si){
+  var l=L[si], rc=recipeOne(si,ti), f=l.files[rc.fileIdx];
+  if(!f) return new Float32Array(0);
+  var src=f.samples, i;
+
+  /* 1. TRIM (static, §14) */
+  var tr=trimRegion(l,src);
+  var cut=src.subarray(tr.a,tr.b);
+  var n=cut.length;
+  var base=new Float32Array(n);
+  base.set(cut);
+
+  /* 2. auto-fades, ONLY on an edge the user actually moved (§14.2) */
+  var maxF=Math.floor(n*SPEC.TRIM_FADE_MAX_PCT/100);
+  if(tr.trimmedIn){
+    var fi=Math.min(Math.round(SPEC.TRIM_FADE_IN_MS/1000*SR),maxF);
+    for(i=0;i<fi;i++) base[i]*=0.5-0.5*Math.cos(Math.PI*i/fi);
+  }
+  if(tr.trimmedOut){
+    var fo=Math.min(Math.round(SPEC.TRIM_FADE_OUT_MS/1000*SR),maxF);
+    for(i=0;i<fo;i++) base[n-1-i]*=0.5-0.5*Math.cos(Math.PI*i/fo);
+  }
+
+  /* 3. START nudge — INSIDE the trimmed region, clamped so it can never eat it
+        down past MIN_TRIM_MS (§14.3). Without the clamp a tight trim + START
+        renders silence, which reads as a broken take. */
+  if(rc.startMs>0){
+    var minN=Math.round(SPEC.MIN_TRIM_MS/1000*SR);
+    var sk=Math.min(Math.round(rc.startMs/1000*SR), Math.max(0,n-minN));
+    if(sk>0){ base=base.subarray(sk); n=base.length; }
+  }
+
+  /* 4. REVERSE (structure — a threshold, monotonic in the knob, §4.2) */
+  if(rc.reversed){ var rv=new Float32Array(n); for(i=0;i<n;i++) rv[i]=base[n-1-i]; base=rv; }
+
+  /* 5. PITCH as VARISPEED — keeps the transient intact and lets length follow,
+        which is what foley does. Not time-stretch. (§4.2) */
+  var rate=Math.pow(2,rc.cents/1200), out;
+  if(Math.abs(rc.cents)<0.001){ out=new Float32Array(n); out.set(base); }
+  else{
+    var m=Math.max(2,Math.floor(n/rate)); out=new Float32Array(m);
+    for(i=0;i<m;i++){ var x=i*rate, i0=Math.floor(x), fr=x-i0;
+      var s0=base[i0]||0, s1=base[i0+1]||0; out[i]=s0+(s1-s0)*fr; }
+    n=m;
+  }
+
+  /* 6. TONE (darkening only) then the static LP / HP filters */
+  var fc=(rc.toneOct>0.001)? Math.min(l.lp,20000)/Math.pow(2,rc.toneOct) : l.lp;
+  if(fc<20000){ var c=Math.exp(-2*Math.PI*fc/SR), z=0;
+    for(i=0;i<n;i++){ z=out[i]*(1-c)+z*c; out[i]=z; } }
+  if(l.hp>20){ var ch=Math.exp(-2*Math.PI*l.hp/SR), zh=0;
+    for(i=0;i<n;i++){ zh=out[i]*(1-ch)+zh*ch; out[i]=out[i]-zh; } }
+
+  /* 7. GAIN */
+  var g=Math.pow(10,(rc.levelDb+rc.dB)/20);
+  for(i=0;i<n;i++) out[i]*=g;
+  return out;
+}
+function layerOffsetSamples(ti,si){
+  var rc=recipeOne(si,ti);
+  /* + HEAD_N so a NEGATIVE offset on a DELAY=0 layer is representable instead of
+     clamping to zero — without this, half the timing variation on the anchor
+     layer silently vanishes (§4.1 HEAD PAD). */
+  return Math.max(0, HEAD_N + Math.round((rc.delayMs+rc.offsetMs)/1000*SR));
+}
+
+/* ══ THE MIX ══════════════════════════════════════════════════════════════ */
+function takeLen(ti){
+  var mx=HEAD_N+Math.round(SR*0.05);
+  liveSlots().forEach(function(o){
+    var n=layerSamples(ti,o.i).length+layerOffsetSamples(ti,o.i);
+    if(n>mx) mx=n;
+  });
+  var tail=Math.round(M.tailFade/1000*SR);
+  return mx+tail+8;
+}
+/* raw = the summed layers, pre-gain. Channels: 1 or 2 (constant-power pan). */
+function rawTake(ti){
+  var N=takeLen(ti), ch=M.channels, bufs=[];
+  for(var c=0;c<ch;c++) bufs.push(new Float32Array(N));
+  liveSlots().forEach(function(o){
+    var s=layerSamples(ti,o.i), off=layerOffsetSamples(ti,o.i), i;
+    if(ch===1){ var m=bufs[0];
+      for(i=0;i<s.length;i++){ var j=off+i; if(j<N) m[j]+=s[i]; }
+    }else{
+      var rc=recipeOne(o.i,ti);
+      var p=Math.max(-100,Math.min(100,rc.pan))/100;      /* -1..1 */
+      var th=(p+1)*Math.PI/4, gl=Math.cos(th), gr=Math.sin(th);
+      var Lb=bufs[0], Rb=bufs[1];
+      for(i=0;i<s.length;i++){ var k=off+i; if(k<N){ Lb[k]+=s[i]*gl; Rb[k]+=s[i]*gr; } }
+    }
+  });
+  return bufs;
+}
+function peakOf(bufs){
+  var m=0; for(var c=0;c<bufs.length;c++){ var b=bufs[c];
+    for(var i=0;i<b.length;i++){ var a=b[i]<0?-b[i]:b[i]; if(a>m)m=a; } }
+  return m;
+}
+/* BOUNCE LATCHES THE SET GAIN (§7.1). Re-rolls reuse it, so a kept take is
+   byte-identical across a re-roll. Only RE-NORMALISE re-latches. */
+function latch(){
+  latchStale=false;
+  if(M.normalise!=='set'){ latchGain=1; return 1; }
+  var target=Math.pow(10,M.trim/20), pk=0;
+  for(var i=0;i<M.count;i++) pk=Math.max(pk,peakOf(rawTake(i)));
+  latchGain = pk>1e-9 ? target/pk : 1;
+  return latchGain;
+}
+function gainFor(ti,pk){
+  var target=Math.pow(10,M.trim/20);
+  if(M.normalise==='each') return pk>1e-9?target/pk:1;
+  /* §7: the soft-clip guard sits at -0.1 dBFS. It was at 0.995 (-0.04 dBFS),
+     which is not the number the design states. */
+  if(M.normalise==='off'){ var G=Math.pow(10,-0.1/20); return (pk>G)? G/pk : 1; }
+  if(latchGain===null) latch();
+  var g=latchGain;
+  if(pk*g>1.0) return {g:Math.pow(10,-1/20)/pk, trimmed:true};  /* §7.1 guard */
+  return g;
+}
+function headTrimStart(bufs){
+  /* §4.3 HEAD: a bounced one-shot starts when the sound starts — 1 ms before the
+     first sample above -60 dBFS. */
+  var thr=Math.pow(10,-60/20), N=bufs[0].length;
+  for(var i=0;i<N;i++){
+    for(var c=0;c<bufs.length;c++){ var a=bufs[c][i]; if(a<0)a=-a; if(a>thr){
+      return Math.max(0,i-Math.round(SR*0.001)); } }
+  }
+  return 0;
+}
+/* renderTake(i) is PURE and SYNCHRONOUS — same inputs, same floats, no device.
+   That is a contract, not a preference (CONTRACT.md). It returns the take EXACTLY
+   as it will be exported, so what you audition is the file. */
+function renderTakeCh(ti){
+  var bufs=rawTake(ti), pk=peakOf(bufs), trimmed=false;
+  var gr=gainFor(ti,pk), g;
+  if(typeof gr==='object'){ g=gr.g; trimmed=true; } else g=gr;
+  var c,i;
+  for(c=0;c<bufs.length;c++){ var b=bufs[c]; for(i=0;i<b.length;i++) b[i]*=g; }
+
+  var s0=headTrimStart(bufs), N=bufs[0].length-s0;
+  if(M.maxLength>0) N=Math.min(N,Math.round(M.maxLength/1000*SR));
+  var out=[];
+  for(c=0;c<bufs.length;c++) out.push(bufs[c].slice(s0,s0+N));
+
+  var fo=Math.min(Math.round(M.tailFade/1000*SR),N-1);
+  for(c=0;c<out.length;c++){
+    var o=out[c];
+    if(fo>0) for(i=0;i<fo;i++) o[N-1-i]*=0.5-0.5*Math.cos(Math.PI*i/fo);
+    if(N>0) o[N-1]=0;                       /* the end is always a hard zero */
+  }
+  out._trimmed=trimmed;
+  return out;
+}
+function renderTake(ti){ return renderTakeCh(ti)[0]; }
+function takeInfo(ti){
+  var bufs=rawTake(ti), pk=peakOf(bufs), gr=gainFor(ti,pk);
+  var trimmed=(typeof gr==='object'), g=trimmed?gr.g:gr;
+  return {trimmed:trimmed, peak:pk*g, peakDb:20*Math.log10(Math.max(1e-9,pk*g)),
+          mark:marks[ti]||'open', roll:rolls[ti]||0};
+}
+function rerollCulled(){
+  var n=0;
+  for(var i=0;i<M.count;i++) if(marks[i]==='cull'){ rolls[i]++; marks[i]='open'; n++; }
+  return n;                    /* latchGain deliberately untouched — §7.1 */
+}
+
+/* ══ AUDIO — exactly ONE AudioContext construction site, in audioReady() ═══
+   Chromium creates an AudioContext SUSPENDED unless it was constructed during a
+   user gesture, and inside the editor's CEF host that is the normal case. A
+   suspended context does not advance currentTime: start() schedules and nothing
+   is heard, then everything fires at once when it resumes. Never touch audioCtx
+   directly — go through audioReady(). (Ported verbatim from the Forge chassis.) */
+var audioCtx=null;
+function audioReady(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:SR});
+  if(audioCtx.state&&audioCtx.state!=='running'&&audioCtx.resume){
+    try{ audioCtx.resume(); }catch(e){}
+  }
+  return audioCtx;
+}
+/* Warm it on the first real gesture, so the first audition is not the press that
+   has to pay for starting the audio device. A TESTED REQUIREMENT (§12.10). */
+(function(){
+  var EV=['pointerdown','mousedown','keydown'];
+  function warm(){ audioReady(); EV.forEach(function(e){window.removeEventListener(e,warm,true);}); }
+  EV.forEach(function(e){ window.addEventListener(e,warm,true); });
+})();
+var curSrc=null;
+function stopS(){ if(curSrc){ try{curSrc.stop();}catch(e){} curSrc=null; } }
+function play(chans){
+  var ctx=audioReady(); stopS();
+  var arr=(chans instanceof Float32Array)?[chans]:chans;
+  var buf=ctx.createBuffer(arr.length,arr[0].length,SR);
+  for(var c=0;c<arr.length;c++) buf.getChannelData(c).set(arr[c]);
+  var src=ctx.createBufferSource(); src.buffer=buf; src.connect(ctx.destination); src.start();
+  curSrc=src; src.onended=function(){ if(curSrc===src) curSrc=null; };
+  return src;
+}
+
+/* ══ WAV + ZIP (chassis) ══════════════════════════════════════════════════ */
+function encWAV(chans,bits,rate){
+  var nCh=chans.length, N=chans[0].length, bps=bits/8;
+  var ds=N*nCh*bps, buf=new ArrayBuffer(44+ds), v=new DataView(buf), o=0;
+  function ws(s){for(var i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));o+=s.length;}
+  ws('RIFF'); v.setUint32(o,36+ds,true);o+=4; ws('WAVE'); ws('fmt ');
+  v.setUint32(o,16,true);o+=4; v.setUint16(o,1,true);o+=2; v.setUint16(o,nCh,true);o+=2;
+  v.setUint32(o,rate,true);o+=4; v.setUint32(o,rate*nCh*bps,true);o+=4;
+  v.setUint16(o,nCh*bps,true);o+=2; v.setUint16(o,bits,true);o+=2;
+  ws('data'); v.setUint32(o,ds,true);o+=4;
+  for(var i=0;i<N;i++) for(var c=0;c<nCh;c++){
+    var x=Math.max(-1,Math.min(1,chans[c][i]));
+    if(bits===16){ v.setInt16(o,Math.round(x*32767),true); o+=2; }
+    else{ var q=Math.round(x*8388607);
+      v.setUint8(o,q&0xFF); v.setUint8(o+1,(q>>8)&0xFF); v.setUint8(o+2,(q>>16)&0xFF); o+=3; }
+  }
+  return buf;
+}
+var crcTable=(function(){var t=new Uint32Array(256);
+  for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}
+  return t;})();
+function crc32(u8){var c=0xFFFFFFFF;for(var i=0;i<u8.length;i++)c=crcTable[(c^u8[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function makeZip(files){
+  var enc=new TextEncoder(), parts=[], central=[], offset=0;
+  var dosTime=0, dosDate=((2026-1980)<<9)|(8<<5)|24;   /* fixed: a byte-identical
+     zip for the same set is a testable promise (§12.2) */
+  for(var i=0;i<files.length;i++){
+    var nameU8=enc.encode(files[i].name), data=new Uint8Array(files[i].data), crc=crc32(data);
+    var lh=new Uint8Array(30+nameU8.length), lv=new DataView(lh.buffer);
+    lv.setUint32(0,0x04034b50,true); lv.setUint16(4,20,true); lv.setUint16(6,0,true);
+    lv.setUint16(8,0,true); lv.setUint16(10,dosTime,true); lv.setUint16(12,dosDate,true);
+    lv.setUint32(14,crc,true); lv.setUint32(18,data.length,true); lv.setUint32(22,data.length,true);
+    lv.setUint16(26,nameU8.length,true); lv.setUint16(28,0,true); lh.set(nameU8,30);
+    parts.push(lh,data);
+    var ch=new Uint8Array(46+nameU8.length), cv=new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true);
+    cv.setUint16(8,0,true); cv.setUint16(10,0,true); cv.setUint16(12,dosTime,true);
+    cv.setUint16(14,dosDate,true); cv.setUint32(16,crc,true);
+    cv.setUint32(20,data.length,true); cv.setUint32(24,data.length,true);
+    cv.setUint16(28,nameU8.length,true); cv.setUint32(42,offset,true); ch.set(nameU8,46);
+    central.push(ch); offset+=lh.length+data.length;
+  }
+  var cdSize=0; for(var j=0;j<central.length;j++) cdSize+=central[j].length;
+  var eocd=new Uint8Array(22), ev=new DataView(eocd.buffer);
+  ev.setUint32(0,0x06054b50,true); ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true);
+  ev.setUint32(12,cdSize,true); ev.setUint32(16,offset,true);
+  return new Blob(parts.concat(central,[eocd]),{type:'application/zip'});
+}
+/* ══ DELIVERY — where can a file actually GO from this host? ════════════
+   The editor's CEF implements no download handler, so `<a download>` is dropped
+   with NO error while the page carries on as though it saved. Measured on 5.6,
+   5.7 and 5.8 by the CEF spike. So the engine asks where a file can go BEFORE
+   it claims to have put one there.
+
+   THE WORDS LAW (TOOL RECORDER's, adopted engine-wide): the word SAVED appears
+   only when a file actually exists. Failures say WRITTEN — "so nothing was
+   saved" still reads as a save to anyone scanning a status line. ────────── */
+function vbBridge(){
+  var b = window.ue && window.ue.taa;
+  return (b && typeof b.savefile === 'function') ? b : null;
+}
+/* HOST IS NOT INFERRED FROM THE BINDING. Deriving it from window.ue.taa means
+   any read taken before the bridge attaches answers "browser" — and then the
+   engine would pick the <a download> path, which the editor drops with NO error.
+   The safe-looking default is the silent one.
+
+   The user agent does not race. MEASURED in an editor tab on 5.7:
+     Mozilla/5.0 (…) GuiVerifyTAASuite57/++UE5+Release-5.7-CL-51494982
+     UnrealEngine/5.7.4-51494982+++UE5+Release-5.7 Chrome/128.0.6613.138 …
+   TOOL RECORDER hit the same trap in cefMicStatus, where it would have told a
+   PLUGIN user to "allow the microphone in a browser". */
+function vbIsUnrealHost(){
+  var ua = (typeof navigator!=='undefined' && navigator.userAgent) || '';
+  if(ua.indexOf('UnrealEngine/') >= 0) return true;
+  /* Belt: a host that binds the bridge is a host, whatever it calls itself. */
+  return !!(window.ue && window.ue.taa);
+}
+var _forcePath = null;                                   /* TEST ONLY */
+function forceDeliveryPath(p){ _forcePath = p || null; return vbDeliveryPath(); }
+function vbDeliveryPath(){
+  if(_forcePath) return _forcePath;
+  if(vbBridge()) return 'bridge';
+  if(vbIsUnrealHost()) return 'none';        /* CEF, and no file bridge present */
+  return 'download';
+}
+/* ⚠ THE BINDING IS NOT THERE AT LOAD. MEASURED, in the plugin skeleton:
+   window.ue.taa already exists when the page script runs on UE 5.6 (CEF 90),
+   and does NOT yet exist on 5.7 / 5.8 (CEF 128). Injection and first paint are
+   not ordered, and 5.6 was simply winning a race.
+
+   Anything that asks "can I write a file?" ONCE AT BOOT will therefore answer
+   'none' on two engines out of three and be wrong about it — a SAVE button that
+   paints itself dead and then works, which is a lie in the safer direction but
+   still a lie. saveBlob() itself is fine because it re-checks at call time; it
+   is the BOOT-TIME PAINT that needs this.
+
+   Calls back immediately if the bridge is already there, once when it arrives,
+   or never if it does not (a plain browser — where 'download' is the right
+   answer anyway, so no callback is the correct outcome). */
+function vbBridgeReady(cb, limitMs){
+  if(typeof cb!=='function') return;
+  if(vbBridge()){ cb(vbBridge()); return; }
+  var waited=0, step=50, limit=(limitMs===undefined)?10000:limitMs;
+  (function poll(){
+    if(vbBridge()){ cb(vbBridge()); return; }
+    waited+=step;
+    if(waited>=limit) return;      /* no bridge here; not an error */
+    setTimeout(poll, step);
+  })();
+}
+
+var VB_NO_PATH_MSG =
+  'this host cannot write files — the editor browser drops downloads and no file '+
+  'bridge is present. NO FILE WAS WRITTEN.';
+
+/* The delivery outcome is deliberately the LAST word on the status line. A tool
+   that says "bounced 2.5s to one WAV" the instant after calling this is being
+   optimistic on the page's behalf, and that sentence must not be the one left
+   standing when nothing was written. */
+function saySoon(msg){ setTimeout(function(){ try{ setS(msg); }catch(e){} },0); }
+
+function blobToB64(blob, cb){
+  try{
+    var fr=new FileReader();
+    fr.onload=function(){
+      var s=String(fr.result||''), c=s.indexOf(',');
+      cb(c>=0? s.slice(c+1) : s, null);
+    };
+    fr.onerror=function(){ cb(null, fr.error||new Error('read failed')); };
+    fr.readAsDataURL(blob);
+  }catch(e){ cb(null,e); }
+}
+
+function saveBlob(blob,name,done){
+  var path=vbDeliveryPath();
+  function finish(r){
+    if(r.msg) saySoon(r.msg);
+    if(typeof done==='function'){ try{ done(r); }catch(e){} }
+    return r;
+  }
+
+  /* 1. NO PATH. The whole reason this function grew: refuse loudly. */
+  if(path==='none') return finish({ok:false, path:'none', name:name, msg:VB_NO_PATH_MSG});
+
+  /* 2. BRIDGE. Only the native side can say whether a file exists, so only it
+        is allowed to produce the word SAVED. */
+  if(path==='bridge'){
+    blobToB64(blob, function(b64, err){
+      if(err||!b64) return finish({ok:false, path:'bridge', name:name,
+        msg:'could not encode '+name+' — NO FILE WAS WRITTEN.'});
+      var p;
+      try{ p=vbBridge().savefile(name,b64); }
+      catch(e){ return finish({ok:false, path:'bridge', name:name,
+        msg:'the file bridge threw on '+name+' — NO FILE WAS WRITTEN.'}); }
+      Promise.resolve(p).then(function(json){
+        var r={}; try{ r=(typeof json==='string')? JSON.parse(json) : (json||{}); }catch(e){}
+        if(r && r.ok) finish({ok:true, path:'bridge', name:name, file:r.path,
+          msg:'SAVED '+name+(r.path? (' — '+r.path) : ' into the project')});
+        else finish({ok:false, path:'bridge', name:name,
+          msg:'the file bridge refused '+name+(r&&r.error? (' — '+r.error):'')+
+              '. NO FILE WAS WRITTEN.'});
+      }, function(e){
+        finish({ok:false, path:'bridge', name:name,
+          msg:'the file bridge failed on '+name+': '+((e&&e.message)||e)+
+              ' — NO FILE WAS WRITTEN.'});
+      });
+    });
+    return {ok:null, path:'bridge', name:name, pending:true};
+  }
+
+  /* 3. DOWNLOAD. The one path whose completion cannot be observed from here —
+        and the one where that is acceptable, because a real browser either
+        saves the file or tells the user why not. CEF does neither, which is
+        exactly why case 1 exists. */
+  try{
+    var a=document.createElement('a'), url=URL.createObjectURL(blob);
+    a.href=url; a.download=name; document.body.appendChild(a); a.click();
+    document.body.removeChild(a); setTimeout(function(){URL.revokeObjectURL(url)},4000);
+  }catch(e){
+    return finish({ok:false, path:'download', name:name,
+      msg:'the browser refused the download of '+name+' — NO FILE WAS WRITTEN.'});
+  }
+  return finish({ok:true, path:'download', name:name,
+    msg:'SAVED '+name+' — your browser has it'});
+}
+
+/* ══ STAGE WATCH — redraw when your box changes ══════════════════════
+   Measured by TOOL RECORDER in a real 5.6 editor tab: CEF reports readyState
+   'complete' while the Slate widget still has NO rectangle (stage 18×2), so a
+   canvas sized once at draw time gets a 16×1 backing store that CSS then
+   stretches into a gradient wash. The real box arrived between 600 ms and
+   2100 ms after load.
+
+   "Redraw when your box changes" is not recorder behaviour, it is CANVAS
+   behaviour — so it lives here once instead of in three tools, and the DAW
+   timeline and the take sheet stop rendering the same wash. Returns a stop
+   function. */
+function vbWatchStage(el, redraw){
+  if(!el || typeof redraw!=='function') return function(){};
+  var last='', stopped=false, iv=0, burst=[], muted=false;
+  function check(){
+    if(stopped) return;
+    var r=el.getBoundingClientRect();
+    var key=Math.round(r.width)+'x'+Math.round(r.height);
+    if(key===last) return;
+    last=key;
+    if(!(r.width>0 && r.height>0)) return;
+
+    /* BURST CAP. A redraw can change the size of the very box being watched —
+       measured: one 0→rectangle transition fires this callback TWICE, because
+       repainting changes the container's content height. That settles, but a
+       layout where every redraw moves the box would loop forever, and an
+       unbounded layout loop is a frozen page with nothing in a console to read.
+       Same instinct as the repaint kernel's re-entrancy guard; a re-entrancy
+       guard cannot catch this one because ResizeObserver delivers on a later
+       frame, so the bound is on RATE instead. */
+    var now=(new Date()).getTime();
+    burst.push(now);
+    while(burst.length && now-burst[0]>1000) burst.shift();
+    if(burst.length>12){
+      if(!muted){
+        muted=true;
+        try{ console.warn('vbWatchStage: >12 redraws in 1s — the redraw is '+
+                          'resizing its own box. Watch a container whose size '+
+                          'does not depend on its content.'); }catch(e){}
+      }
+      return;
+    }
+    if(muted && burst.length<=2) muted=false;
+    try{ redraw(); }catch(e){}
+  }
+  if(window.ResizeObserver){ try{ new ResizeObserver(check).observe(el); }catch(e){} }
+  window.addEventListener('resize', check);
+  /* Belt as well as braces: an older CEF may not deliver ResizeObserver
+     callbacks for a Slate-hosted widget, so poll briefly at boot too. */
+  var n=0; iv=setInterval(function(){ check(); if(++n>40||stopped) clearInterval(iv); },150);
+  check();
+  return function(){ stopped=true; clearInterval(iv); };
+}
+function padNum(v,w){var s=String(v);while(s.length<w)s='0'+s;return s;}
+
+/* ══ PACK — kept + open takes only; culled never leave the app (§9) ═══════ */
+function pack(){
+  if(latchGain===null) latch();
+  var files=[], manifest={
+    taaBridge:1, tool:'variation-bench', toolVersion:VERSION, title:M.name,
+    buildTarget:'soundcue', sampleRate:M.rate, bounces:[],
+    output:{chainApplied:true, chain:SPEC.ORDER},
+    dials:{ variation:M.knob, count:M.count, seed:M.seed, rolls:rolls.slice(),
+            normalise:M.normalise, trim:M.trim, tailFade:M.tailFade,
+            maxLength:M.maxLength, headPadMs:SPEC.HEAD_MS, channels:M.channels, bits:M.bits,
+            layers:L.map(function(l){return {id:l.id, name:l.name, files:l.files.map(function(f){return f.name;}),
+              pick:l.pick, level:l.level, delay:l.delay, pan:l.pan, lp:l.lp, hp:l.hp,
+              trimIn:l.trimIn, trimOut:l.trimOut, offset:l.r.offset, pitch:l.r.pitch,
+              gain:l.r.gain, tone:l.r.tone, spread:l.r.spread, reverse:l.r.reverse, start:l.r.start};})},
+    takes:[]
+  };
+  var w=Math.max(2,String(M.count).length), n=0;
+  for(var i=0;i<M.count;i++){
+    if(marks[i]==='cull') continue;
+    var ch=renderTakeCh(i), nm=M.name+'_'+padNum(n+1,w)+'.wav';
+    files.push({name:nm, data:encWAV(ch,M.bits,M.rate)});
+    manifest.bounces.push(nm);
+    manifest.takes.push({file:nm, index:i, roll:rolls[i]||0, trimmed:!!ch._trimmed,
+      recipe:recipe(i).map(function(r){return {slot:r.slot,file:r.file,offsetMs:+r.offsetMs.toFixed(3),
+        cents:+r.cents.toFixed(2),dB:+r.dB.toFixed(3),toneOct:+r.toneOct.toFixed(3),
+        pan:+r.pan.toFixed(1),reversed:r.reversed,startMs:+r.startMs.toFixed(2)};})});
+    n++;
+  }
+  files.push({name:'manifest.json', data:new TextEncoder().encode(JSON.stringify(manifest,null,2)).buffer});
+  return {files:files, manifest:manifest};
+}
+
+
+/* ══ THE REPAINT KERNEL ═══════════════════════════════════════════════════
+   The engine must never call a tool's paint function by name - that is what
+   welded three tools into one file. Instead every tool registers a repaint and
+   the engine says "something changed". */
+var VBUI = (function(){
+  var fns=[], busy=false;
+  return {
+    onChange:function(fn){ fns.push(fn); },
+    /* RE-ENTRANCY GUARD. A painter that (directly or otherwise) triggers another
+       notify would recurse until the tab dies - which is exactly what happened
+       once during the split, and it hangs with no error to read. One level only. */
+    notify:function(){
+      if(busy) return;
+      busy=true;
+      try{ for(var i=0;i<fns.length;i++){ try{ fns[i](); }catch(e){ /* a broken painter must not stop the engine */ } } }
+      finally{ busy=false; }
+    }
+  };
+})();
+function onEdit(){ markStale(); VBUI.notify(); commitSoon(); }
+function bounceCount(n){
+  if(!anyLoaded()){ setS('load some files first — or press LOAD DEMO KIT'); return false; }
+  resetSheet(n||M.count); latch(); VBUI.notify(); commitUndo(); return true;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   UI
+   ══════════════════════════════════════════════════════════════════════════ */
+function $(id){return document.getElementById(id);}
+function setS(t){ $('statusText').textContent=t; var d=$('dot');
+  d.classList.add('on'); setTimeout(function(){d.classList.remove('on');},550); }
+function fitCv(cv){
+  var r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  var w=Math.max(1,Math.round(r.width*dpr)), h=Math.max(1,Math.round(r.height*dpr));
+  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}
+  return cv.getContext('2d');
+}
+/* TRUE min/max peak envelope — not a squiggle. */
+function drawWave(cv,samples,opt){
+  opt=opt||{};
+  var c=fitCv(cv), W=cv.width, H=cv.height, mid=H/2;
+  if(!opt.keep) c.clearRect(0,0,W,H);
+  if(opt.zero!==false){ c.strokeStyle='rgba(255,255,255,.09)'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(0,Math.round(mid)+.5); c.lineTo(W,Math.round(mid)+.5); c.stroke(); }
+  if(!samples||!samples.length) return;
+  var s0=opt.s0||0, sN=opt.sN||samples.length, g=opt.gain||1;
+  c.strokeStyle=opt.col||'#2dd4bf'; c.lineWidth=(opt.lw||1)*(window.devicePixelRatio||1);
+  if(opt.alpha!==undefined) c.globalAlpha=opt.alpha;
+  c.beginPath();
+  for(var x=0;x<W;x++){
+    var a=s0+Math.floor(x/W*sN), b=s0+Math.floor((x+1)/W*sN); if(b<=a)b=a+1;
+    var mn=0,mx=0,any=false;
+    for(var i=a;i<b && i<samples.length;i++){ var v=samples[i];
+      if(!any){mn=mx=v;any=true;} else { if(v<mn)mn=v; if(v>mx)mx=v; } }
+    if(!any) continue;
+    c.moveTo(x+.5, mid-Math.max(-1,Math.min(1,mx*g))*mid*.94);
+    c.lineTo(x+.5, mid-Math.max(-1,Math.min(1,mn*g))*mid*.94);
+  }
+  c.stroke(); c.globalAlpha=1;
+}
+
+/* ── DECODE: drop files on a slot ─────────────────────────────────────── */
+function addFiles(si,fileList){
+  var l=L[si], list=[].slice.call(fileList), done=0;
+  if(!list.length) return;
+  setS('decoding '+list.length+' file'+(list.length>1?'s':'')+'…');
+  list.forEach(function(f){
+    var rd=new FileReader();
+    rd.onload=function(){
+      /* decodeAudioData on a context created at SR resamples for us, and it
+         handles 24-bit, EXTENSIBLE and BWF-with-bext (measured: INFRA.md §1). */
+      audioReady().decodeAudioData(rd.result).then(function(ab){
+        var n=ab.length, mono=new Float32Array(n), c;
+        for(c=0;c<ab.numberOfChannels;c++){
+          var d=ab.getChannelData(c);
+          for(var i=0;i<n;i++) mono[i]+=d[i];
+        }
+        if(ab.numberOfChannels>1) for(var i=0;i<n;i++) mono[i]/=ab.numberOfChannels;
+        if(l.files.length<32) l.files.push({name:f.name.replace(/\.[^.]+$/,''),samples:mono,
+          durMs:n/SR*1000, stereo:ab.numberOfChannels>1});
+        if(!l.name) l.name=f.name.replace(/\.[^.]+$/,'').slice(0,14);
+        if(++done===list.length){ l.trimIn=0; l.trimOut=-1; afterLoad(); }
+      }).catch(function(e){
+        if(++done===list.length) afterLoad();
+        setS('could not decode '+f.name+' — '+(e&&e.message?e.message:e));
+      });
+    };
+    rd.readAsArrayBuffer(f);
+  });
+}
+function afterLoad(){
+  resetSheet(M.count); VBUI.notify();
+  setS(anyLoaded()? 'loaded — press BOUNCE' : 'drop WAVs on a slot');
+}
+
+/* ── DEMO KIT: four synthesised layers so the bench works with no files ── */
+function demoKit(){
+  function synth(kind,seedName,secs){
+    var rng=mulberry32(hashTag(seedName)), n=Math.round(SR*secs), out=new Float32Array(n), i,t,env;
+    if(kind==='heel'){ var f=88+rng()*16;
+      for(i=0;i<n;i++){ t=i/SR; env=Math.exp(-t*48);
+        out[i]=Math.sin(2*Math.PI*f*t)*env*.72 + (i<70?(rng()*2-1)*Math.exp(-i/22)*.9:0); } }
+    else if(kind==='scuff'){ var lp=0,hp=0,pv=0;
+      for(i=0;i<n;i++){ t=i/SR; env=(t<.004? t/.004 : Math.exp(-(t-.004)*30));
+        var w=rng()*2-1; lp+=(w-lp)*.55; hp=.86*(hp+lp-pv); pv=lp; out[i]=hp*env*.85; } }
+    else if(kind==='grit'){ var gr=16+Math.floor(rng()*10);
+      for(var g=0;g<gr;g++){ var at=Math.floor(Math.pow(rng(),1.6)*n*.8), ln=40+Math.floor(rng()*160), am=.25+rng()*.6;
+        for(i=0;i<ln&&at+i<n;i++) out[at+i]+=(rng()*2-1)*Math.exp(-i/(ln*.32))*am*.5; } }
+    else { var f0=52+rng()*10;
+      for(i=0;i<n;i++){ t=i/SR; var fr=f0*(1+.5*Math.exp(-t*40));
+        env=Math.exp(-t*24)*(t<.002?t/.002:1); out[i]=Math.sin(2*Math.PI*fr*t)*env*.95; } }
+    var pk=0; for(i=0;i<n;i++) pk=Math.max(pk,Math.abs(out[i]));
+    if(pk>1e-9) for(i=0;i<n;i++) out[i]/=pk;
+    return out;
+  }
+  var kit=[
+    {k:'heel', nm:'heel',  files:['heel_01','heel_02','heel_03','heel_04','heel_05'], secs:.20, delay:0,  level:0},
+    {k:'scuff',nm:'scuff', files:['scuff_01','scuff_02','scuff_03'],                  secs:.14, delay:22, level:-3},
+    {k:'grit', nm:'grit',  files:['gravel_a','gravel_b','gravel_c','gravel_d'],       secs:.22, delay:8,  level:-7},
+    {k:'body', nm:'body',  files:['thud_01','thud_02'],                               secs:.28, delay:2,  level:-11}
+  ];
+  kit.forEach(function(spec,si){
+    var l=L[si]=mkLayer(si);
+    l.name=spec.nm; l.delay=spec.delay; l.level=spec.level;
+    spec.files.forEach(function(fn){
+      var s=synth(spec.k,fn,spec.secs);
+      l.files.push({name:fn, samples:s, durMs:s.length/SR*1000, stereo:false});
+    });
+  });
+  afterLoad();
+  setS('demo kit loaded — 4 layers, 14 files. Press BOUNCE.');
+}
+
+/* ── build the DESIGN pane ────────────────────────────────────────────── */
+var layerEls=[];
+function segWire(id,fn){
+  document.querySelectorAll('#'+id+' b').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('#'+id+' b').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on'); fn(b.dataset.v||b.dataset.mix);
+    });
+  });
+}
+function askDialog(msg,cb){
+  $('dlgMsg').textContent=msg; dlgCb=cb;
+  if(dlgInput){ dlgInput.remove(); dlgInput=null; }
+  $('ov').classList.add('show');
+}
+function askInput(msg,def,cb){
+  $('dlgMsg').textContent=msg;
+  if(dlgInput) dlgInput.remove();
+  dlgInput=document.createElement('input');
+  dlgInput.className='num'; dlgInput.style.cssText='width:100%;text-align:left;padding:6px;font-size:9px';
+  dlgInput.value=def||'';
+  $('dlgMsg').insertAdjacentElement('afterend',dlgInput);
+  dlgCb=function(ok){ cb(ok? dlgInput.value.trim() : null); };
+  $('ov').classList.add('show');
+  setTimeout(function(){ dlgInput.focus(); dlgInput.select(); },30);
+}
+$('dlgYes').addEventListener('click',function(){ $('ov').classList.remove('show'); var c=dlgCb; dlgCb=null; if(c)c(true); });
+$('dlgNo').addEventListener('click',function(){ $('ov').classList.remove('show'); var c=dlgCb; dlgCb=null; if(c)c(false); });
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   UNDO / REDO and PRESETS (APP-BLUEPRINT §3, §4)
+   A snapshot is VB.state() — which already round-trips byte-exact, so undo
+   restores THE SEED and every dial, not just slider positions. Without the seed,
+   "I randomised and lost it" is unrecoverable, which is the whole reason the
+   blueprint insists on it.
+   ══════════════════════════════════════════════════════════════════════════ */
+var UNDO_MAX=60;
+var undoStack=[], redoStack=[], _lastSnap=null, _commitTimer=0;
+function snapKey(o){ return JSON.stringify(o); }
+function commitUndo(){
+  var st=window.VB.state(), k=snapKey(st);
+  if(k===_lastSnap) return;               /* nothing actually changed */
+  if(_lastSnap!==null){
+    undoStack.push(_lastSnap);
+    if(undoStack.length>UNDO_MAX) undoStack.shift();
+    redoStack.length=0;
+  }
+  _lastSnap=k; markDirty(); paintUndo();
+}
+/* slider drags fire dozens of input events; one edit should be one undo step */
+function commitSoon(){ clearTimeout(_commitTimer); _commitTimer=setTimeout(commitUndo,320); }
+function paintUndo(){
+  var u=$('undoBtn'), r=$('redoBtn');
+  if(u) u.disabled=!undoStack.length;
+  if(r) r.disabled=!redoStack.length;
+}
+function doUndo(){
+  if(!undoStack.length) return;
+  var cur=snapKey(window.VB.state());
+  var prev=undoStack.pop(); redoStack.push(cur);
+  _lastSnap=prev; window.VB.restore(JSON.parse(prev)); paintUndo();
+  setS('undo — '+undoStack.length+' steps left');
+}
+function doRedo(){
+  if(!redoStack.length) return;
+  var cur=snapKey(window.VB.state());
+  var nx=redoStack.pop(); undoStack.push(cur);
+  _lastSnap=nx; window.VB.restore(JSON.parse(nx)); paintUndo();
+  setS('redo');
+}
+
+/* ── presets ──────────────────────────────────────────────────────────────
+   A preset carries the dials AND THE SEED, so loading one returns the exact
+   set. It cannot carry the audio — a browser will not hold your files for you —
+   so it stores file NAMES and says so plainly when they are missing (§9). */
+var PRESET_KEY='taa.variationbench.presets.v1';
+var FACTORY=[
+  {name:'footstep gravel', seed:2148294601, knob:35, count:12,
+   layers:[{delay:0,level:0,r:{offset:15,pitch:40,gain:2,tone:1.0}},
+           {delay:22,level:-3,r:{offset:15,pitch:40,gain:2,tone:1.0}},
+           {delay:8,level:-7,r:{offset:15,pitch:40,gain:2,tone:1.0}},
+           {delay:2,level:-11,r:{offset:15,pitch:40,gain:2,tone:1.0}}]},
+  {name:'tight — barely moving', seed:1001, knob:12, count:8,
+   layers:[{delay:0,level:0,r:{offset:8,pitch:15,gain:1,tone:0.4}},
+           {delay:18,level:-4,r:{offset:8,pitch:15,gain:1,tone:0.4}},
+           {delay:6,level:-8,r:{offset:8,pitch:15,gain:1,tone:0.4}},
+           {delay:2,level:-12,r:{offset:8,pitch:15,gain:1,tone:0.4}}]},
+  {name:'wide — obviously different', seed:2002, knob:75, count:16,
+   layers:[{delay:0,level:0,r:{offset:35,pitch:90,gain:3,tone:1.6}},
+           {delay:26,level:-3,r:{offset:35,pitch:90,gain:3,tone:1.6}},
+           {delay:10,level:-6,r:{offset:35,pitch:90,gain:3,tone:1.6}},
+           {delay:3,level:-10,r:{offset:35,pitch:90,gain:3,tone:1.6}}]}
+];
+var presetName='FACTORY / footstep gravel', presetDirty=false;
+function markDirty(){ presetDirty=true; paintPreset(); }
+function paintPreset(){
+  var e=$('presetName'); if(!e) return;
+  e.textContent=presetName+(presetDirty?' *':'');
+  e.className=presetDirty?'dirty':'';
+}
+/* STORAGE MAY NOT EXIST, AND SILENCE ABOUT THAT IS THE BUG.
+   localStorage throws on an opaque origin (a data: URL, some embedded hosts -
+   plausibly the editor's browser). The first version caught that and said
+   NOTHING, so SAVE reported success and saved nothing: the worst failure shape
+   there is. Now we probe once, fall back to an in-session store so the feature
+   still WORKS, and say plainly that it will not survive a reload. */
+var memStore=null, storageOK=(function(){
+  try{ var k='__taa_probe'; localStorage.setItem(k,'1'); localStorage.removeItem(k); return true; }
+  catch(e){ return false; }
+})();
+function blankStore(){ return {version:1,folders:[{name:'MY PRESETS',presets:[]}]}; }
+function loadUserPresets(){
+  if(!storageOK){ if(!memStore) memStore=blankStore(); return memStore; }
+  try{ var raw=localStorage.getItem(PRESET_KEY); if(!raw) return blankStore();
+       var o=JSON.parse(raw.replace(/^﻿/,''));   /* strip a BOM we did not write */
+       if(!o.folders) o={version:1,folders:[{name:'MY PRESETS',presets:o.presets||[]}]};
+       return o;
+  }catch(e){ return blankStore(); }
+}
+function saveUserPresets(o){
+  if(!storageOK){ memStore=o; return false; }
+  try{ localStorage.setItem(PRESET_KEY,JSON.stringify(o)); return true; }
+  catch(e){ storageOK=false; memStore=o; return false; }   /* quota, or revoked */
+}
+function storageNote(){ return storageOK? '' : ' - THIS SESSION ONLY, this host has no storage'; }
+function applyFactory(f){
+  M.seed=f.seed>>>0; M.knob=f.knob; M.count=f.count;
+  f.layers.forEach(function(o,i){
+    var l=L[i]; if(!l) return;
+    l.delay=o.delay; l.level=o.level;
+    for(var k in o.r) l.r[k]=o.r[k];
+  });
+  resetSheet(M.count);
+  presetName='FACTORY / '+f.name; presetDirty=false;
+  _lastSnap=snapKey(window.VB.state()); paintPreset(); paintUndo(); VBUI.notify();
+  if(anyLoaded()) doBounce(M.count);
+  setS('loaded factory preset "'+f.name+'"');
+}
+function applyUserPreset(p){
+  window.VB.restore(p.state);
+  presetName=p.folder+' / '+p.name; presetDirty=false;
+  _lastSnap=snapKey(window.VB.state()); paintPreset(); paintUndo();
+  var missing=[];
+  p.state.layers.forEach(function(o,i){
+    (o.files||[]).forEach(function(fn){
+      var have=L[i].files.some(function(f){return f.name===fn;});
+      if(!have) missing.push(fn);
+    });
+  });
+  setS(missing.length
+    ? ('loaded "'+p.name+'" — re-drop '+missing.length+' file(s) to restore the sound: '+missing.slice(0,3).join(', '))
+    : ('loaded preset "'+p.name+'"'));
+}
+function showPicker(anchorEl){
+  var pk=$('pick'); if(!pk) return;
+  pk.innerHTML='';
+  var store=loadUserPresets();
+  var fold=document.createElement('div'); fold.className='fold'; fold.textContent='★ FACTORY (protected)';
+  pk.appendChild(fold);
+  FACTORY.forEach(function(f){
+    var it=document.createElement('div'); it.className='item';
+    it.innerHTML='<span>'+f.name+'</span><b>seed '+f.seed+'</b>';
+    it.addEventListener('click',function(){ hidePicker(); guardThen(function(){ applyFactory(f); }); });
+    pk.appendChild(it);
+  });
+  store.folders.forEach(function(fo){
+    var fd=document.createElement('div'); fd.className='fold'; fd.textContent=fo.name;
+    pk.appendChild(fd);
+    if(!fo.presets.length){
+      var em=document.createElement('div'); em.className='item'; em.style.color='var(--dim)';
+      em.textContent='(empty — press SAVE)'; pk.appendChild(em);
+    }
+    fo.presets.forEach(function(p2){
+      var it2=document.createElement('div'); it2.className='item';
+      it2.innerHTML='<span>'+p2.name+'</span><b>del</b>';
+      it2.querySelector('span').addEventListener('click',function(){
+        hidePicker(); guardThen(function(){ p2.folder=fo.name; applyUserPreset(p2); });
+      });
+      it2.querySelector('b').addEventListener('click',function(ev){
+        ev.stopPropagation();
+        fo.presets=fo.presets.filter(function(x){return x!==p2;});
+        saveUserPresets(store); showPicker(anchorEl); setS('deleted preset "'+p2.name+'"');
+      });
+      pk.appendChild(it2);
+    });
+  });
+  var r=anchorEl.getBoundingClientRect();
+  pk.style.left=Math.min(r.left,window.innerWidth-250)+'px';
+  pk.style.top=(r.bottom+4)+'px';
+  pk.classList.add('show');
+}
+function hidePicker(){ var pk=$('pick'); if(pk) pk.classList.remove('show'); }
+/* never silently overwrite a designer's work: SAVE / DISCARD / CANCEL */
+function guardThen(fn){
+  if(!presetDirty){ fn(); return; }
+  askDialog('"'+presetName+'" has unsaved changes.\n\nDiscard them and load the other preset?',function(ok){
+    if(ok) fn();
+  });
+}
+function savePreset(){
+  askInput('Save preset as:', presetName.split(' / ').pop(), function(nm){
+    if(!nm) return;
+    var store=loadUserPresets(), fo=store.folders[0];
+    var st=window.VB.state();
+    var existing=fo.presets.filter(function(p){return p.name===nm;})[0];
+    if(existing){ existing.state=st; }
+    else fo.presets.push({name:nm,state:st});
+    saveUserPresets(store);
+    presetName=fo.name+' / '+nm; presetDirty=false; paintPreset();
+    setS('saved preset "'+nm+'" ('+fo.presets.length+' in '+fo.name+')'+storageNote());
+  });
+}
+
+/* ══ THE SHARED HALF OF window.VB ═════════════════════════════════════════
+   Each tool assigns its own members on top of this (Object.assign), so a
+   single-tool build exposes exactly the doors that tool actually has. */
+window.VB={
+  version:VERSION, SR:SR, design:DESIGN_REF,
+  spec:function(){ var s={}; for(var k in SPEC) s[k]=SPEC[k]; return s; },
+  seed:function(){return M.seed;},  setSeed:function(n){M.seed=(n>>>0);markStale();VBUI.notify();},
+  /* §SAVE: where a file can actually go from this host, and a test door to
+     force it so the refusal path can be exercised without an editor. */
+  deliveryPath:function(){ return vbDeliveryPath(); },
+  /* call back when window.ue.taa arrives — see vbBridgeReady's note: on CEF 128
+     it is NOT bound yet when the page script runs. */
+  onBridge:function(cb){ return vbBridgeReady(cb); },
+  forceDeliveryPath:function(p){ return forceDeliveryPath(p); },
+  slotCount:function(i){return L[i]?L[i].files.length:0;},
+  /* STRINGS STAY STRINGS. This used to coerce with +value, so setDial(0,'pick',
+     'FIXED') silently became NaN and the contract could not set PICK at all -
+     a setter that fails in silence is the worst kind. */
+  setDial:function(slot,dial,value){
+    var l=L[slot]; if(!l) return;
+    var num=(typeof value!=='string')||(value.trim()!=='' && isFinite(+value));
+    var v=num?+value:value;
+    if(dial in l.r) l.r[dial]=+v; else if(dial in l) l[dial]=v;
+    markStale(); VBUI.notify();
+  },
+  setMaster:function(dial,value){
+    var strDial=(dial==='normalise'||dial==='name');
+    if(strDial) M[dial]=String(value); else if(dial in M) M[dial]=+value;
+    if(dial==='normalise'){ latchGain=null; latchStale=false; } else markStale();
+    VBUI.notify();
+  },
+  /* §14 trim, through the contract - TESTER asked for it by name */
+  loadLayer:function(slot,o){
+    var l=L[slot]; if(!l) return 0;
+    var s=o.samples;
+    if(o.sampleRate&&o.sampleRate!==SR){    /* linear resample — harness convenience */
+      var ratio=o.sampleRate/SR, m=Math.floor(s.length/ratio), r=new Float32Array(m);
+      for(var i=0;i<m;i++){ var x=i*ratio,i0=Math.floor(x),fr=x-i0;
+        var a=s[i0]||0,b=s[i0+1]||0; r[i]=a+(b-a)*fr; }
+      s=r;
+    }
+    l.files.push({name:o.name||('inject_'+l.files.length), samples:s, durMs:s.length/SR*1000, stereo:false});
+    if(!l.name) l.name=o.name||('slot'+l.id);
+    latchGain=null; VBUI.notify();
+    return l.files.length;
+  },
+  clearLayer:function(slot){ var l=L[slot]; if(!l) return; l.files=[]; l.trimIn=0; l.trimOut=-1;
+    latchGain=null; VBUI.notify(); },
+  state:function(){
+    return { v:1, seed:M.seed, knob:M.knob, count:M.count, trim:M.trim, normalise:M.normalise,
+      tailFade:M.tailFade, maxLength:M.maxLength, rate:M.rate, bits:M.bits, channels:M.channels,
+      name:M.name, rolls:rolls.slice(), marks:marks.slice(), latchGain:latchGain, sel:sel,
+      layers:L.map(function(l){ return {name:l.name, pick:l.pick, fixedIdx:l.fixedIdx, on:l.on,
+        solo:l.solo, mute:l.mute, level:l.level, delay:l.delay, pan:l.pan, lp:l.lp, hp:l.hp,
+        trimIn:l.trimIn, trimOut:l.trimOut, files:l.files.map(function(f){return f.name;}),
+        r:{offset:l.r.offset,pitch:l.r.pitch,gain:l.r.gain,tone:l.r.tone,
+           spread:l.r.spread,reverse:l.r.reverse,start:l.r.start}};})};
+  },
+  restore:function(s){
+    if(!s) return;
+    M.seed=s.seed>>>0; M.knob=s.knob; M.count=s.count; M.trim=s.trim; M.normalise=s.normalise;
+    M.tailFade=s.tailFade; M.maxLength=s.maxLength; M.rate=s.rate; M.bits=s.bits;
+    M.channels=s.channels; M.name=s.name;
+    rolls=s.rolls.slice(); marks=s.marks.slice(); latchGain=s.latchGain; sel=s.sel||0;
+    s.layers.forEach(function(o,i){
+      var l=L[i]; if(!l) return;
+      l.name=o.name; l.pick=o.pick; l.fixedIdx=o.fixedIdx; l.on=o.on; l.solo=o.solo; l.mute=o.mute;
+      l.level=o.level; l.delay=o.delay; l.pan=o.pan; l.lp=o.lp; l.hp=o.hp;
+      l.trimIn=o.trimIn; l.trimOut=o.trimOut;
+      for(var k in o.r) l.r[k]=o.r[k];
+    });
+    /* the engine does not know what a screen looks like - it says "something
+       changed" and every registered tool repaints itself. */
+    VBUI.notify();
+  },
+  loadDemoKit:function(){ demoKit(); if(window.__vbAfterDemo) window.__vbAfterDemo(); },
+  onChange:function(fn){ VBUI.onChange(fn); },
+  undo:function(){ doUndo(); return undoStack.length; },
+  redo:function(){ doRedo(); return redoStack.length; },
+  undoDepth:function(){ return {undo:undoStack.length, redo:redoStack.length, max:UNDO_MAX}; },
+  commitUndo:function(){ commitUndo(); return undoStack.length; },
+  presets:function(){
+    var store=loadUserPresets();
+    return {current:presetName, dirty:presetDirty, persistent:storageOK,
+            factory:FACTORY.map(function(f){return f.name;}),
+            folders:store.folders.map(function(f){return {name:f.name,presets:f.presets.map(function(p){return p.name;})};})};
+  },
+  loadFactory:function(i){ applyFactory(FACTORY[i]); return presetName; },
+  savePresetAs:function(nm){
+    var store=loadUserPresets(), fo=store.folders[0], st=window.VB.state();
+    var ex=fo.presets.filter(function(p){return p.name===nm;})[0];
+    if(ex) ex.state=st; else fo.presets.push({name:nm,state:st});
+    saveUserPresets(store); presetName=fo.name+' / '+nm; presetDirty=false; paintPreset();
+    return nm;
+  },
+  loadPresetNamed:function(nm){
+    var store=loadUserPresets(), found=null;
+    store.folders.forEach(function(fo){ fo.presets.forEach(function(p){ if(p.name===nm){ p.folder=fo.name; found=p; } }); });
+    if(!found) return null;
+    applyUserPreset(found); return presetName;
+  },
+  audioReady:audioReady,
+  play:play
+};
+/* ══ HEADLESS SELF-CHECK ══════════════════════════════════════════════════
+   Once the tools are separate files, a preview pane that re-serves a page as a
+   data: URL cannot load their script tags - so the ONLY honest way to test a
+   split tool is headless. This renders results into the DOM where
+   `chrome --dump-dom` can read them, which is exactly what run-vbench needs.
+   Usage:  <tool>/index.html?selftest      Look for  VBSELFTEST PASS/FAIL. */
+function vbSelfTest(toolName, checks){
+  /* ── ENGINE INVARIANTS — asserted in EVERY tool, for free ─────────────────
+     These belong to the engine, not to any one screen. Copying them into three
+     gates would mean three gates that drift apart, and the one tool that quietly
+     dropped a check would be the one that broke — so they live at the single
+     place every tool already calls. No tool can forget them, and adding a tool
+     cannot lose them. Three sessions now write into one window.VB; the clash
+     check in particular has to run everywhere or it is not a guard at all. */
+  var engine=[
+    {name:'ENGINE · no namespace CLASH — nobody silently overwrote anybody',
+     fn:function(){ var c=(window.VB&&window.VB.nsClashes)?window.VB.nsClashes():[];
+       return {ok:c.length===0, detail:c.length? c.join(', ') : 'none'}; }},
+    {name:'ENGINE · the page NAMES ITSELF (VB.tool)',
+     fn:function(){ var t=window.VB&&window.VB.tool;
+       return {ok:(typeof t==='string')&&!!t, detail:'tool = '+t}; }},
+    {name:'ENGINE · SAVE never claims success without a delivery path',
+     fn:function(){
+       /* The lie this kills: the editor drops <a download> with no error while
+          the status line says it saved. Forced, so it is proven without an
+          editor and in EVERY tool, not just the one that found it. */
+       var was=window.VB.deliveryPath();
+       window.VB.forceDeliveryPath('none');
+       var r=saveBlob(new Blob(['probe']),'probe.wav');
+       window.VB.forceDeliveryPath(null);
+       var m=(r&&r.msg)||'';
+       return {ok: !!r && r.ok===false && m.indexOf('NO FILE WAS WRITTEN')>=0 &&
+                   m.indexOf('SAVED')<0 && window.VB.deliveryPath()===was,
+               detail:'path none → ok='+(r&&r.ok)+', says WRITTEN not SAVED'}; }},
+    {name:'ENGINE · state()/restore() round-trips BYTE-EXACT (CONTRACT)',
+     fn:function(){
+       var a=snapKey(window.VB.state());
+       window.VB.restore(JSON.parse(a));        /* a CLONE — proves no aliasing */
+       var b=snapKey(window.VB.state());
+       return {ok:a===b, detail:(a===b)? (a.length+' bytes, identical') : 'DIFFERS'}; }}
+  ];
+  checks=engine.concat(checks);
+  var out=[], failed=0;
+  checks.forEach(function(c){
+    var ok=false, detail='';
+    try{ var r=c.fn(); if(r&&typeof r==='object'){ ok=!!r.ok; detail=r.detail||''; } else ok=!!r; }
+    catch(e){ ok=false; detail='threw: '+(e&&e.message?e.message:e); }
+    if(!ok) failed++;
+    out.push((ok?'PASS ':'FAIL ')+c.name+(detail?('  ['+detail+']'):''));
+  });
+  var pre=document.createElement('pre');
+  pre.id='vbselftest';
+  pre.style.cssText='position:fixed;inset:0;z-index:999;background:#0b0a06;color:#d6d3d1;'+
+                    'font:12px monospace;padding:12px;overflow:auto;white-space:pre-wrap';
+  pre.textContent='VBSELFTEST '+(failed?'FAIL':'PASS')+' - '+toolName+' - '+
+                  (checks.length-failed)+'/'+checks.length+String.fromCharCode(10,10)+
+                  out.join(String.fromCharCode(10));
+  document.body.appendChild(pre);
+  document.title='VBSELFTEST '+(failed?'FAIL':'PASS')+' '+toolName;
+  return failed===0;
+}
+
+/* boot helper every tool uses. NEVER gate first paint on rAF alone: rAF is
+   PAUSED in a non-compositing webview and the tool would render blank with no
+   error at all (INFRA.md risk 5). */
+function vbBoot(fn){
+  var done=false;
+  function go(){ if(done) return; done=true; fn(); vbAnnounce(); }
+  setTimeout(go,0); requestAnimationFrame(go);
+}
+
+/* ══ ANNOUNCE — one line into the editor log, once ════════════════════
+   THERE IS NO DEVTOOLS WINDOW ON THIS BROWSER. Inside the editor a page is a
+   black box the moment anything goes wrong on a machine that is not ours, so
+   every tool says what it is, what host it thinks it is in, and where it
+   believes a file can go — the three things worth knowing before anything else
+   is diagnosed.
+
+   It also carries the exact phrase `page loaded:` that verify-gui.ps1 greps for,
+   which is what lets a REAL tool be gated in a real editor rather than only a
+   placeholder page that was written to be gateable. A harness that can only
+   verify a stub verifies nothing that ships. */
+function vbAnnounce(){
+  vbBridgeReady(function(bridge){
+    try{
+      bridge.log('page loaded: ' + (window.VB && window.VB.tool || 'unknown') +
+                 ' ' + VERSION +
+                 ' | host=' + (vbIsUnrealHost() ? 'unreal' : 'browser') +
+                 ' | delivery=' + vbDeliveryPath() +
+                 ' | storage=' + (storageOK ? 'persistent' : 'none'));
+    }catch(e){}
+  });
+}
+
+/* ── NAMESPACE REGISTRAR — VB.ns('daw', {…}) ───────────────────────
+   Three sessions now write into one window.VB: the engine here, VB.rec from
+   mini-recorder, VB.daw from mini-daw. A plain `window.VB.rec = {…}` written in
+   two files means THE LAST ONE LOADED WINS and the other disappears without a
+   sound — the exact silent-failure class this build keeps paying for (setDial
+   coercing to NaN, the swallowed storage exception, the contract advertising
+   doors that did not exist).
+
+   So registration MERGES rather than replaces, and every duplicate key is
+   RECORDED so the gate can go red on a collision instead of shipping whichever
+   file happened to load second. A clash is not resolved here on purpose: two
+   sessions disagreeing about who owns a verb is a routing question, and the
+   honest thing is to make it visible, not to pick a winner quietly. */
+var _nsClash=[];
+window.VB.ns=function(name,members){
+  var t=window.VB[name]||(window.VB[name]={});
+  for(var k in members){
+    if(!Object.prototype.hasOwnProperty.call(members,k)) continue;
+    if(Object.prototype.hasOwnProperty.call(t,k)) _nsClash.push(name+'.'+k);
+    t[k]=members[k];
+  }
+  return t;
+};
+window.VB.nsClashes=function(){ return _nsClash.slice(); };
+
+</script>
+<script>
+/* inlined: rec.js */
+/* ══════════════════════════════════════════════════════════════════════════
+   MINI RECORDER — the fastest capture path
+   Part of the TAA tool family. Shared engine lives in ../shared/.
+   ══════════════════════════════════════════════════════════════════════════ */
+'use strict';
+/* ══════════════════════════════════════════════════════════════════════════
+   MINI RECORDER (tool 3) — "just quickly getting in sounds".
+   The fastest capture path, not a field recorder. Pick an input, watch the
+   meter, press record, trim what you caught, name it, send it to a DAW track
+   or a Variation slot. Everything that would slow that down is absent.
+
+   ⚠ CEF: getUserMedia's permission path inside Unreal's embedded browser is an
+   OPEN QUESTION (INFRA spike). The browser build is the guaranteed one; the
+   plugin build may need a native permission call through the bridge. Flagged in
+   the UI rather than assumed away.
+   ══════════════════════════════════════════════════════════════════════════ */
+var rec={
+  mode:'idle',                 /* idle | armed | recording | captured */
+  src:'mic', devId:null, devices:[],
+  stream:null, node:null, an:null, srcNode:null,
+  chunks:[], len:0, buffer:null,
+  trimIn:0, trimOut:-1,
+  peak:0, hold:0, clipped:false,
+  t0:0, dest:'daw', slot:0, _raf:0, _playing:null, _sent:0, _phRaf:0
+};
+function recMsg(t,warn){ var e=$('rMsg'); if(e){ e.textContent=t; e.className='hint'+(warn?' rwarn':''); } setS(t); }
+function recBadge(){
+  var b=$('rBadge'); if(!b) return;
+  b.className='rbadge '+(rec.mode==='recording'?'':(rec.mode==='armed'?'armed':'idle'));
+  b.textContent=rec.mode.toUpperCase();
+  var fullMs=rec.buffer? rec.buffer.length/SR*1000 : 0;
+  $('rSub').textContent = rec.mode==='captured'
+    ? ((recTrimMs()/1000).toFixed(2)+'s trimmed (of '+(fullMs/1000).toFixed(2)+'s) · 48kHz/24-bit mono')
+    : (rec.src==='system'?'system audio':'microphone');
+}
+function recTrimMs(){
+  if(!rec.buffer) return 0;
+  var a=Math.round(rec.trimIn/1000*SR), b=(rec.trimOut<0)?rec.buffer.length:Math.round(rec.trimOut/1000*SR);
+  return Math.max(0,(b-a)/SR*1000);
+}
+function recTrimmed(){
+  if(!rec.buffer) return new Float32Array(0);
+  var a=Math.max(0,Math.round(rec.trimIn/1000*SR));
+  var b=(rec.trimOut<0)?rec.buffer.length:Math.min(rec.buffer.length,Math.round(rec.trimOut/1000*SR));
+  if(b-a<8) return new Float32Array(0);
+  var n=b-a, out=new Float32Array(n); out.set(rec.buffer.subarray(a,b));
+  /* the same trim fades the other two tools use - one idiom everywhere */
+  var maxF=Math.floor(n*SPEC.TRIM_FADE_MAX_PCT/100), i;
+  if(a>0){ var fi=Math.min(Math.round(SPEC.TRIM_FADE_IN_MS/1000*SR),maxF);
+    for(i=0;i<fi;i++) out[i]*=0.5-0.5*Math.cos(Math.PI*i/fi); }
+  if(b<rec.buffer.length){ var fo=Math.min(Math.round(SPEC.TRIM_FADE_OUT_MS/1000*SR),maxF);
+    for(i=0;i<fo;i++) out[n-1-i]*=0.5-0.5*Math.cos(Math.PI*i/fo); }
+  return out;
+}
+/* ── devices ─────────────────────────────────────────────────────────────
+   The sheet lists "remembers the last choice, so relaunch needs zero clicks"
+   as SHIPS, and it was never implemented — devId lived in memory only. It is
+   stored through the same probe the presets use, and when the host has no
+   storage the tool SAYS so instead of silently forgetting: the third instance
+   of that fix in this codebase, and the reason the family keeps finding them. */
+var REC_DEV_KEY='taa_vb_rec_device';
+function recRememberDevice(){
+  if(!storageOK) return false;
+  try{ localStorage.setItem(REC_DEV_KEY, rec.devId||''); return true; }
+  catch(e){ return false; }
+}
+function recRecallDevice(){
+  if(!storageOK) return null;
+  try{ return localStorage.getItem(REC_DEV_KEY)||null; }catch(e){ return null; }
+}
+function recScan(){
+  var host=$('rDevs'); if(!host) return Promise.resolve([]);
+  if(!navigator.mediaDevices||!navigator.mediaDevices.enumerateDevices){
+    host.innerHTML='<span class="rwarn">no mediaDevices in this host</span>';
+    return Promise.resolve([]);
+  }
+  return navigator.mediaDevices.enumerateDevices().then(function(list){
+    rec.devices=list.filter(function(d){return d.kind==='audioinput';})
+      .map(function(d,i){ return {id:d.deviceId, label:d.label||('input '+(i+1)+' (label hidden until permission)')}; });
+    if(!rec.devices.length) rec.devices=[{id:'default',label:'default input'}];
+    if(!rec.devId){
+      /* the remembered choice only counts if that input is still plugged in */
+      var want=recRecallDevice();
+      var still=want&&rec.devices.filter(function(d){return d.id===want;}).length;
+      rec.devId = still? want : rec.devices[0].id;
+    }
+    host.innerHTML='';
+    rec.devices.forEach(function(d){
+      var b=document.createElement('button');
+      b.className='btn sm'+(d.id===rec.devId?' primary':'');
+      b.textContent=d.label; b.title=d.label;
+      b.addEventListener('click',function(){
+        rec.devId=d.id; recRememberDevice(); recScan();
+        recMsg('input: '+d.label+storageNote());
+      });
+      host.appendChild(b);
+    });
+    return rec.devices;
+  }).catch(function(e){
+    host.innerHTML='<span class="rwarn">device scan failed: '+(e&&e.message?e.message:e)+'</span>';
+    return [];
+  });
+}
+/* ── arm: open the input so the meter is live BEFORE you commit ───────── */
+function recArm(){
+  if(rec.mode==='recording') return Promise.resolve(false);
+  recDisarm();
+  var ctx=audioReady();
+  var want = (rec.src==='system')
+    ? (navigator.mediaDevices.getDisplayMedia
+        ? navigator.mediaDevices.getDisplayMedia({video:true, audio:true})
+        : Promise.reject(new Error('getDisplayMedia not available')))
+    : navigator.mediaDevices.getUserMedia({audio:{
+        deviceId: rec.devId&&rec.devId!=='default'?{exact:rec.devId}:undefined,
+        echoCancellation:false, noiseSuppression:false, autoGainControl:false}});
+  return want.then(function(stream){
+    var tracks=stream.getAudioTracks();
+    if(!tracks.length){
+      stream.getTracks().forEach(function(t){t.stop();});
+      throw new Error(rec.src==='system'
+        ? 'no audio track — tick "Share tab audio" in the picker'
+        : 'no audio track from the device');
+    }
+    if(rec.src==='system') stream.getVideoTracks().forEach(function(t){t.stop();});
+    rec.stream=stream;
+    rec.srcNode=ctx.createMediaStreamSource(stream);
+    rec.an=ctx.createAnalyser(); rec.an.fftSize=1024;
+    /* ScriptProcessor is deprecated but it is the one capture path that works
+       in every host we ship into, including an older CEF. AudioWorklet needs a
+       module URL, which a single self-contained file cannot rely on. */
+    rec.node=ctx.createScriptProcessor(4096,1,1);
+    rec.chunks=[]; rec.len=0;
+    rec.node.onaudioprocess=function(e){ recBlock(e.inputBuffer.getChannelData(0)); };
+    rec.srcNode.connect(rec.an); rec.an.connect(rec.node);
+    /* a muted sink keeps the ScriptProcessor pulling without monitoring back
+       into the room (which is a feedback howl on a laptop mic) */
+    var sink=ctx.createGain(); sink.gain.value=0;
+    rec.node.connect(sink); sink.connect(ctx.destination);
+    rec.mode='armed'; recBadge(); recPaint(); recLoop();
+    /* ARMED IS NOT PROVEN. The stream opened; no sample has been metered yet,
+       so cefMicStatus() stays 'unproven' until recBlock sees one. */
+    micEv.since='arm'; micEv.refusedName=null; micEv.refusedMsg=null;
+    recBridgeMicRefresh();
+    recMsg('armed — the meter is live; press RECORD');
+    recScan();
+    return true;
+  }).catch(function(e){
+    var m=(e&&e.message)?e.message:String(e);
+    micEv.refusedName=(e&&e.name)?e.name:'Error';
+    micEv.refusedMsg=m; micEv.since='arm';
+    recBridgeMicRefresh();
+    recMsg('could not open the input: '+m, true);
+    if(/permission|denied|NotAllowed/i.test(m))
+      recMsg('input permission refused. In a browser, allow the mic. In the Unreal tab this is the known open question — the plugin may need a native permission call.', true);
+    return false;
+  });
+}
+/* ── ONE metering path ────────────────────────────────────────────────────
+   Every block of audio this tool ever sees goes through here, whether it came
+   from a microphone or from feedInput(). That is deliberate: the peak-hold and
+   the clip LED are the only warning a designer gets that a take is ruined, and
+   a test that drove a SEPARATE path would prove nothing about the one the user
+   actually relies on. TESTER asked for exactly this ("the SAME analyser path a
+   microphone does") after peak-hold and the clip LED sat UNVERIFIABLE. */
+function recBlock(d,origin){
+  var i, mx=0;
+  for(i=0;i<d.length;i++){ var v=d[i]<0?-d[i]:d[i]; if(v>mx)mx=v; }
+  rec.peak=mx;
+  if(mx>rec.hold) rec.hold=mx;
+  if(mx>=1.0) rec.clipped=true;          /* 0 dBFS, per the family sheet */
+  if(rec.mode==='recording'){
+    var c=new Float32Array(d.length); c.set(d); rec.chunks.push(c); rec.len+=d.length;
+  }
+  micSaw(origin||'live', d.length);      /* evidence, for cefMicStatus */
+  return mx;
+}
+/* ── THE INJECTION POINT: tests and the native bridge both arrive here ──────
+   NOT test-only, and it must not be tidied into being test-only in fact.
+
+   `recBlock` meters, holds the peak, latches the clip LED AND accumulates the
+   take — both halves, one door. That is what makes this the plugin's capture
+   INGRESS as well as the test hook: when the wrap's Path 2 pumps natively
+   captured audio in through here, it drives the meter, the LED and the recorded
+   buffer on exactly the code a live microphone uses.
+
+   That property is not a coincidence. This path exists because proving the
+   meter reads the SIGNAL rather than decorating the screen required the test to
+   share the live path — anything else would have proved nothing. Reuse fell out
+   of honesty.
+
+   `origin` is what the evidence is worth, and it defaults to the SAFE value:
+     'live'   — real getUserMedia samples (the onaudioprocess default)
+     'bridge' — native capture through the plugin bridge  <- PUMP MUST PASS THIS
+     'inject' — a test amplitude we chose; proves the meter, NOT a microphone
+   Only 'live' and 'bridge' can ever make cefMicStatus() report state:'ok',
+   because a green nobody watched happen is the thing this whole file refuses
+   to print. */
+function recFeed(sig,origin){
+  if(!sig||!sig.length) return 0;
+  var mx=recBlock(sig,origin||'inject');
+  recPaintMeter(rec.peak);
+  return mx;
+}
+function recMeterRead(){
+  return {peakDb:20*Math.log10(Math.max(1e-5,rec.peak)),
+          holdDb:20*Math.log10(Math.max(1e-5,rec.hold)),
+          clipped:!!rec.clipped};
+}
+function recFormat(){ return {rate:SR, bits:24, channels:1, fixed:true}; }
+/* ── THE MICROPHONE'S STATUS, AND THE RULE THAT GOVERNS IT ─────────────────
+   THE RULE: state:'ok' is permitted ONLY after samples have actually arrived
+   and been metered. Not because getUserMedia exists — the spike proved it
+   exists on 5.6/5.7/5.8 and is refused on all three. Not because the bridge
+   says a permission handler is installed — that is a diagnosis, not a cure.
+   Only because audio came through recBlock and we watched it.
+
+   'unproven' is the honest value before evidence and is NOT a failure state.
+   'refused' carries the real DOMException name. 'unavailable' means this host
+   offers no capture path at all.
+
+   Who owns what, so the two sides cannot disagree: `host` and `path` come from
+   the bridge when it is there, because only native knows them. `state` is owned
+   by the PAGE, because the page is the only one that can see samples arrive. */
+var micEv={
+  proven:false,          /* a real capture path delivered audio, and we metered it */
+  provenBy:null,         /* 'live' | 'bridge' */
+  refusedName:null, refusedMsg:null,
+  since:'boot',
+  bridge:null            /* cached ue.taa.micstatus() - the call is a PROMISE */
+};
+function micSaw(origin,n){
+  if(!n) return;
+  if(origin==='live'||origin==='bridge'){
+    if(!micEv.proven){ micEv.proven=true; micEv.provenBy=origin; micEv.since='capture'; }
+    micEv.refusedName=null; micEv.refusedMsg=null;
+  }
+}
+/* The bridge's methods resolve as PROMISES in CEF, so this cannot be folded in
+   synchronously. Cache it, and never block cefMicStatus() on it. */
+function recBridgeMicRefresh(){
+  try{
+    var t=window.ue&&window.ue.taa;
+    if(!t||typeof t.micstatus!=='function') return Promise.resolve(null);
+    return Promise.resolve(t.micstatus()).then(function(r){
+      try{ micEv.bridge=(typeof r==='string')?JSON.parse(r):r; }catch(e){ micEv.bridge=null; }
+      return micEv.bridge;
+    },function(){ micEv.bridge=null; return null; });
+  }catch(e){ return Promise.resolve(null); }
+}
+/* WHICH HOST am I in — answered without racing the binding.
+   `window.ue.taa` is definitive when present, but on CEF 128 it is NOT bound
+   yet when the page script runs, so its ABSENCE proves nothing early. Reading
+   host from the bridge alone made this report host:'browser' inside Unreal for
+   the first moments of the tab's life, and the detail sentence would then have
+   told a plugin user to "allow the microphone in a browser". The user agent is
+   available immediately and does not race — measured in the spike:
+   "...UnrealEngine/5.6.1-44394996+". Same bug family as the SAVE paint. */
+function recIsUnrealHost(){
+  try{
+    if(window.ue&&window.ue.taa) return true;
+    return /UnrealEngine/i.test(navigator.userAgent||'');
+  }catch(e){ return false; }
+}
+function recCefMicStatus(){
+  var t=null;
+  try{ t=window.ue&&window.ue.taa; }catch(e){ t=null; }
+  var host=recIsUnrealHost()? 'unreal' : 'browser';
+  var bm=micEv.bridge;
+  var canGum=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);
+  /* path: the bridge's word when it is there, since only native knows */
+  var path;
+  if(bm&&bm.path){ path=(bm.path==='cef')?'webaudio':(bm.path==='native'?'bridge':'none'); }
+  else if(host==='unreal'){ path=(t&&typeof t.micread==='function')?'bridge':(canGum?'webaudio':'none'); }
+  else { path=canGum?'webaudio':'none'; }
+
+  var state, detail;
+  if(micEv.proven){
+    state='ok';
+    detail='audio has actually arrived and been metered through the '+
+           (micEv.provenBy==='bridge'?'plugin bridge':'browser capture path')+
+           ' — this is the only way this reports ok.';
+  }else if(micEv.refusedName){
+    state='refused';
+    detail='the host refused capture ('+micEv.refusedName+
+           (micEv.refusedMsg?(': '+micEv.refusedMsg):'')+'). '+
+           (host==='unreal'
+             ? 'This is the known CEF gap: the plugin must grant the permission natively or capture natively.'
+             : 'In a browser, allow the microphone and press ARM again.');
+  }else if(path==='none'){
+    state='unavailable';
+    detail='this host offers no capture path at all — neither a browser capture API nor a bridge mic method.';
+  }else{
+    state='unproven';
+    detail='nothing has been captured yet, so nothing is proven. '+
+           (canGum?'A capture function exists, which is not evidence that it works — ':'')+
+           'press ARM to find out.';
+  }
+  return {host:host, path:path, state:state, detail:detail, since:micEv.since};
+}
+function recDiscard(){
+  recDisarm();
+  rec.buffer=null; rec.chunks=[]; rec.len=0;
+  rec.trimIn=0; rec.trimOut=-1;
+  rec.peak=0; rec.hold=0; rec.clipped=false;
+  rec.mode='idle';
+  recBadge(); recPaint(); recPaintMeter(0);
+  return rec.mode;
+}
+/* STRICT — the API's capture verb refuses when the input was never opened, and
+   says so by returning false. The on-screen 2·RECORD button is allowed to be
+   friendlier (it arms for you); the API is not, because the invariant has to
+   live somewhere a caller cannot skip. Same lesson as setDial's strings and
+   setRecTrim's bounds: an invariant enforced only in the UI is not one. */
+function recRecordStrict(){
+  if(rec.mode!=='armed') return false;
+  recStart();
+  return rec.mode==='recording';
+}
+/* STOP, optionally with the take handed in. A headless run can never reach
+   'recording' (arm needs a microphone this rig has none of), so without this
+   the entire trim/save/send half of the tool would be untestable. */
+function recStopWith(sig){
+  if(rec.mode==='recording'){ recStopIt(); return rec.buffer?rec.buffer.length:0; }
+  if(sig&&sig.length){
+    var b=new Float32Array(sig.length); b.set(sig);
+    rec.buffer=b; rec.len=b.length; rec.chunks=[];
+    rec.trimIn=0; rec.trimOut=-1; rec.mode='captured';
+    recDisarm(); recBadge(); recPaint();
+    return b.length;
+  }
+  recStopIt();
+  return rec.buffer?rec.buffer.length:0;
+}
+/* SAVE, split in two: the bytes, and the download. They were one function, so
+   the only way to check what SAVE writes was to hook the browser's download
+   machinery. Returning the bytes lets the WAV be parsed from bytes. */
+function recWavBytes(){
+  var b=recTrimmed();
+  if(!b.length) return null;
+  return {data:encWAV([b],24,SR), name:recName()+'.wav', samples:b.length};
+}
+function recName(){
+  var e=$('rName');
+  return ((e&&e.value)||'take').replace(/[^\w\-]/g,'_');
+}
+/* ── SAVE ─ the routing now lives ONE LEVEL DOWN ──────────────────────
+   This tool used to own a three-way delivery decision. It does not any more:
+   `shared/vb-core.js`'s saveBlob is bridge-aware and honest for all three
+   tools, so a copy here would be two answers to one question. The words-rule
+   this department derived (failures say WRITTEN, successes say SAVED; the
+   success word appears only when a file exists) was adopted verbatim in the
+   engine, so it now protects the DAW and the Variation Designer too.
+
+   What stays is the only part that is genuinely the Recorder's: WHICH bytes,
+   and WHAT the take is called. Host detection, encoding, the refusal message
+   and the delivery decision are all shared's now. */
+var REC_NO_TAKE_MSG='nothing to write — capture a take first';
+/* Always a Promise of the shared result {ok, path, name, file?, msg}. `ok` is
+   NULL while a bridge call is in flight, so this waits for the real answer
+   instead of reporting the pending one. */
+function recSaveWavHonest(){
+  var w=recWavBytes();
+  if(!w) return Promise.resolve({ok:false, path:'none', name:null, samples:0,
+                                 msg:REC_NO_TAKE_MSG, message:REC_NO_TAKE_MSG});
+  return new Promise(function(resolve){
+    var settled=false;
+    function hand(r){
+      if(settled) return; settled=true;
+      r=r||{}; r.samples=w.samples; r.message=r.msg;
+      resolve(r);
+    }
+    var immediate=saveBlob(new Blob([w.data],{type:'audio/wav'}), w.name, hand);
+    /* a non-pending answer is final and has already gone through `done` */
+    if(immediate && immediate.pending!==true) hand(immediate);
+  });
+}
+
+function recDisarm(){
+  if(rec.node){ try{rec.node.disconnect();}catch(e){} rec.node.onaudioprocess=null; rec.node=null; }
+  if(rec.srcNode){ try{rec.srcNode.disconnect();}catch(e){} rec.srcNode=null; }
+  if(rec.stream){ rec.stream.getTracks().forEach(function(t){t.stop();}); rec.stream=null; }
+  rec.an=null;
+  if(rec._raf){ cancelAnimationFrame(rec._raf); rec._raf=0; }
+}
+function recStart(){
+  if(rec.mode==='idle'||rec.mode==='captured'){ recArm().then(function(ok){ if(ok) recStart(); }); return; }
+  if(rec.mode!=='armed') return;
+  rec.chunks=[]; rec.len=0; rec.buffer=null; rec.clipped=false; rec.hold=0;
+  rec.t0=audioReady().currentTime; rec.mode='recording';
+  recBadge(); recMsg('recording — press STOP when you are done');
+}
+function recStopIt(){
+  if(rec.mode!=='recording'){ recDisarm(); rec.mode='idle'; recBadge(); recPaint(); return; }
+  var buf=new Float32Array(rec.len), o=0;
+  rec.chunks.forEach(function(c){ buf.set(c,o); o+=c.length; });
+  rec.buffer=buf; rec.chunks=[];
+  rec.trimIn=0; rec.trimOut=-1;
+  rec.mode='captured'; recDisarm();
+  if(!$('rName').value || /^take_\d+$/.test($('rName').value)){
+    var n=(rec.devices[0]&&rec.devices[0].label||'take').split(' ')[0].replace(/[^\w]/g,'').slice(0,10).toLowerCase();
+    $('rName').value=(n||'take')+'_'+padNum(Math.floor((buf.length/SR)*10)%100,2);
+  }
+  recBadge(); recPaint();
+  recMsg('captured '+(buf.length/SR).toFixed(2)+'s — trim it, then SAVE or SEND'+(rec.clipped?' (it clipped)':''));
+}
+/* test-only: a synthetic take, so the trim/name/save/send path is verifiable in
+   a headless run that has no microphone. Without this the whole tool is
+   untestable, which is how a capture tool ships broken. */
+function recSimulate(ms){
+  var n=Math.round(SR*(ms||900)/1000), b=new Float32Array(n), rng=mulberry32(12345);
+  for(var i=0;i<n;i++){ var t=i/SR;
+    b[i]=Math.sin(2*Math.PI*220*t)*Math.exp(-t*2.2)*0.6 + (rng()*2-1)*0.02*Math.exp(-t*4); }
+  rec.buffer=b; rec.len=n; rec.trimIn=0; rec.trimOut=-1; rec.mode='captured';
+  rec.clipped=false; rec.hold=0.6;
+  recBadge(); recPaint();
+  return n;
+}
+function recLoop(){
+  if(rec.mode!=='armed' && rec.mode!=='recording'){ recPaintMeter(0); return; }
+  recPaintMeter(rec.peak);
+  if(rec.mode==='recording'){
+    var el=(audioReady().currentTime-rec.t0);
+    $('rBig').textContent=padNum(Math.floor(el/60),2)+':'+padNum(Math.floor(el%60),2)+'.'+Math.floor((el*10)%10);
+  }
+  rec._raf=requestAnimationFrame(recLoop);
+}
+function recPaintMeter(pk){
+  var m=$('rMeter'); if(!m) return;
+  var db=20*Math.log10(Math.max(1e-5,pk)), w=Math.max(0,Math.min(1,(db+60)/60));
+  m.querySelector('b').style.width=(w*100)+'%';
+  var hb=20*Math.log10(Math.max(1e-5,rec.hold)), hw=Math.max(0,Math.min(1,(hb+60)/60));
+  var h=m.querySelector('i');
+  h.style.display=rec.hold>0.001?'':'none'; h.style.left=(hw*100)+'%';
+  $('rLed').classList.toggle('hot',rec.clipped);
+  $('rPeak').textContent = rec.hold>0.001? (20*Math.log10(rec.hold)).toFixed(1)+' dB' : '—';
+}
+function recPaint(){
+  var cap=(rec.mode==='captured' && rec.buffer && rec.buffer.length);
+  $('rBig').style.display=cap?'none':'';
+  $('rWave').style.display=cap?'':'none';
+  ['rIn','rOut','rInLab','rOutLab'].forEach(function(id){ $(id).style.display=cap?'':'none'; });
+  $('rStageHint').textContent = cap
+    ? 'drag the handles to trim · PLAY to check · SEND fires it at the next tool'
+    : (rec.mode==='armed'? 'armed — the meter is live; press RECORD'
+      : rec.mode==='recording'? 'recording — press STOP, nothing is lost'
+      : 'press ARM to open the input, then RECORD');
+  ['rDimL','rDimR','rTrimLen'].forEach(function(id){ var e=$(id); if(e) e.style.display=cap?'':'none'; });
+  if(!cap){ recPlayheadHide(); return; }
+  var cv=$('rWave');
+  /* ONE wave, drawn once, at full strength. The trim is expressed by DIMMING
+     what falls outside it — the take is never redrawn in a "kept" colour,
+     because that reads as highlighting rather than "the rest is still there". */
+  drawWave(cv,rec.buffer,{col:'#ffb38a',zero:false});
+  var wrapW=cv.getBoundingClientRect().width, dur=rec.buffer.length/SR*1000;
+  var inMs=rec.trimIn, outMs=(rec.trimOut<0)?dur:rec.trimOut;
+  var xIn=inMs/dur*wrapW, xOut=outMs/dur*wrapW;
+  $('rDimL').style.left='0px';  $('rDimL').style.width=Math.max(0,xIn)+'px';
+  $('rDimR').style.left=xOut+'px'; $('rDimR').style.width=Math.max(0,wrapW-xOut)+'px';
+  $('rIn').style.left=(xIn-3)+'px';
+  $('rOut').style.left=(xOut-3)+'px';
+  $('rInLab').textContent='IN '+inMs.toFixed(0)+'ms';
+  $('rOutLab').textContent='OUT '+outMs.toFixed(0)+'ms';
+  /* what you are about to save, read off the TRIMMED take rather than the
+     whole capture - the number that matters is the one that leaves the tool */
+  var t=recTrimmed(), pk=0;
+  for(var i=0;i<t.length;i++){ var v=t[i]<0?-t[i]:t[i]; if(v>pk)pk=v; }
+  $('rTrimLen').textContent='TRIM '+(recTrimMs()/1000).toFixed(2)+'s · PEAK '+
+    (pk>0? (20*Math.log10(pk)).toFixed(1)+' dBFS' : '—');
+  recBadge();
+}
+/* ── audition playhead ─────────────────────────────────────────────────────
+   PLAY used to give no positional feedback at all, so a trim you were checking
+   by ear had nothing on screen to check it against. The head runs across the
+   TRIMMED range only, because that is what is playing. */
+function recPlayheadHide(){
+  var p=$('rPh'); if(p) p.style.display='none';
+  if(rec._phRaf){ cancelAnimationFrame(rec._phRaf); rec._phRaf=0; }
+}
+function recPlayhead(durMs){
+  var p=$('rPh'), cv=$('rWave');
+  if(!p||!cv||!rec.buffer) return;
+  var t0=audioReady().currentTime;
+  var full=rec.buffer.length/SR*1000;
+  var inMs=rec.trimIn, outMs=(rec.trimOut<0)?full:rec.trimOut;
+  p.style.display='';
+  if(rec._phRaf) cancelAnimationFrame(rec._phRaf);
+  (function step(){
+    var el=(audioReady().currentTime-t0)*1000;
+    if(el>=durMs){ recPlayheadHide(); return; }
+    var w=cv.getBoundingClientRect().width;
+    p.style.left=((inMs+el)/full*w)+'px';
+    rec._phRaf=requestAnimationFrame(step);
+  })();
+  return outMs;
+}
+/* The destinations this tool understands. An unknown one is REJECTED, never
+   quietly redirected — the old code mapped anything that was not 'slot' onto
+   the DAW, so sendTo('variation', 2) silently went to a DAW track. Worse, that
+   branch also appends to the layer's file list, so slotCount() still went up
+   and the misroute was invisible to exactly the assertion you would write to
+   catch it. Director's ruling, 25 Aug: a misroute must be LOUD. */
+var REC_DESTS={slot:'slot', variation:'slot', daw:'daw', track:'daw'};
+function recNormDest(d){ return REC_DESTS[String(d||'').toLowerCase()] || null; }
+function recSend(){
+  var buf=recTrimmed();
+  if(!buf.length){ recMsg('nothing to send',true); return null; }
+  var nm=($('rName').value||'take').replace(/[^\w\-]/g,'_');
+  if(rec.dest==='slot'){
+    window.VB.loadLayer(rec.slot,{name:nm,samples:buf,sampleRate:SR});
+    recMsg('sent '+(buf.length/SR).toFixed(2)+'s to VARIATION slot '+SLOT_IDS[rec.slot]);
+  }else if(typeof daw==='undefined'){
+    /* the DAW module is not in this build. The layer's file list IS the DAW's
+       track content when it opens (dawSync builds clips from it), so the take
+       still lands where it was aimed - it just arrives when the DAW does. */
+    window.VB.loadLayer(rec.slot,{name:nm,samples:buf,sampleRate:SR});
+    recMsg('sent '+(buf.length/SR).toFixed(2)+'s to track '+SLOT_IDS[rec.slot]+' — it will be there when the Mini DAW opens');
+  }else{
+    var l=L[rec.slot];
+    l.files.push({name:nm,samples:buf,durMs:buf.length/SR*1000,stereo:false});
+    if(!l.name) l.name=nm.slice(0,14);
+    var fi=l.files.length-1, start=daw.tracks[rec.slot].length? (function(){
+      var last=daw.tracks[rec.slot][daw.tracks[rec.slot].length-1];
+      return last.startMs+(last.outMs-last.inMs);
+    })() : 0;
+    daw.tracks[rec.slot].push({id:daw._nextId++, fileIdx:fi, startMs:start,
+                               inMs:0, outMs:buf.length/SR*1000});
+    sortTrack(rec.slot); dawCommitNominal(rec.slot);
+    VBUI.notify();
+    recMsg('sent '+(buf.length/SR).toFixed(2)+'s to DAW track '+SLOT_IDS[rec.slot]+' at '+(start/1000).toFixed(2)+'s');
+  }
+  rec._sent++;
+  return buf.length;
+}
+/* ── THE CANVAS MUST BE RE-FITTED WHEN ITS BOX CHANGES ────────────────────
+   `fitCv` sizes the backing store from getBoundingClientRect() at DRAW TIME,
+   once. Measured inside a real UE 5.6 editor tab:
+
+     before any take     canvas 0.0x0.0    backing 300x150   STAGE 18.0x2.0
+     right after drawing  canvas 16.0x0.0   backing 16x1      STAGE 18.0x2.0
+     +1500ms, no redraw   canvas 1128x461   backing 16x1   <-- STILL 16x1
+     after a repaint      canvas 1128x461   backing 1128x461
+
+   CEF reports document.readyState "complete" while the Slate widget still has
+   no rectangle — Click Factory's panel says the same thing in its own words
+   ("one second of real ticks ... so the browser widget has been arranged and
+   has a rectangle"). So the take was drawn into a 16x1 buffer and CSS stretched
+   it across 1128x461, which is the smooth gradient wash on screen. Nothing ever
+   re-fitted it, so it stayed broken for the life of the tab.
+
+   This is NOT a CEF hack. The same bug bites a plain browser: resize the window
+   with a take captured and the waveform is left at the old backing size. The
+   missing behaviour is "redraw when your box changes", and that is what this
+   adds. */
+function recWatchStage(){
+  var st=$('rStage'); if(!st) return;
+  var last='';
+  function check(){
+    var cv=$('rWave'); if(!cv) return;
+    var r=cv.getBoundingClientRect();
+    var key=Math.round(r.width)+'x'+Math.round(r.height);
+    if(key===last) return;
+    last=key;
+    if(r.width>0 && r.height>0) recPaint();
+  }
+  if(window.ResizeObserver){
+    try{ new ResizeObserver(check).observe(st); }catch(e){}
+  }
+  window.addEventListener('resize',check);
+  /* Belt as well as braces: an older CEF may not deliver ResizeObserver
+     callbacks for a Slate-hosted widget, so poll briefly at boot too. Measured:
+     the real box arrived between 600 ms and 2100 ms after load on 5.6. */
+  var n=0, iv=setInterval(function(){ check(); if(++n>40) clearInterval(iv); },150);
+  check();
+}
+/* A button that cannot do its job must not look like one that can. When there
+   is no delivery path, SAVE WAV wears it before it is pressed rather than
+   apologising afterwards. */
+function recPaintSave(){
+  var b=$('rSave'); if(!b) return;
+  /* the DECISION is shared's; wearing it is mine */
+  var path=vbDeliveryPath();
+  var dead=(path==='none');
+  b.classList.toggle('warn',dead);
+  b.textContent=dead? 'SAVE WAV ⚠' : 'SAVE WAV';
+  b.title=dead
+    ? 'This host cannot receive a file: Unreal\'s browser drops downloads and no '+
+      'file bridge is present. Press for the full explanation, or use SEND TO.'
+    : (path==='bridge'
+        ? 'Writes the trimmed take into the project through the plugin bridge.'
+        : 'Writes the trimmed take to disk.');
+  return path;
+}
+/* ── wiring ──────────────────────────────────────────────────────────── */
+function recWire(){
+  $('rArm').addEventListener('click',function(){ recArm(); });
+  $('rRec').addEventListener('click',recStart);
+  $('rStop').addEventListener('click',recStopIt);
+  $('rRedo').addEventListener('click',function(){ rec.buffer=null; rec.mode='idle'; recBadge(); recPaint(); recArm(); });
+  $('rRescan').addEventListener('click',function(){ recScan().then(function(d){ recMsg(d.length+' input(s) found'); }); });
+  $('rPlay').addEventListener('click',function(){
+    var b=recTrimmed(); if(!b.length){ recMsg('nothing captured yet',true); return; }
+    play(b);
+    recPlayhead(b.length/SR*1000);
+    recMsg('playing the trimmed take · '+(b.length/SR).toFixed(2)+'s');
+  });
+  $('rSave').addEventListener('click',function(){
+    /* the button writes the SAME bytes recWavBytes() returns - one encoder, so
+       what the gate parses is what the designer gets - and it reports what
+       ACTUALLY happened, never a save that did not occur */
+    recSaveWavHonest().then(function(r){ recMsg(r.message, !r.ok); });
+  });
+  $('rSend').addEventListener('click',recSend);
+  ['rIn','rOut'].forEach(function(id){
+    var h=$(id), which=(id==='rIn')?'in':'out';
+    h.addEventListener('pointerdown',function(e){
+      if(!rec.buffer) return;
+      e.preventDefault(); h.setPointerCapture(e.pointerId);
+      var cv=$('rWave'), r=cv.getBoundingClientRect(), dur=rec.buffer.length/SR*1000;
+      function mv(ev){
+        var x=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width)), ms=x*dur;
+        var to=(rec.trimOut<0)?dur:rec.trimOut;
+        if(which==='in') rec.trimIn=Math.max(0,Math.min(ms,to-SPEC.MIN_TRIM_MS));
+        else rec.trimOut=Math.min(dur,Math.max(ms,rec.trimIn+SPEC.MIN_TRIM_MS));
+        recPaint();
+      }
+      function up(){ h.removeEventListener('pointermove',mv); h.removeEventListener('pointerup',up); }
+      h.addEventListener('pointermove',mv); h.addEventListener('pointerup',up);
+    });
+  });
+}
+
+</script>
+<script>
+/* inlined: rec-app.js */
+/* ══════════════════════════════════════════════════════════════════════════
+   MINI RECORDER — wiring and boot.
+   rec.js holds the capture engine; this file is only the screen's plumbing and
+   the tool's half of window.VB. Keeping them apart is what lets the recorder
+   ship on its own without dragging the other two tools with it.
+   ══════════════════════════════════════════════════════════════════════════ */
+'use strict';
+
+segWire('rSrcSeg',function(v){
+  rec.src=v; recBadge();
+  setS(v==='system'
+    ? 'SYSTEM AUDIO — the share dialog must have "share audio" ticked; if the host refuses, mic is the guaranteed path'
+    : 'microphone input');
+});
+segWire('rDestSeg',function(v){ rec.dest=v; });
+segWire('rSlotSeg',function(v){ rec.slot=+v; });
+
+/* preset + undo furniture, identical in all three tools */
+$('undoBtn').addEventListener('click',doUndo);
+$('redoBtn').addEventListener('click',doRedo);
+$('presetBtn').addEventListener('click',function(e){
+  var pk=$('pick');
+  if(pk.classList.contains('show')) hidePicker(); else showPicker(this);
+  e.stopPropagation();
+});
+$('saveBtn').addEventListener('click',savePreset);
+document.addEventListener('click',function(e){
+  var pk=$('pick');
+  if(pk&&pk.classList.contains('show')&&!pk.contains(e.target)&&e.target.id!=='presetBtn') hidePicker();
+});
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z')){ doUndo(); e.preventDefault(); return; }
+  if((e.ctrlKey||e.metaKey)&&(e.key==='y'||e.key==='Y')){ doRedo(); e.preventDefault(); return; }
+  if(/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if(e.key===' '){                       /* space is the one key that matters here */
+    if(rec.mode==='recording') recStopIt(); else recStart();
+    e.preventDefault();
+  }
+  /* ESC bails out. The family sheet's state diagram promises "SPACE toggles
+     ARM -> RECORD - ESC discards and returns to idle" and says the mouse is
+     never required; SPACE was bound and ESC was not, so half that promise was
+     decoration. TESTER named the gap by name in escDiscards. */
+  else if(e.key==='Escape'){
+    if(rec.mode==='idle') return;
+    var had=rec.buffer&&rec.buffer.length;
+    recDiscard();
+    recMsg(had? 'take discarded — back to idle' : 'back to idle');
+    e.preventDefault();
+  }
+});
+
+/* ── the tool's half of the contract — DESIGN §16.6c, amended 25 Aug ───────
+   ONE NAMESPACE, VB.rec. The flat members this replaced (VB.arm, VB.record,
+   VB.stopRec, VB.recState, VB.takeBuffer, VB.setRecTrim, VB.sendTo, VB.inputs)
+   are GONE on purpose, and the important one is VB.record: §16.5 says the DAW
+   does not record and TESTER asserts that by name, so a global VB.record was a
+   scope violation waiting to be read as one. Namespacing retires it by
+   construction rather than by anyone remembering. Director's ruling, 25 Aug. */
+function recTrimSet(inMs,outMs){
+  /* CLAMPED here as well as in the drag handles - an invariant enforced in the
+     UI but not in the API is not an invariant. */
+  var dur=rec.buffer? (rec.buffer.length/SR*1000) : 0, mn=SPEC.MIN_TRIM_MS;
+  var a=Math.max(0,+inMs||0);
+  var b=(outMs===null||outMs===undefined)?-1:+outMs;
+  if(dur>0){ a=Math.min(a,Math.max(0,dur-mn)); if(b>=0) b=Math.min(dur,Math.max(b,a+mn)); }
+  else if(b>=0){ b=Math.max(b,a+mn); }
+  rec.trimIn=a; rec.trimOut=b; recPaint();
+  return {trimIn:rec.trimIn,trimOut:rec.trimOut,trimmedMs:recTrimMs()};
+}
+window.VB.tool='mini-recorder';
+window.VB.rec={
+  /* input */
+  devices:function(){ return rec.devices.map(function(d){ return {deviceId:d.id, label:d.label}; }); },
+  setDevice:function(id){ rec.devId=id; recRememberDevice(); recScan(); return rec.devId; },
+  device:function(){ return rec.devId; },
+  rescan:function(){ return recScan(); },
+  source:function(sr){ if(sr!==undefined){ rec.src=(sr==='system')?'system':'mic'; recBadge(); } return rec.src; },
+  /* the capture chain */
+  phase:function(){ return rec.mode; },
+  /* the whole observable state in one read. dest/slot are in here because the
+     COUNT alone cannot prove a take went where it was aimed: the DAW branch
+     also appends to the layer's file list, so a misroute increments slotCount
+     too. The ROUTE has to be readable, or the assertion is measuring nothing. */
+  state:function(){
+    return {mode:rec.mode, dest:rec.dest, slot:rec.slot,
+            ms:rec.buffer?(rec.buffer.length/SR*1000):(rec.len/SR*1000),
+            trimmedMs:recTrimMs(), name:recName(),
+            peakDb:20*Math.log10(Math.max(1e-5,rec.peak)),
+            holdDb:20*Math.log10(Math.max(1e-5,rec.hold)),
+            clipped:!!rec.clipped, sent:rec._sent};
+  },
+  arm:function(){ return recArm(); },
+  record:recRecordStrict,
+  stop:function(sig){ return recStopWith(sig); },
+  discard:recDiscard,
+  take:function(){ return rec.buffer; },
+  trimmed:function(){ return recTrimmed(); },
+  setTrim:recTrimSet,
+  name:function(nm){ if(nm!==undefined && $('rName')) $('rName').value=nm; return recName(); },
+  /* what the meter knows */
+  meter:recMeterRead,
+  format:recFormat,
+  /* honesty */
+  cefMicStatus:recCefMicStatus,
+  storagePersistent:function(){ return !!storageOK; },
+  /* out */
+  saveWav:recWavBytes,                    /* the BYTES - what a gate parses */
+  save:function(){ return recSaveWavHonest(); },   /* the ACT, and its truth */
+  /* delivery is the ENGINE's decision now - VB.deliveryPath() is the one
+     answer, and this is kept only so recorder callers need not know that */
+  deliveryPath:function(){ return window.VB.deliveryPath(); },
+  sendTo:function(dest,idx){
+    var d=recNormDest(dest);
+    if(!d){                                  /* LOUD, never a quiet redirect */
+      recMsg('unknown SEND destination "'+dest+'" — nothing was sent. Use daw/track or slot/variation.',true);
+      return false;
+    }
+    rec.dest=d; rec.slot=Math.max(0,Math.min(3,+idx||0));
+    return recSend()!==null;
+  },
+  sent:function(){ return rec._sent||0; },
+  /* TEST ONLY: a headless run has no microphone, and a capture tool nobody can
+     test is a capture tool that ships broken. */
+  simulate:function(ms){ return recSimulate(ms); },
+  /* THE INJECTION POINT — tests AND the plugin's native capture pump arrive
+     here (see rec.js). The pump MUST pass origin 'bridge'; without it the
+     samples count as a test injection and can never report state:'ok'. */
+  feedInput:function(sig,origin){ return recFeed(sig,origin); }
+};
+
+/* one repaint, registered with the engine */
+VBUI.onChange(function(){
+  recBadge(); recPaint();
+  if($('verLbl')) $('verLbl').textContent='TAA MINI RECORDER '+VERSION;
+});
+window.__vbAfterDemo=function(){ recPaint(); };
+
+vbBoot(function(){
+  recWire(); recScan(); recBadge(); recPaint(); recPaintMeter(0); recPaintSave();
+  recWatchStage();          /* the box arrives late in CEF - redraw when it does */
+  /* ── THE BRIDGE ARRIVES LATE, AND CHECKING ONCE IS A LIE ──────────────────
+     recPaintSave() above ran at boot. On CEF 128 (UE 5.7/5.8) window.ue.taa is
+     NOT bound yet at that moment, so deliveryPath() answered 'none' and SAVE
+     WAV painted itself DEAD — on a host where saving works perfectly. The
+     ACTION was always fine (saveBlob re-checks at call time); it was the PAINT
+     that lied, and a button that lies in the safe direction is still a button
+     that lies. 5.6 (CEF 90) happened to win the race, which is the trap: it
+     passed on one engine and failed on the next for reasons belonging to
+     neither. Fires now if the bridge is here, once when it arrives, never in a
+     plain browser — where 'download' was the right answer all along. */
+  window.VB.onBridge(function(){ recPaintSave(); recBridgeMicRefresh(); });
+  recBridgeMicRefresh();    /* cache what only native knows; never blocks a read */
+  $('verLbl').textContent='TAA MINI RECORDER '+VERSION;
+  _lastSnap=snapKey(window.VB.state()); presetDirty=false; paintPreset(); paintUndo();
+  setS('press ARM to open the input, then RECORD');
+  /* ?demo drops a synthetic take in so the whole trim/name/save/send path is
+     usable — and testable — on a machine with no microphone at all. */
+  if(/(^|[?&])demo(=|&|$)/.test(location.search)){ recSimulate(900); recPaint(); }
+  recScan().then(function(){ recPaint(); });
+
+  /* ?selftest — the headless gate for this tool */
+  if(/(^|[?&])selftest(=|&|$)/.test(location.search)) vbSelfTest('mini-recorder',[
+    {name:'boots STANDALONE as its own tool',
+     fn:function(){ return {ok:VB.tool==='mini-recorder', detail:'tool = '+VB.tool}; }},
+    {name:'does NOT drag the other tools in',
+     fn:function(){ return typeof VB.clips==='undefined' && typeof VB.devBar==='undefined'; }},
+    {name:'the shared engine came across',
+     fn:function(){ return {ok:VB.spec().MIN_TRIM_MS===5 && VB.SR===48000,
+                            detail:'SR '+VB.SR+' MIN_TRIM '+VB.spec().MIN_TRIM_MS}; }},
+    {name:'the audio contract survives the split',
+     fn:function(){ return typeof VB.audioReady==='function'; }},
+    {name:'simulate fills a take (no microphone needed)',
+     fn:function(){ VB.rec.simulate(900);
+       var ms=VB.rec.take()?VB.rec.take().length/VB.SR*1000:0;
+       return {ok:VB.rec.phase()==='captured' && Math.abs(ms-900)<12, detail:ms.toFixed(0)+'ms'}; }},
+    {name:'trim narrows the take',
+     fn:function(){ var t=VB.rec.setTrim(200,600);
+       return {ok:Math.abs(t.trimmedMs-400)<1, detail:JSON.stringify(t)}; }},
+    {name:'the MIN_TRIM clamp survived the split',
+     fn:function(){ var t=VB.rec.setTrim(500,501); VB.rec.setTrim(200,600);
+       return {ok:t.trimmedMs>=5, detail:t.trimmedMs+'ms'}; }},
+    {name:'trimmed() is trimmed and faded at both cut edges',
+     fn:function(){ var b=VB.rec.trimmed();
+       return {ok:Math.abs(b.length-19200)<80 && Math.abs(b[0])<0.02 && Math.abs(b[b.length-1])<0.02,
+               detail:b.length+' samples'}; }},
+    {name:'the meter reads an INJECTED amplitude, not a decoration',
+     fn:function(){ var s=new Float32Array(512);
+       for(var i=0;i<512;i++) s[i]=Math.sin(2*Math.PI*440*i/VB.SR)*0.5;
+       VB.rec.feedInput(s); var m=VB.rec.meter();
+       return {ok:Math.abs(m.peakDb-(-6.02))<0.5, detail:m.peakDb.toFixed(2)+' dBFS (want -6.02)'}; }},
+    {name:'a 0 dBFS spike latches the clip LED and holds the peak',
+     fn:function(){ var sp=new Float32Array(64); sp[10]=1.0; VB.rec.feedInput(sp);
+       var hot=VB.rec.meter();
+       var q=new Float32Array(2048);
+       for(var i=0;i<2048;i++) q[i]=Math.sin(2*Math.PI*440*i/VB.SR)*0.05;
+       VB.rec.feedInput(q); var back=VB.rec.meter();
+       return {ok:hot.clipped===true && back.holdDb>=-0.5 && back.peakDb<back.holdDb-1,
+               detail:'hold '+back.holdDb.toFixed(1)+' dB, live '+back.peakDb.toFixed(1)+' dB'}; }},
+    {name:'SEND TO a Variation slot',
+     fn:function(){ VB.rec.simulate(900); VB.rec.setTrim(0,-1);
+       var n=VB.slotCount(2); VB.rec.sendTo('slot',2);
+       return {ok:VB.slotCount(2)===n+1, detail:n+' -> '+VB.slotCount(2)}; }},
+    {name:'SEND TO a DAW track degrades gracefully with no DAW module',
+     fn:function(){ VB.rec.sendTo('daw',3); return {ok:VB.slotCount(3)>=1, detail:'slot D = '+VB.slotCount(3)+' file(s)'}; }},
+    {name:'an UNKNOWN destination is refused, not quietly redirected',
+     fn:function(){ var a=VB.slotCount(1), ok=VB.rec.sendTo('sideways',1);
+       return {ok:ok===false && VB.slotCount(1)===a,
+               detail:'returned '+ok+', slot B still '+VB.slotCount(1)+' file(s)'}; }},
+    {name:'record() REFUSES when the input was never armed',
+     fn:function(){ VB.rec.discard();
+       var r=VB.rec.record();
+       return {ok:r===false && VB.rec.phase()==='idle', detail:'returned '+r+', phase '+VB.rec.phase()}; }},
+    {name:'trim DIMS the outside instead of recolouring the inside',
+     fn:function(){ VB.rec.simulate(900); VB.rec.setTrim(200,600);
+       var L=document.getElementById('rDimL'), R=document.getElementById('rDimR');
+       var lw=parseFloat(L.style.width)||0, rw=parseFloat(R.style.width)||0;
+       return {ok:L.style.display!=='none' && lw>0 && rw>0,
+               detail:'dim left '+lw.toFixed(0)+'px, dim right '+rw.toFixed(0)+'px'}; }},
+    {name:'dragging the handles back out un-dims the whole take',
+     fn:function(){ VB.rec.setTrim(0,-1);
+       var lw=parseFloat(document.getElementById('rDimL').style.width)||0;
+       var rw=parseFloat(document.getElementById('rDimR').style.width)||0;
+       return {ok:lw===0 && rw===0, detail:'dim left '+lw+'px, right '+rw+'px - nothing was cut'}; }},
+    {name:'the audition playhead appears INSIDE the trimmed range',
+     fn:function(){ VB.rec.simulate(900); VB.rec.setTrim(200,600);
+       var cv=document.getElementById('rWave'), w=cv.getBoundingClientRect().width;
+       recPlayhead(400);
+       var p=document.getElementById('rPh'), x=parseFloat(p.style.left)||0;
+       var lo=200/900*w, hi=600/900*w;
+       var ok=p.style.display!=='none' && x>=lo-2 && x<=hi+2;
+       recPlayheadHide();
+       return {ok:ok, detail:'head at '+x.toFixed(0)+'px, trim spans '+
+               lo.toFixed(0)+'-'+hi.toFixed(0)+'px'}; }},
+    {name:'the playhead is cleared when the take is discarded',
+     fn:function(){ VB.rec.simulate(400); recPlayhead(400); VB.rec.discard();
+       return {ok:document.getElementById('rPh').style.display==='none',
+               detail:'display = '+document.getElementById('rPh').style.display}; }},
+    {name:'the captured readout names the trim AND the peak that will be saved',
+     fn:function(){ VB.rec.setTrim(200,600);
+       var t=document.getElementById('rTrimLen').textContent;
+       return {ok:/TRIM 0\.40s/.test(t) && /PEAK -?\d/.test(t), detail:t}; }},
+    {name:'ESC discards from the keyboard (the mouse is never required)',
+     fn:function(){ VB.rec.simulate(400);
+       var had=VB.rec.phase();
+       document.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));
+       return {ok:had==='captured' && VB.rec.phase()==='idle',
+               detail:had+' -> '+VB.rec.phase()+' on Escape'}; }},
+    /* ── cefMicStatus: the shape, and THE RULE. These try to MANUFACTURE a
+       green, because that is the failure this rule exists to prevent. ── */
+    {name:'cefMicStatus has the shape the wrap reports through',
+     fn:function(){ var s=VB.rec.cefMicStatus();
+       var ok=s && typeof s==='object'
+         && /^(browser|unreal)$/.test(s.host)
+         && /^(webaudio|bridge|none)$/.test(s.path)
+         && /^(ok|refused|unavailable|unproven)$/.test(s.state)
+         && typeof s.detail==='string' && s.detail.length>10
+         && /^(boot|arm|capture)$/.test(s.since);
+       return {ok:ok, detail:s?JSON.stringify({host:s.host,path:s.path,state:s.state,since:s.since}):'null'}; }},
+    {name:'a capture FUNCTION EXISTING is not evidence — state stays unproven',
+     fn:function(){ var s=VB.rec.cefMicStatus();
+       var gum=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);
+       return {ok:s.state==='unproven' && gum,
+               detail:'getUserMedia present='+gum+' yet state="'+s.state+'" — the spike proved '+
+                      'it exists on 5.6/5.7/5.8 and is refused on all three'}; }},
+    {name:'INJECTED samples CANNOT manufacture a green',
+     fn:function(){ var sig=new Float32Array(512);
+       for(var i=0;i<512;i++) sig[i]=Math.sin(2*Math.PI*440*i/VB.SR)*0.5;
+       VB.rec.feedInput(sig);                 /* origin defaults to 'inject' */
+       var s=VB.rec.cefMicStatus();
+       return {ok:s.state!=='ok',
+               detail:'fed a test tone, meter moved, state still "'+s.state+
+                      '" — a test amplitude proves the METER, not a microphone'}; }},
+    {name:'BRIDGE samples DO prove it — state becomes ok, since "capture"',
+     fn:function(){ var sig=new Float32Array(512);
+       for(var i=0;i<512;i++) sig[i]=Math.sin(2*Math.PI*440*i/VB.SR)*0.5;
+       VB.rec.feedInput(sig,'bridge');        /* what the native pump will pass */
+       var s=VB.rec.cefMicStatus();
+       var ok=s.state==='ok' && s.since==='capture';
+       micEv.proven=false; micEv.provenBy=null; micEv.since='boot';   /* restore */
+       return {ok:ok, detail:'state="'+s.state+'" since="'+s.since+'" after real samples arrived'}; }},
+    {name:'the CEF warning is ON SCREEN, not just in the source',
+     fn:function(){ var e=document.getElementById('rCef');
+       return {ok:!!e && /UNRESOLVED/i.test(e.textContent), detail:e?e.textContent.trim():'MISSING'}; }},
+    {name:'the CEF mic question is still reported as OPEN (never laundered)',
+     fn:function(){ var s=VB.rec.cefMicStatus();
+       /* the gap is closed ONLY by s.state==='ok', which only real samples reach */
+       return {ok:s.state!=='ok',
+               detail:'state="'+s.state+'" on '+s.host+'/'+s.path+
+                      ' — a known GAP has not become a claim'}; }},
+    /* SAVE WAV honesty. The three-way ROUTING now lives in shared saveBlob,
+       so these no longer re-test the engine's decision - they test that this
+       tool asks the real door and reports the real answer. The no-delivery
+       host is still modelled, because that is the failure that used to lie. */
+    {name:'NO DELIVERY PATH: SAVE refuses and NEVER claims a save',
+     fn:function(){ VB.rec.simulate(400); VB.rec.setTrim(0,-1);
+       VB.forceDeliveryPath('none');
+       var r=saveBlob(new Blob(['x']),'take_01.wav');
+       VB.forceDeliveryPath(null);
+       var claims=/saved/i.test(r.msg||'');
+       return {ok:r.ok===false && r.path==='none' && !claims,
+               detail:(claims?'STILL CLAIMS SAVED: ':'')+(r.msg||'(no msg)').slice(0,95)}; }},
+    {name:'NO DELIVERY PATH: the button wears it BEFORE it is pressed',
+     fn:function(){ VB.forceDeliveryPath('none'); recPaintSave();
+       var b=document.getElementById('rSave');
+       var marked=b.classList.contains('warn') && /⚠/.test(b.textContent);
+       var told=/cannot receive a file/i.test(b.title||'');
+       VB.forceDeliveryPath(null); recPaintSave();
+       return {ok:marked&&told, detail:'marked='+marked+' tooltip='+told+
+               ', restored to "'+b.textContent+'"'}; }},
+    /* ── THE BRIDGE RACE. On CEF 128 the binding is not there when the page
+       script runs, so anything painted from a ONE-TIME check at boot lies on
+       5.7/5.8 and passes on 5.6. These model the arrival, in a plain browser,
+       so the trap cannot hide behind an engine that happens to win the race. ── */
+    {name:'SAVE paint RECOVERS when the bridge arrives late',
+     fn:function(){
+       var prevUe=window.ue, b=document.getElementById('rSave');
+       try{ delete window.ue; }catch(e){ window.ue=undefined; }
+       VB.forceDeliveryPath('none'); recPaintSave();
+       var deadFirst=b.classList.contains('warn');
+       /* ...now the bridge shows up, exactly as it does on 5.7/5.8 */
+       window.ue={taa:{savefile:function(){ return '{"ok":true}'; }}};
+       VB.forceDeliveryPath(null); recPaintSave();
+       var aliveAfter=!b.classList.contains('warn');
+       window.ue=prevUe; VB.forceDeliveryPath(null); recPaintSave();
+       return {ok:deadFirst && aliveAfter,
+               detail:'painted dead with no bridge='+deadFirst+
+                      ', repainted alive once it arrived='+aliveAfter}; }},
+    {name:'onBridge WAITS instead of answering once',
+     fn:function(){
+       var prevUe=window.ue;
+       try{ delete window.ue; }catch(e){ window.ue=undefined; }
+       var firedWithNone=false;
+       VB.onBridge(function(){ firedWithNone=true; });
+       window.ue={taa:{savefile:function(){ return '{"ok":true}'; }}};
+       var firedWithOne=false;
+       VB.onBridge(function(){ firedWithOne=true; });
+       window.ue=prevUe;
+       return {ok:firedWithNone===false && firedWithOne===true,
+               detail:'no bridge -> did NOT fire a wrong answer ('+firedWithNone+
+                      '); bridge present -> fired at once ('+firedWithOne+')'}; }},
+    {name:'cefMicStatus does not call an Unreal host a browser',
+     fn:function(){
+       var prevUe=window.ue;
+       window.ue={taa:{savefile:function(){ return '{}'; }}};
+       var withBridge=VB.rec.cefMicStatus().host;
+       window.ue=prevUe;
+       var without=VB.rec.cefMicStatus().host;
+       /* in a real browser 'browser' is correct; inside Unreal the user-agent
+          branch answers 'unreal' before the binding lands */
+       return {ok:withBridge==='unreal' && without==='browser',
+               detail:'bridge present -> "'+withBridge+'", plain browser -> "'+without+
+                      '" (UA branch covers the pre-binding window in Unreal)'}; }},
+    {name:'the tool asks the SHARED door, not a private copy',
+     fn:function(){ VB.forceDeliveryPath('bridge');
+       var mine=VB.rec.deliveryPath(), theirs=VB.deliveryPath();
+       VB.forceDeliveryPath(null);
+       return {ok:mine==='bridge' && mine===theirs,
+               detail:'VB.rec.deliveryPath()="'+mine+'" VB.deliveryPath()="'+theirs+
+                      '" - one answer to one question'}; }},
+    {name:'SAVE hands the engine a real WAV, and waits for the real verdict',
+     fn:function(){ VB.rec.simulate(400); VB.rec.setTrim(0,-1);
+       var w=VB.rec.saveWav();
+       var head=''; try{ head=String.fromCharCode.apply(null,new Uint8Array(w.data,0,4)); }catch(e){ head='?'; }
+       /* forced to the refusing path on purpose: this asserts the WIRING, and a
+          real <a download> click stalls a headless run waiting on a file */
+       VB.forceDeliveryPath('none');
+       var p=VB.rec.save();
+       VB.forceDeliveryPath(null);
+       return {ok:head==='RIFF' && p && typeof p.then==='function',
+               detail:'bytes start "'+head+'", save() returns a promise of the ENGINE result'}; }},
+    {name:'the flat surface is GONE (§16.5: no global VB.record)',
+     fn:function(){ return {ok:typeof VB.record==='undefined' && typeof VB.recState==='undefined',
+               detail:'VB.record '+typeof VB.record+', VB.recState '+typeof VB.recState}; }},
+    {name:'presets and undo came across',
+     fn:function(){ return {ok:typeof VB.undo==='function' && typeof VB.presets==='function',
+                            detail:'storage persistent = '+VB.presets().persistent}; }}
+  ]);
+});
+
+</script>
+</body>
+</html>

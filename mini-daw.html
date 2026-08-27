@@ -1,0 +1,2953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!-- CHARSET FIRST — hygiene, NOT a bug fix. Read this before you "restore" the
+     banner above <html>: it used to sit there, putting this declaration at byte
+     594, and it was moved on a theory that CEF ignores a late charset on
+     file:// URLs. THAT THEORY WAS RETRACTED (Director, 25 Aug): TOOL RECORDER
+     measured three byte-identical builds with the charset at 45, 646 and 1600 —
+     all three rendered correctly, including one OUTSIDE the sniff window.
+     Position never mattered. The real defect was a PowerShell Get-Content
+     round-trip reading BOM-less UTF-8 as ANSI and corrupting the file, then
+     measuring its own corruption.
+     Keeping charset first anyway because it costs nothing and it is what the
+     spec asks for — but it closes no known bug, so do not treat it as load
+     bearing and do not re-investigate it. If you add anything to the top of
+     this file, putting it below this line keeps the hygiene intact. -->
+<!-- Copyright 2026 Tommy Allen Acoustics. All rights reserved.
+     TAA MINI DAW — tool 2 of the family. A tiny Reaper for the quick edit you
+     would otherwise leave the engine for: cut, move, snip, zoom, balance,
+     bounce. No automation, no FX chains, no crossfades, and NO RECORD — capture
+     is the Mini Recorder's job.
+
+     DEV: loads ../shared/vb-core.js by script tag. RELEASE: the build script
+     inlines everything into one self-contained file.
+     Boot flags: ?demo (a synthesised 4-layer kit) · ?selftest (headless gate). -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TAA Mini DAW</title>
+<style>
+/* inlined: ../shared/vb-core.css */
+/* ══ VB-CORE.CSS — the S3 HARDWARE PANEL skin, shared by all three tools ══
+   One organising idea, and every rule obeys it:
+     PANELS ARE LIGHT HARDWARE. ANYTHING SHOWING AUDIO IS A DARK SCREEN INSET.
+   Swapping the :root block below re-skins every tool at once - that is the
+   whole reason the skin was built as tokens. */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+/* == SKIN: S3 HARDWARE PANEL (picked 25 Aug) ==============================
+   One organising idea, and every rule below obeys it:
+     PANELS ARE LIGHT HARDWARE.  ANYTHING SHOWING AUDIO IS A DARK SCREEN INSET.
+   So the chrome is a pale instrument face with engraved labels and physical
+   fader caps, and every waveform, meter and tile sits on a dark screen the way
+   it does on a real desk. Swapping this block is how the skin changes -
+   nothing below hard-codes a colour. */
+:root{
+  --bg:#d9d7d0; --panel:#e7e5df; --panel2:#cfcdc5; --line:#b3b0a6;
+  --ink:#1c1b18; --dim:#6e6b62; --dimmer:#8a877e;
+  --amber:#ff5a1f; --amber-dim:#8a8780; --green:#1c9e6a; --red:#e0341f;
+  /* the screen: where audio lives */
+  --screen:#232220; --screen-2:#2e2c28; --screen-line:#3a3833;
+  /* field = an editable inset */
+  --field:#f2f0ea;
+  /* layer identity: DARK on the panel, BRIGHT on the screen */
+  --A:#0f766e; --B:#a21caf; --C:#4d7c0f; --D:#b45309;
+  --Aw:#2dd4bf; --Bw:#f0abfc; --Cw:#a3e635; --Dw:#fbbf24;
+  --cap:linear-gradient(180deg,#fdfdfb,#d5d2c9);
+  --engrave:0 1px 0 rgba(255,255,255,.85);
+}
+body{background:var(--bg);color:var(--ink);font-family:'VT323',monospace;font-size:17px}
+.ttl,.lab,.btn,.seg b,.num,.badge{text-shadow:var(--engrave)}
+.px{font-family:'Press Start 2P',monospace}
+
+/* THE WHOLE WINDOW IS ONE GRID (APP-BLUEPRINT §4). minmax(0,1fr) is load-bearing:
+   an implicit auto column sizes to its content and pushes the UI off-screen. */
+.app{height:100vh;display:grid;grid-template-columns:minmax(0,1fr);
+     grid-template-rows:auto minmax(0,1fr) auto auto auto;gap:4px;padding:4px 6px}
+.panel{background:var(--panel);border:1px solid var(--line);min-width:0;min-height:0;
+       box-shadow:0 1px 0 rgba(255,255,255,.75) inset}
+.row{display:flex;align-items:center;gap:6px;min-width:0}
+.ttl{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--amber);letter-spacing:1px;white-space:nowrap}
+.lab{font-size:13px;color:var(--amber-dim);letter-spacing:1px;white-space:nowrap}
+.hint{font-size:13px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1 1 0;min-width:0}
+.sep{width:1px;height:18px;background:var(--line);flex:0 0 auto}
+
+/* controls — NEVER a native <select>/<input type=file> popup in the editor host
+   (APP-BLUEPRINT §6.5: a native popup HARD-CRASHES the editor) */
+.btn{font-family:'Press Start 2P',monospace;font-size:8px;padding:6px 9px;cursor:pointer;
+     border:1px solid var(--line);background:var(--field);color:var(--ink);white-space:nowrap;
+     box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 1px 2px rgba(0,0,0,.16)}
+.btn:hover{border-color:var(--amber);background:#fff}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.primary{background:linear-gradient(180deg,#ff7a45,#e04a12);color:#fff;border-color:#c9410f;
+             text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.btn.warn{border-color:var(--red);color:var(--red);background:#fdeeeb}
+.btn.sm{font-size:7px;padding:4px 6px}
+.seg{display:inline-flex;border:1px solid var(--line);flex:0 0 auto}
+.seg b{font-family:'Press Start 2P',monospace;font-size:7px;padding:5px 7px;cursor:pointer;
+       background:var(--field);color:var(--dim);font-weight:normal;user-select:none;
+       box-shadow:0 1px 0 rgba(255,255,255,.9) inset}
+.seg b.on{background:var(--amber);color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.25)}
+.seg.tiny b{font-size:6px;padding:4px 5px}
+.num{font-family:'Press Start 2P',monospace;font-size:8px;padding:5px 4px;background:var(--field);
+     border:1px solid var(--line);color:var(--ink);outline:none;text-align:center;width:52px;
+     box-shadow:0 1px 2px rgba(0,0,0,.12) inset}
+.num.wide{width:96px}
+input[type=range]{-webkit-appearance:none;height:5px;background:var(--line);
+  border:1px solid #9a978d;border-radius:3px;width:100%;cursor:pointer;display:block;margin:3px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:17px;
+  background:var(--cap);border:1px solid #8a8780;border-radius:2px;cursor:pointer;
+  box-shadow:0 1px 2px rgba(0,0,0,.32)}
+input[type=range]::-moz-range-thumb{width:12px;height:17px;background:#f0eee8;
+  border:1px solid #8a8780;border-radius:2px;cursor:pointer}
+
+/* ── toolbar ─────────────────────────────────────────────────────────── */
+.tb{padding:4px 7px}
+.brand{font-family:'Press Start 2P',monospace;font-size:12px;color:var(--amber);letter-spacing:1px}
+.brand small{color:var(--dim);font-size:7px;letter-spacing:0}
+
+/* ── mode panes ──────────────────────────────────────────────────────── */
+.pane{display:none;min-height:0;min-width:0;height:100%}
+.pane.on{display:block}
+#designPane{overflow:auto}
+.layers{display:flex;flex-direction:column;gap:4px;padding:4px}
+
+.status{border:1px solid #9a978d;background:var(--screen);padding:3px 9px;display:flex;align-items:center;
+        gap:8px;font-size:14px;color:#7dd3c8;box-shadow:0 1px 3px rgba(0,0,0,.30) inset}
+.dot{width:7px;height:7px;background:#5a5852;flex:0 0 auto;border-radius:50%}
+.dot.on{background:var(--amber);box-shadow:0 0 7px var(--amber)}
+.status .right{margin-left:auto;font-size:12px;color:#8a877e}
+
+/* the preset picker — drawn, because a native popup crashes the editor */
+.pick{position:fixed;z-index:240;background:var(--panel);border:1px solid var(--amber);
+      box-shadow:0 10px 30px rgba(0,0,0,.45);max-height:60vh;overflow:auto;min-width:230px;display:none}
+.pick.show{display:block}
+.pick .fold{font-family:'Press Start 2P',monospace;font-size:7px;color:var(--dim);
+            padding:6px 8px 3px;letter-spacing:1px;background:var(--panel2)}
+.pick .item{padding:5px 9px;font-size:15px;cursor:pointer;display:flex;gap:8px;align-items:center}
+.pick .item:hover{background:#f7f5ef}
+.pick .item b{color:var(--amber);font-weight:normal;margin-left:auto;font-size:12px}
+.dirty{color:var(--red)}
+
+/* ONE dialog does prompts AND the three-way guard. NOT window.confirm(): native
+   modals are the class of thing that crashed the editor on 5.6/5.7. */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:220;align-items:center;justify-content:center}
+.ov.show{display:flex}
+.dlg{background:var(--panel);border:1px solid var(--amber);padding:14px 16px;width:min(520px,92vw);
+     box-shadow:0 10px 34px rgba(0,0,0,.4);
+     display:flex;flex-direction:column;gap:11px}
+.dlg p{color:var(--ink);font-size:16px;white-space:pre-wrap;line-height:1.35;overflow-wrap:anywhere}
+.dlg .btns{display:flex;gap:6px;justify-content:flex-end}
+</style>
+<style>
+/* inlined: daw.css */
+/* MINI DAW — screen-specific rules. Tokens live in ../shared/vb-core.css */
+/* ── MINI DAW pane (§16) ─────────────────────────────────────────────────
+   The tiny Reaper. Headers in a fixed column, ruler and lanes in ONE shared
+   horizontal scroller so they can never drift out of sync, meters down the
+   right. Nothing here knows about variation - the DAW is the NOMINAL (§16.1). */
+#dawPane{display:none;grid-template-rows:auto minmax(0,1fr) auto;gap:4px;padding:4px;height:100%}
+#dawPane.on{display:grid}
+.dawtp{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:5px 7px}
+/* the BIG readout — the loudest thing on the transport strip, as in Reaper */
+.dawtime{font-family:'Press Start 2P',monospace;font-size:24px;color:var(--ink);
+         letter-spacing:1px;min-width:236px;text-align:center;
+         background:var(--screen);color:#ffb38a;padding:7px 10px;border:1px solid #9a978d;
+         box-shadow:0 1px 3px rgba(0,0,0,.3) inset}
+/* round transport buttons: prev · next · play · loop · stop · pause. NO record. */
+.tgrp{display:flex;gap:6px;align-items:center;flex:0 0 auto}
+.tbtn{width:34px;height:34px;flex:0 0 auto;border-radius:50%;border:1px solid #6e6b62;
+      background:linear-gradient(180deg,#f4f2ec 0%,#d7d4cb 100%);color:#2a2825;
+      font-size:13px;line-height:1;padding:0;cursor:pointer;font-family:inherit;
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 1px 2px rgba(0,0,0,.28)}
+.tbtn:hover{background:linear-gradient(180deg,#fff 0%,#e8e5dc 100%)}
+.tbtn:active{box-shadow:0 1px 3px rgba(0,0,0,.45) inset}
+.tbtn.on{background:linear-gradient(180deg,#ff8a4f 0%,#e0451a 100%);color:#fff;border-color:#c9410f}
+.tbtn.play.on{background:linear-gradient(180deg,#35c98a 0%,#12855a 100%);border-color:#0e6b49}
+.tstate{font-family:'Press Start 2P',monospace;font-size:8px;color:var(--dim);
+        min-width:78px;flex:0 0 auto}
+.tstate.live{color:var(--green)}
+.dawsel{font-size:13px;color:var(--dim);white-space:nowrap}
+/* HONEST DEGRADATION BELOW THE RULED 1200x660 (Director's window ruling,
+   24 Aug: "minimum 1200x660, honest degradation below it — no control-cutting").
+   The lane area SCROLLS when it cannot fit instead of silently clipping track D,
+   which was worse than a scrollbar: nothing on screen told you the fourth track
+   existed. The plugin case makes it real — a tab docked along the bottom of the
+   editor is short and wide, exactly the shape that hides a lane.
+   The whole body scrolls as ONE unit on purpose: headers, timeline and meters are
+   four grid columns that must stay row-aligned, and four independently scrolled
+   columns desync. The transport strip and the mixer sit OUTSIDE this box, so they
+   stay pinned; the cost is that the ruler scrolls with its lanes. That is the
+   Director's stated fallback, taken deliberately over a JS scroll-sync. */
+.dawbody{display:grid;grid-template-columns:200px minmax(0,1fr) 32px 46px;gap:0;
+         min-height:0;min-width:0;border:1px solid var(--line);background:var(--panel);
+         overflow-y:auto;overflow-x:hidden}
+.dcol{display:flex;flex-direction:column;min-width:0;min-height:0}
+.dscroll{overflow-x:auto;overflow-y:hidden;min-width:0;background:var(--screen);
+         box-shadow:0 1px 3px rgba(0,0,0,.32) inset;position:relative}
+.dinner{position:relative;height:100%}
+.dspacer{height:22px;flex:0 0 auto;border-bottom:1px solid var(--line);background:var(--panel2)}
+.druler{height:22px;position:relative;background:var(--screen-2);
+        border-bottom:1px solid #3a3833;cursor:text;flex:0 0 auto}
+.druler i{position:absolute;top:0;bottom:0;border-left:1px solid #4a4843;
+          font-family:'Press Start 2P',monospace;font-size:6px;color:#8a877e;
+          padding:3px 0 0 3px;font-style:normal;white-space:nowrap}
+.dlane{height:96px;position:relative;border-bottom:1px solid #3a3833;overflow:hidden}
+.dlane.sel{background:rgba(255,90,31,.05)}
+/* flex:0 0 auto is load-bearing: without it the header column SHRINKS its panels
+   to fit a short body instead of letting the body scroll, and the 96px lanes
+   desync from their own track headers. Measured at 1200x560 — panels went to
+   66px and every row pointed at the wrong track. */
+.dhdr{height:96px;flex:0 0 auto;border-bottom:1px solid var(--line);padding:3px 6px;
+      display:flex;flex-direction:column;gap:1px;min-width:0;background:var(--panel);
+      overflow:hidden}
+.dhdr.sel{background:#f7f5ef;box-shadow:inset 3px 0 0 var(--amber)}
+.dhrow{display:flex;align-items:center;gap:4px;min-width:0}
+.dms{font-family:'Press Start 2P',monospace;font-size:7px;padding:3px 5px;border:1px solid var(--line);
+     background:var(--field);color:var(--dim);cursor:pointer;flex:0 0 auto}
+.dms.on{background:var(--amber);color:#fff;border-color:#c9410f}
+.dms.so{background:var(--green);color:#fff;border-color:#157952}
+.dknob{display:grid;grid-template-columns:30px minmax(0,1fr) 40px;gap:4px;align-items:center}
+/* the panel's round VOLUME knob + the TRIM button beside it */
+/* 22px, not 28: the panel is a fixed 96px and at 28 the clip-count line fell off
+   the bottom of track D. Caught by looking at it, not by a test. */
+.dknob.knobrow{grid-template-columns:30px 24px 40px minmax(0,1fr)}
+.knb{width:22px;height:22px;border-radius:50%;position:relative;cursor:ns-resize;
+     touch-action:none;justify-self:start;
+     background:radial-gradient(circle at 50% 34%,#6c6960 0%,#3d3b36 62%,#232120 100%);
+     border:1px solid #1b1917;box-shadow:0 1px 3px rgba(0,0,0,.45)}
+.knb:focus{outline:2px solid var(--amber);outline-offset:2px}
+.knb:focus:not(:focus-visible){outline:none}
+.knb i{position:absolute;left:50%;top:2px;width:2px;height:8px;margin-left:-1px;
+       background:#ffb38a;border-radius:1px;transform-origin:50% 9px;display:block}
+.dms.trim{font-size:6px;justify-self:end}
+/* TRIM armed: this track's clip handles stop hiding */
+.dlane.trimon .clip{border-color:var(--amber)}
+.dlane.trimon .clip .ctab{background:rgba(255,90,31,.92);width:7px}
+.dknob span{font-family:'Press Start 2P',monospace;font-size:6px;color:var(--dim)}
+.dknob b{font-size:13px;color:var(--ink);text-align:right;font-weight:normal}
+.dknob input[type=range]{margin:0}
+/* a clip */
+.clip{position:absolute;top:6px;bottom:6px;background:var(--screen-2);
+      border:1px solid #6e6b62;overflow:hidden;cursor:grab}
+.clip.sel{border-color:var(--amber);box-shadow:0 0 0 1px var(--amber)}
+.clip canvas{display:block;width:100%;height:100%}
+.clip .ctag{position:absolute;top:0;left:0;font-size:11px;line-height:1.1;padding:0 3px;
+            background:rgba(20,18,16,.75);color:#e7e5df;white-space:nowrap;pointer-events:none}
+.clip .ctab{position:absolute;top:0;bottom:0;width:6px;background:rgba(255,90,31,.55);
+            cursor:ew-resize}
+.clip .ctab.l{left:0} .clip .ctab.r{right:0}
+.clip .ctab:hover{background:rgba(255,90,31,.9)}
+.dph{position:absolute;top:0;bottom:0;width:2px;background:#ff5a1f;pointer-events:none;z-index:4}
+.dselrange{position:absolute;top:0;bottom:0;background:rgba(255,90,31,.13);
+           border-left:1px solid rgba(255,90,31,.6);border-right:1px solid rgba(255,90,31,.6);
+           pointer-events:none;z-index:3}
+/* meters */
+.dmtr{height:96px;flex:0 0 auto;border-bottom:1px solid var(--line);padding:5px 4px;
+      display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--panel)}
+.dbar{flex:1;width:10px;background:var(--screen);border:1px solid #9a978d;position:relative;overflow:hidden}
+.dbar b{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(0deg,#1c9e6a 0%,#1c9e6a 62%,#e8a33d 82%,#e0341f 100%)}
+.dbar i{position:absolute;left:0;right:0;height:2px;background:#fff}
+.dled{width:12px;height:5px;background:#a6a399;border:1px solid #8a8780;flex:0 0 auto}
+.dled.hot{background:var(--red);border-color:#a02718}
+.dmlab{font-family:'Press Start 2P',monospace;font-size:5px;color:var(--dim)}
+.dmaster{display:flex;flex-direction:column;align-items:center;gap:3px;padding:5px 4px;
+         background:var(--panel2);border-left:1px solid var(--line)}
+
+/* ── SEGMENTED METERS (REAPER-SPEC item 14) ──────────────────────────────
+   Reaper's meters read as a stack of discrete segments, not a smooth bar.
+   This is a pure overlay: it rules dark lines ACROSS every .dbar, so the
+   height maths in dawPaintMeters is untouched and the ballistics of §16.3
+   still measure exactly what they measured before. Furniture, not plumbing. */
+.dbar::after{content:'';position:absolute;left:0;right:0;top:0;bottom:0;
+             pointer-events:none;z-index:2;
+             background:repeating-linear-gradient(180deg,
+               rgba(22,20,18,.92) 0 1px, rgba(0,0,0,0) 1px 5px)}
+
+/* ── THE MIXER (Reaper's MCP) ALONG THE BOTTOM ───────────────────────────
+   Tommy named this furniture and the window did not have it:
+   "wave forms theres meters, theres fucking thing i can slide about."
+   A row of vertical channel strips with MASTER on the LEFT. The fader is a
+   real grabbable cap driven by pointer events - NOT a restyled <input
+   type=range> - because "can I grab it" is the acceptance test. */
+/* 112px, and the number is arithmetic, not taste. The body must hold the ruler
+   plus four full-height lanes = 22 + 4x96 = 406px, and at the ruled 1200x660
+   only ~388px was reaching it — so the mixer sheds 20px.
+   This was hidden until now: the header column was being FLEX-SHRUNK to fit,
+   which meant that at the RULED size headers ran ~91.5px against 96px lanes,
+   a desync growing to ~18px by track D that nobody had spotted. Stopping the
+   shrink made the shortfall visible as a scrollbar at 660, which is honest but
+   wrong at the minimum size — the ruled window should need no scrolling. */
+.mcp{display:flex;height:112px;flex:0 0 auto;min-height:0;
+     border:1px solid var(--line);background:var(--panel2);overflow:hidden}
+.mstrips{display:flex;flex:1;min-width:0;overflow-x:auto;overflow-y:hidden}
+.mstrip{width:88px;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;
+        gap:2px;padding:4px 4px;min-width:0;background:var(--panel);
+        border-right:1px solid var(--line);cursor:pointer}
+.mstrip.sel{background:#f7f5ef;box-shadow:inset 0 3px 0 var(--amber)}
+.mstrip.master{width:106px;flex:0 0 auto;background:var(--panel2);
+               border-right:2px solid var(--line);cursor:default;gap:1px}
+.mstrip.master .mname{font-size:7px;color:var(--ink);letter-spacing:1px}
+.mbtns{display:flex;gap:3px;flex:0 0 auto}
+.mfrow{display:flex;align-items:stretch;gap:6px;flex:1;min-height:0}
+.mname{font-family:'Press Start 2P',monospace;font-size:6px;color:var(--dim);
+       max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:0 0 auto}
+.mdb{font-size:11px;color:var(--ink);flex:0 0 auto}
+.mrms{font-family:'Press Start 2P',monospace;font-size:5px;color:var(--dim);flex:0 0 auto}
+.mrms b{color:#ffb38a;font-weight:normal}
+.mtag{font-family:'Press Start 2P',monospace;font-size:5px;color:#fff;background:#6e6b62;
+      padding:2px 4px;letter-spacing:.5px;flex:0 0 auto}
+.mfrow .dbar{flex:0 0 9px;width:9px;height:auto;align-self:stretch}
+.mstrip.master .mfrow .dbar{flex:0 0 8px;width:8px}
+
+/* the fader — a slot with a cap you grab */
+.fdr{position:relative;width:24px;flex:0 0 auto;cursor:grab;touch-action:none}
+.fdr:active{cursor:grabbing}
+.fdr:focus{outline:2px solid var(--amber);outline-offset:1px}
+.fdr:focus:not(:focus-visible){outline:none}
+.fdrslot{position:absolute;left:50%;top:4px;bottom:4px;width:5px;margin-left:-2.5px;
+         background:var(--screen);border:1px solid #8a8780;
+         box-shadow:0 1px 2px rgba(0,0,0,.38) inset}
+.fdrcap{position:absolute;left:0;right:0;height:15px;margin-bottom:-7.5px;
+        background:linear-gradient(180deg,#77746c 0%,#45433d 47%,#2b2926 53%,#514f48 100%);
+        border:1px solid #1a1816;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+.fdrcap::after{content:'';position:absolute;left:2px;right:2px;top:6px;height:2px;
+               background:#ffb38a;box-shadow:0 0 2px rgba(255,179,138,.7)}
+.fdr.tall{width:26px}
+.fdr.tall .fdrcap{height:17px;margin-bottom:-8.5px}
+
+</style>
+<style>.app{grid-template-rows:auto minmax(0,1fr) auto}</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="panel tb">
+    <div class="row">
+      <span class="brand">MINI DAW<small> &nbsp;TAA</small></span>
+      <span class="sep"></span>
+      <button class="btn sm" id="undoBtn" title="Undo (Ctrl+Z)" disabled>&#8630;</button>
+      <button class="btn sm" id="redoBtn" title="Redo (Ctrl+Y)" disabled>&#8631;</button>
+      <button class="btn sm" id="presetBtn" title="Presets">&#9733; <span id="presetName">FACTORY / footstep gravel</span></button>
+      <button class="btn sm" id="saveBtn">SAVE</button>
+      <button class="btn sm" id="demoBtn" title="Four synthesised layers, so the tool works with nothing to hand">DEMO KIT</button>
+      <span class="sep"></span>
+      <!-- EDIT commands live here, NOT on the transport strip: the transport bar
+           is its own strip in Reaper and carries transport only. -->
+      <span class="lab">ZOOM</span>
+      <button class="btn sm" id="dZoomOut" title="Zoom out (&minus;)">&minus;</button>
+      <button class="btn sm" id="dZoomIn" title="Zoom in (+)">+</button>
+      <button class="btn sm" id="dSplit" title="SPLIT the selected track at the playhead — key S">SPLIT</button>
+      <button class="btn sm primary" id="dBounce">BOUNCE &rarr; WAV</button>
+      <span class="hint" id="modeHint">space play &middot; S split &middot; M mute &middot; O solo</span>
+    </div>
+  </div>
+
+  <div class="panel" style="min-height:0;position:relative">
+    <div class="pane on" id="dawPane">
+      <!-- THE TRANSPORT BAR — its own strip, round buttons, big readout, and the
+           status word. There is NO RECORD BUTTON: capture is the Mini Recorder's
+           job (§16.2, Tommy: "we dont need a record"). §16.5 asserts its absence. -->
+      <div class="panel dawtp">
+        <div class="tgrp">
+          <button class="tbtn" id="tPrev" title="Go to START">&#9198;</button>
+          <button class="tbtn" id="tNext" title="Go to END">&#9197;</button>
+          <button class="tbtn play" id="dPlay" title="PLAY — key Space">&#9654;</button>
+          <button class="tbtn" id="dLoop" title="LOOP the selection, or the whole arrangement">&#8635;</button>
+          <button class="tbtn" id="tStop" title="STOP — returns to where playback started; press again for zero">&#9632;</button>
+          <button class="tbtn" id="tPause" title="PAUSE — holds the playhead where it is">&#10074;&#10074;</button>
+        </div>
+        <div class="dawtime" id="dTime">00:00.000</div>
+        <span class="tstate" id="dState">[Stopped]</span>
+        <span class="dawsel" id="dSel">no selection &mdash; drag on the ruler</span>
+        <span class="hint" id="dHint">seconds, not bars &mdash; this is a sound tool</span>
+      </div>
+      <div class="dawbody">
+        <div class="dcol" id="dHdrs"><div class="dspacer"></div></div>
+        <div class="dscroll" id="dScroll"><div class="dinner" id="dInner">
+          <div class="druler" id="dRuler"></div>
+          <div id="dLanes"></div>
+          <div class="dph" id="dPh" style="left:0"></div>
+        </div></div>
+        <div class="dcol" id="dMtrs"><div class="dspacer"></div></div>
+        <div class="dmaster"><span class="dmlab">MST</span>
+          <div class="dbar" id="dMasterBar"><b style="height:0"></b><i style="bottom:0;display:none"></i></div>
+          <span class="dled" id="dMasterLed"></span></div>
+      </div>
+
+      <!-- THE MIXER (Reaper's MCP), MASTER on the LEFT. The faders are grabbable
+           caps, not restyled range inputs — "theres fucking thing i can slide
+           about" is the acceptance test for this strip. -->
+      <div class="mcp" id="dMix">
+        <div class="mstrip master" id="dMixMaster">
+          <div class="mbtns"><span class="mtag" id="dMixMonTag"
+               title="MONITOR ONLY — this fader changes what you hear, not what BOUNCE writes. The per-track faders change both.">MONITOR</span></div>
+          <div class="mfrow">
+            <div class="fdr tall" id="dMixMasterFdr" data-fader="master" tabindex="0" role="slider"
+                 aria-label="Master monitor level in decibels" aria-valuemin="-60" aria-valuemax="6" aria-valuenow="0"
+                 title="MASTER monitor level — grab and drag, or focus and use the arrow keys">
+              <div class="fdrslot"></div><div class="fdrcap" style="bottom:90.9%"></div>
+            </div>
+            <div class="dbar" id="dMixMasterBar"><b style="height:0"></b><i style="bottom:0;display:none"></i></div>
+          </div>
+          <div class="mdb" id="dMixMasterDb">0.0</div>
+          <div class="mrms">RMS <b id="dMixMasterRms">&minus;&infin;</b></div>
+          <div class="mname">MASTER</div>
+        </div>
+        <div class="mstrips" id="dMixTracks"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="status">
+    <div class="dot" id="dot"></div><span id="statusText">ready</span>
+    <span class="right" id="verLbl"></span>
+  </div>
+</div>
+
+<div class="pick" id="pick"></div>
+<div class="ov" id="ov"><div class="dlg">
+  <p id="dlgMsg"></p>
+  <div class="btns">
+    <button class="btn" id="dlgYes">OK</button>
+    <button class="btn warn" id="dlgAlt" style="display:none">DISCARD</button>
+    <button class="btn" id="dlgNo">CANCEL</button>
+  </div>
+</div></div>
+
+<script>
+/* inlined: ../shared/vb-core.js */
+/* ══════════════════════════════════════════════════════════════════════════
+   VB-CORE — the shared engine for all three TAA tools.
+   Mini Recorder · Mini DAW · Variation Designer all load this file; none of
+   them owns it. If a change here breaks one tool it breaks all three, which is
+   exactly the property that makes it worth having in one place.
+
+   WHAT IS IN HERE: the design constants, the seeded draw law, the layer state,
+   the render chain, the mix, the ONE AudioContext, WAV + zip writing, file
+   decode, presets and undo, the dialog, and the shared half of window.VB.
+   WHAT IS NOT: anything that knows what a screen looks like. Tools paint
+   themselves and register a repaint with VBUI.onChange().
+   ══════════════════════════════════════════════════════════════════════════ */
+'use strict';
+var VERSION='v0.2', DESIGN_REF='DESIGN.md signed 24 Aug 2026';
+var SR=48000;
+
+/* ══ SPEC — every design constant in one place, section noted ══════════════
+   TESTER's vb-spec.js compares against VB.spec(); if a number moves it moves
+   here and nowhere else. */
+var SPEC={
+  variation:35, count:12, trim:-1, normalise:'set', tailFade:10, maxLength:0,
+  rate:48000, bits:24, channels:1,
+  offset:15, pitch:40, gain:2, tone:1.0, spread:0, reverse:0, start:0,      /* §4.2 */
+  level:0, delay:0, pan:0, lp:20000, hp:20,                                  /* §4.1 */
+  offsetMode:'+/-', pick:'RANDOM',                                           /* §4.2 §5 */
+  HEAD_MS:30,                                                                /* §4.1 */
+  TRIM_FADE_IN_MS:2, TRIM_FADE_OUT_MS:5, TRIM_FADE_MAX_PCT:10, MIN_TRIM_MS:5, /* §14.2 */
+  ORDER:'trim -> trimfades -> start -> reverse -> pitch -> tone -> lp/hp -> gain -> place(head+delay+offset)' /* §14.1 */
+};
+var HEAD_N=Math.round(SR*SPEC.HEAD_MS/1000);
+
+/* ══ SEEDED IDENTITY (§6) ══════════════════════════════════════════════════
+   Every draw is DERIVED from (seed, take, roll, slot, param) — never streamed.
+   That is what makes the knob SCALE draws in place instead of reshuffling them,
+   and it is why a kept take survives a knob move. Nothing in the render path
+   reads Math.random(); only DICE and the audition SHUFFLE do. */
+function mulberry32(a){return function(){a|=0;a=(a+0x6D2B79F5)|0;var t=Math.imul(a^(a>>>15),1|a);
+  t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296;};}
+function hashTag(s){var h=2166136261>>>0;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function drawU(seed,take,roll,slot,param){
+  return mulberry32((seed>>>0)^hashTag(take+'|'+roll+'|'+slot+'|'+param))();
+}
+function uni(u){return u*2-1;}
+function newSeed(){return (Math.random()*0xFFFFFFFF)>>>0;}
+
+/* ══ STATE ════════════════════════════════════════════════════════════════ */
+var SLOT_IDS=['A','B','C','D'];
+/* PANEL colours (badges, chips) are dark so they read on the pale face; SCREEN
+   colours (waveforms, ticks) are bright so they read on the dark inset. Same
+   identity, two surfaces - S3's whole idea in one pair of arrays. */
+var SLOT_COL=['#0f766e','#a21caf','#4d7c0f','#b45309'];
+var SLOT_WAVE=['#2dd4bf','#f0abfc','#a3e635','#fbbf24'];
+function mkLayer(i){
+  return {id:SLOT_IDS[i], col:SLOT_COL[i], wave:SLOT_WAVE[i], name:'', files:[], pick:SPEC.pick, fixedIdx:0,
+    on:true, solo:false, mute:false,
+    level:SPEC.level, delay:SPEC.delay, pan:SPEC.pan, lp:SPEC.lp, hp:SPEC.hp,
+    pitchNom:0,                                 /* §4.1 - static, NOT knob-scaled */
+    trimIn:0, trimOut:-1,                       /* ms; -1 = to the end (§14) */
+    r:{offset:SPEC.offset, pitch:SPEC.pitch, gain:SPEC.gain, tone:SPEC.tone,
+       spread:SPEC.spread, reverse:SPEC.reverse, start:SPEC.start}};
+}
+var L=[mkLayer(0),mkLayer(1),mkLayer(2),mkLayer(3)];
+var M={ seed:newSeed(), knob:SPEC.variation, count:SPEC.count, trim:SPEC.trim,
+        normalise:SPEC.normalise, tailFade:SPEC.tailFade, maxLength:SPEC.maxLength,
+        rate:SPEC.rate, bits:SPEC.bits, channels:SPEC.channels, name:'variation' };
+var rolls=[], marks=[], latchGain=null, sel=0, mode='design', mixView='summed';
+/* RULING 25 Aug: a dial change NEVER silently re-latches. It marks the level
+   STALE and the sheet says so; only BOUNCE and an explicit RE-NORMALISE move
+   the latch. Before this, nudging any dial did RE-NORMALISE's job without
+   RE-NORMALISE's ceremony, which is how a designer's approved takes changed
+   under them. */
+var latchStale=false;
+
+function markStale(){ if(latchGain!==null && M.normalise==='set') latchStale=true; }
+function resetSheet(n){
+  M.count=n||M.count; rolls=[]; marks=[];
+  for(var i=0;i<M.count;i++){rolls.push(0);marks.push('open');}
+  latchGain=null; latchStale=false; sel=0;
+}
+resetSheet(M.count);
+function anyLoaded(){for(var i=0;i<4;i++) if(L[i].files.length) return true; return false;}
+/* MUTE / SOLO PRECEDENCE (§16.4). SOLO BEATS MUTE: when anything is soloed,
+   solo membership alone decides, so a soloed-AND-muted track SOUNDS. Otherwise
+   the user hunts for a mute they cannot see. Mute only speaks when nothing is
+   soloed. Both windows call this shape, so they agree by construction. */
+function audibleSlot(l){
+  if(!l.files.length || !l.on) return false;
+  var soloed=L.some(function(x){return x.solo;});
+  return soloed ? !!l.solo : !l.mute;
+}
+function liveSlots(){
+  return L.map(function(l,i){return {l:l,i:i};}).filter(function(o){ return audibleSlot(o.l); });
+}
+
+/* ══ THE RECIPE (§4.2, §5, §6) ════════════════════════════════════════════ */
+function pickFile(si,ti){
+  var l=L[si], n=l.files.length; if(!n) return 0;
+  if(l.pick==='FIXED') return Math.min(l.fixedIdx,n-1);
+  if(l.pick==='ORDER') return ti%n;
+  /* RANDOM: a shuffle-bag - every file used once before any repeats (Wwise's
+     "Shuffle"). §5.
+     EACH BAG GETS ITS OWN SHUFFLE. This used to shuffle once per (seed, slot)
+     and then walk that ONE permutation forever, so a 5-file slot bouncing 30
+     takes played the same five-file order six times - the exact repetition this
+     product exists to kill, arriving from the tool meant to prevent it. The bag
+     index is part of the key now. Determinism is untouched: §6 promises the same
+     seed gives the same set, not that the set is one repeating loop.
+     A re-rolled take adds its roll to the key, so it draws from a different
+     permutation than its bag-mates - which can repeat a file inside one bag, and
+     that is correct: a re-roll is a request for something else. */
+  var bagIdx=Math.floor(ti/n), roll=rolls[ti]||0;
+  var rng=mulberry32(((M.seed>>>0)^hashTag('bag|'+l.id+'|'+bagIdx+'|'+roll))>>>0);
+  var bag=[], k, tmp;
+  for(k=0;k<n;k++) bag.push(k);
+  for(k=n-1;k>0;k--){ var j=Math.floor(rng()*(k+1)); tmp=bag[k]; bag[k]=bag[j]; bag[j]=tmp; }
+  return bag[ti%n];
+}
+function effOf(si,dial){ return L[si].r[dial]*M.knob/100; }   /* §4: range x k/100 */
+
+function recipeOne(si,ti){
+  var l=L[si], r=rolls[ti]||0, k=M.knob/100, fi=pickFile(si,ti);
+  var f=l.files[fi];
+  var off=uni(drawU(M.seed,ti,r,l.id,'offset'))*l.r.offset*k;
+  if(l.r.offset>0){
+    if(SPEC.offsetMode==='+') off=Math.abs(off);
+    else if(SPEC.offsetMode==='-') off=-Math.abs(off);
+  }
+  return {
+    slot:l.id, slotIdx:si, name:l.name, col:l.col,
+    file:f?f.name:'', fileIdx:fi,
+    delayMs:l.delay, offsetMs:off,
+    /* RULING 25 Aug: the range varies AROUND the nominal, exactly as OFFSET
+       varies around DELAY. Splitting these is what lets the DAW own the nominal
+       without touching the variation. */
+    cents: (l.pitchNom||0) + uni(drawU(M.seed,ti,r,l.id,'pitch'))*l.r.pitch*k,
+    dB:    uni(drawU(M.seed,ti,r,l.id,'gain')) *l.r.gain *k,
+    toneOct:   drawU(M.seed,ti,r,l.id,'tone')  *l.r.tone *k,
+    pan:   l.pan + uni(drawU(M.seed,ti,r,l.id,'pan'))*l.r.spread*k,
+    startMs:   drawU(M.seed,ti,r,l.id,'start') *l.r.start*k,
+    reversed:  drawU(M.seed,ti,r,l.id,'rev') < (l.r.reverse*k)/100,
+    levelDb:l.level
+  };
+}
+function recipe(ti){
+  var out=[]; liveSlots().forEach(function(o){ out.push(recipeOne(o.i,ti)); }); return out;
+}
+
+/* ══ PER-LAYER RENDER — the §14.1 order, and nothing out of order ═════════ */
+function trimRegion(l,src){
+  var n=src.length;
+  var a=Math.max(0,Math.round(l.trimIn/1000*SR));
+  var b=(l.trimOut<0)?n:Math.min(n,Math.round(l.trimOut/1000*SR));
+  var minN=Math.round(SPEC.MIN_TRIM_MS/1000*SR);
+  if(b-a<minN) b=Math.min(n,a+minN);
+  if(b<=a){a=0;b=n;}
+  return {a:a,b:b,trimmedIn:a>0,trimmedOut:b<n};
+}
+function layerSamples(ti,si){
+  var l=L[si], rc=recipeOne(si,ti), f=l.files[rc.fileIdx];
+  if(!f) return new Float32Array(0);
+  var src=f.samples, i;
+
+  /* 1. TRIM (static, §14) */
+  var tr=trimRegion(l,src);
+  var cut=src.subarray(tr.a,tr.b);
+  var n=cut.length;
+  var base=new Float32Array(n);
+  base.set(cut);
+
+  /* 2. auto-fades, ONLY on an edge the user actually moved (§14.2) */
+  var maxF=Math.floor(n*SPEC.TRIM_FADE_MAX_PCT/100);
+  if(tr.trimmedIn){
+    var fi=Math.min(Math.round(SPEC.TRIM_FADE_IN_MS/1000*SR),maxF);
+    for(i=0;i<fi;i++) base[i]*=0.5-0.5*Math.cos(Math.PI*i/fi);
+  }
+  if(tr.trimmedOut){
+    var fo=Math.min(Math.round(SPEC.TRIM_FADE_OUT_MS/1000*SR),maxF);
+    for(i=0;i<fo;i++) base[n-1-i]*=0.5-0.5*Math.cos(Math.PI*i/fo);
+  }
+
+  /* 3. START nudge — INSIDE the trimmed region, clamped so it can never eat it
+        down past MIN_TRIM_MS (§14.3). Without the clamp a tight trim + START
+        renders silence, which reads as a broken take. */
+  if(rc.startMs>0){
+    var minN=Math.round(SPEC.MIN_TRIM_MS/1000*SR);
+    var sk=Math.min(Math.round(rc.startMs/1000*SR), Math.max(0,n-minN));
+    if(sk>0){ base=base.subarray(sk); n=base.length; }
+  }
+
+  /* 4. REVERSE (structure — a threshold, monotonic in the knob, §4.2) */
+  if(rc.reversed){ var rv=new Float32Array(n); for(i=0;i<n;i++) rv[i]=base[n-1-i]; base=rv; }
+
+  /* 5. PITCH as VARISPEED — keeps the transient intact and lets length follow,
+        which is what foley does. Not time-stretch. (§4.2) */
+  var rate=Math.pow(2,rc.cents/1200), out;
+  if(Math.abs(rc.cents)<0.001){ out=new Float32Array(n); out.set(base); }
+  else{
+    var m=Math.max(2,Math.floor(n/rate)); out=new Float32Array(m);
+    for(i=0;i<m;i++){ var x=i*rate, i0=Math.floor(x), fr=x-i0;
+      var s0=base[i0]||0, s1=base[i0+1]||0; out[i]=s0+(s1-s0)*fr; }
+    n=m;
+  }
+
+  /* 6. TONE (darkening only) then the static LP / HP filters */
+  var fc=(rc.toneOct>0.001)? Math.min(l.lp,20000)/Math.pow(2,rc.toneOct) : l.lp;
+  if(fc<20000){ var c=Math.exp(-2*Math.PI*fc/SR), z=0;
+    for(i=0;i<n;i++){ z=out[i]*(1-c)+z*c; out[i]=z; } }
+  if(l.hp>20){ var ch=Math.exp(-2*Math.PI*l.hp/SR), zh=0;
+    for(i=0;i<n;i++){ zh=out[i]*(1-ch)+zh*ch; out[i]=out[i]-zh; } }
+
+  /* 7. GAIN */
+  var g=Math.pow(10,(rc.levelDb+rc.dB)/20);
+  for(i=0;i<n;i++) out[i]*=g;
+  return out;
+}
+function layerOffsetSamples(ti,si){
+  var rc=recipeOne(si,ti);
+  /* + HEAD_N so a NEGATIVE offset on a DELAY=0 layer is representable instead of
+     clamping to zero — without this, half the timing variation on the anchor
+     layer silently vanishes (§4.1 HEAD PAD). */
+  return Math.max(0, HEAD_N + Math.round((rc.delayMs+rc.offsetMs)/1000*SR));
+}
+
+/* ══ THE MIX ══════════════════════════════════════════════════════════════ */
+function takeLen(ti){
+  var mx=HEAD_N+Math.round(SR*0.05);
+  liveSlots().forEach(function(o){
+    var n=layerSamples(ti,o.i).length+layerOffsetSamples(ti,o.i);
+    if(n>mx) mx=n;
+  });
+  var tail=Math.round(M.tailFade/1000*SR);
+  return mx+tail+8;
+}
+/* raw = the summed layers, pre-gain. Channels: 1 or 2 (constant-power pan). */
+function rawTake(ti){
+  var N=takeLen(ti), ch=M.channels, bufs=[];
+  for(var c=0;c<ch;c++) bufs.push(new Float32Array(N));
+  liveSlots().forEach(function(o){
+    var s=layerSamples(ti,o.i), off=layerOffsetSamples(ti,o.i), i;
+    if(ch===1){ var m=bufs[0];
+      for(i=0;i<s.length;i++){ var j=off+i; if(j<N) m[j]+=s[i]; }
+    }else{
+      var rc=recipeOne(o.i,ti);
+      var p=Math.max(-100,Math.min(100,rc.pan))/100;      /* -1..1 */
+      var th=(p+1)*Math.PI/4, gl=Math.cos(th), gr=Math.sin(th);
+      var Lb=bufs[0], Rb=bufs[1];
+      for(i=0;i<s.length;i++){ var k=off+i; if(k<N){ Lb[k]+=s[i]*gl; Rb[k]+=s[i]*gr; } }
+    }
+  });
+  return bufs;
+}
+function peakOf(bufs){
+  var m=0; for(var c=0;c<bufs.length;c++){ var b=bufs[c];
+    for(var i=0;i<b.length;i++){ var a=b[i]<0?-b[i]:b[i]; if(a>m)m=a; } }
+  return m;
+}
+/* BOUNCE LATCHES THE SET GAIN (§7.1). Re-rolls reuse it, so a kept take is
+   byte-identical across a re-roll. Only RE-NORMALISE re-latches. */
+function latch(){
+  latchStale=false;
+  if(M.normalise!=='set'){ latchGain=1; return 1; }
+  var target=Math.pow(10,M.trim/20), pk=0;
+  for(var i=0;i<M.count;i++) pk=Math.max(pk,peakOf(rawTake(i)));
+  latchGain = pk>1e-9 ? target/pk : 1;
+  return latchGain;
+}
+function gainFor(ti,pk){
+  var target=Math.pow(10,M.trim/20);
+  if(M.normalise==='each') return pk>1e-9?target/pk:1;
+  /* §7: the soft-clip guard sits at -0.1 dBFS. It was at 0.995 (-0.04 dBFS),
+     which is not the number the design states. */
+  if(M.normalise==='off'){ var G=Math.pow(10,-0.1/20); return (pk>G)? G/pk : 1; }
+  if(latchGain===null) latch();
+  var g=latchGain;
+  if(pk*g>1.0) return {g:Math.pow(10,-1/20)/pk, trimmed:true};  /* §7.1 guard */
+  return g;
+}
+function headTrimStart(bufs){
+  /* §4.3 HEAD: a bounced one-shot starts when the sound starts — 1 ms before the
+     first sample above -60 dBFS. */
+  var thr=Math.pow(10,-60/20), N=bufs[0].length;
+  for(var i=0;i<N;i++){
+    for(var c=0;c<bufs.length;c++){ var a=bufs[c][i]; if(a<0)a=-a; if(a>thr){
+      return Math.max(0,i-Math.round(SR*0.001)); } }
+  }
+  return 0;
+}
+/* renderTake(i) is PURE and SYNCHRONOUS — same inputs, same floats, no device.
+   That is a contract, not a preference (CONTRACT.md). It returns the take EXACTLY
+   as it will be exported, so what you audition is the file. */
+function renderTakeCh(ti){
+  var bufs=rawTake(ti), pk=peakOf(bufs), trimmed=false;
+  var gr=gainFor(ti,pk), g;
+  if(typeof gr==='object'){ g=gr.g; trimmed=true; } else g=gr;
+  var c,i;
+  for(c=0;c<bufs.length;c++){ var b=bufs[c]; for(i=0;i<b.length;i++) b[i]*=g; }
+
+  var s0=headTrimStart(bufs), N=bufs[0].length-s0;
+  if(M.maxLength>0) N=Math.min(N,Math.round(M.maxLength/1000*SR));
+  var out=[];
+  for(c=0;c<bufs.length;c++) out.push(bufs[c].slice(s0,s0+N));
+
+  var fo=Math.min(Math.round(M.tailFade/1000*SR),N-1);
+  for(c=0;c<out.length;c++){
+    var o=out[c];
+    if(fo>0) for(i=0;i<fo;i++) o[N-1-i]*=0.5-0.5*Math.cos(Math.PI*i/fo);
+    if(N>0) o[N-1]=0;                       /* the end is always a hard zero */
+  }
+  out._trimmed=trimmed;
+  return out;
+}
+function renderTake(ti){ return renderTakeCh(ti)[0]; }
+function takeInfo(ti){
+  var bufs=rawTake(ti), pk=peakOf(bufs), gr=gainFor(ti,pk);
+  var trimmed=(typeof gr==='object'), g=trimmed?gr.g:gr;
+  return {trimmed:trimmed, peak:pk*g, peakDb:20*Math.log10(Math.max(1e-9,pk*g)),
+          mark:marks[ti]||'open', roll:rolls[ti]||0};
+}
+function rerollCulled(){
+  var n=0;
+  for(var i=0;i<M.count;i++) if(marks[i]==='cull'){ rolls[i]++; marks[i]='open'; n++; }
+  return n;                    /* latchGain deliberately untouched — §7.1 */
+}
+
+/* ══ AUDIO — exactly ONE AudioContext construction site, in audioReady() ═══
+   Chromium creates an AudioContext SUSPENDED unless it was constructed during a
+   user gesture, and inside the editor's CEF host that is the normal case. A
+   suspended context does not advance currentTime: start() schedules and nothing
+   is heard, then everything fires at once when it resumes. Never touch audioCtx
+   directly — go through audioReady(). (Ported verbatim from the Forge chassis.) */
+var audioCtx=null;
+function audioReady(){
+  if(!audioCtx) audioCtx=new(window.AudioContext||window.webkitAudioContext)({sampleRate:SR});
+  if(audioCtx.state&&audioCtx.state!=='running'&&audioCtx.resume){
+    try{ audioCtx.resume(); }catch(e){}
+  }
+  return audioCtx;
+}
+/* Warm it on the first real gesture, so the first audition is not the press that
+   has to pay for starting the audio device. A TESTED REQUIREMENT (§12.10). */
+(function(){
+  var EV=['pointerdown','mousedown','keydown'];
+  function warm(){ audioReady(); EV.forEach(function(e){window.removeEventListener(e,warm,true);}); }
+  EV.forEach(function(e){ window.addEventListener(e,warm,true); });
+})();
+var curSrc=null;
+function stopS(){ if(curSrc){ try{curSrc.stop();}catch(e){} curSrc=null; } }
+function play(chans){
+  var ctx=audioReady(); stopS();
+  var arr=(chans instanceof Float32Array)?[chans]:chans;
+  var buf=ctx.createBuffer(arr.length,arr[0].length,SR);
+  for(var c=0;c<arr.length;c++) buf.getChannelData(c).set(arr[c]);
+  var src=ctx.createBufferSource(); src.buffer=buf; src.connect(ctx.destination); src.start();
+  curSrc=src; src.onended=function(){ if(curSrc===src) curSrc=null; };
+  return src;
+}
+
+/* ══ WAV + ZIP (chassis) ══════════════════════════════════════════════════ */
+function encWAV(chans,bits,rate){
+  var nCh=chans.length, N=chans[0].length, bps=bits/8;
+  var ds=N*nCh*bps, buf=new ArrayBuffer(44+ds), v=new DataView(buf), o=0;
+  function ws(s){for(var i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));o+=s.length;}
+  ws('RIFF'); v.setUint32(o,36+ds,true);o+=4; ws('WAVE'); ws('fmt ');
+  v.setUint32(o,16,true);o+=4; v.setUint16(o,1,true);o+=2; v.setUint16(o,nCh,true);o+=2;
+  v.setUint32(o,rate,true);o+=4; v.setUint32(o,rate*nCh*bps,true);o+=4;
+  v.setUint16(o,nCh*bps,true);o+=2; v.setUint16(o,bits,true);o+=2;
+  ws('data'); v.setUint32(o,ds,true);o+=4;
+  for(var i=0;i<N;i++) for(var c=0;c<nCh;c++){
+    var x=Math.max(-1,Math.min(1,chans[c][i]));
+    if(bits===16){ v.setInt16(o,Math.round(x*32767),true); o+=2; }
+    else{ var q=Math.round(x*8388607);
+      v.setUint8(o,q&0xFF); v.setUint8(o+1,(q>>8)&0xFF); v.setUint8(o+2,(q>>16)&0xFF); o+=3; }
+  }
+  return buf;
+}
+var crcTable=(function(){var t=new Uint32Array(256);
+  for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);t[n]=c>>>0;}
+  return t;})();
+function crc32(u8){var c=0xFFFFFFFF;for(var i=0;i<u8.length;i++)c=crcTable[(c^u8[i])&0xFF]^(c>>>8);return (c^0xFFFFFFFF)>>>0;}
+function makeZip(files){
+  var enc=new TextEncoder(), parts=[], central=[], offset=0;
+  var dosTime=0, dosDate=((2026-1980)<<9)|(8<<5)|24;   /* fixed: a byte-identical
+     zip for the same set is a testable promise (§12.2) */
+  for(var i=0;i<files.length;i++){
+    var nameU8=enc.encode(files[i].name), data=new Uint8Array(files[i].data), crc=crc32(data);
+    var lh=new Uint8Array(30+nameU8.length), lv=new DataView(lh.buffer);
+    lv.setUint32(0,0x04034b50,true); lv.setUint16(4,20,true); lv.setUint16(6,0,true);
+    lv.setUint16(8,0,true); lv.setUint16(10,dosTime,true); lv.setUint16(12,dosDate,true);
+    lv.setUint32(14,crc,true); lv.setUint32(18,data.length,true); lv.setUint32(22,data.length,true);
+    lv.setUint16(26,nameU8.length,true); lv.setUint16(28,0,true); lh.set(nameU8,30);
+    parts.push(lh,data);
+    var ch=new Uint8Array(46+nameU8.length), cv=new DataView(ch.buffer);
+    cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true);
+    cv.setUint16(8,0,true); cv.setUint16(10,0,true); cv.setUint16(12,dosTime,true);
+    cv.setUint16(14,dosDate,true); cv.setUint32(16,crc,true);
+    cv.setUint32(20,data.length,true); cv.setUint32(24,data.length,true);
+    cv.setUint16(28,nameU8.length,true); cv.setUint32(42,offset,true); ch.set(nameU8,46);
+    central.push(ch); offset+=lh.length+data.length;
+  }
+  var cdSize=0; for(var j=0;j<central.length;j++) cdSize+=central[j].length;
+  var eocd=new Uint8Array(22), ev=new DataView(eocd.buffer);
+  ev.setUint32(0,0x06054b50,true); ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true);
+  ev.setUint32(12,cdSize,true); ev.setUint32(16,offset,true);
+  return new Blob(parts.concat(central,[eocd]),{type:'application/zip'});
+}
+/* ══ DELIVERY — where can a file actually GO from this host? ════════════
+   The editor's CEF implements no download handler, so `<a download>` is dropped
+   with NO error while the page carries on as though it saved. Measured on 5.6,
+   5.7 and 5.8 by the CEF spike. So the engine asks where a file can go BEFORE
+   it claims to have put one there.
+
+   THE WORDS LAW (TOOL RECORDER's, adopted engine-wide): the word SAVED appears
+   only when a file actually exists. Failures say WRITTEN — "so nothing was
+   saved" still reads as a save to anyone scanning a status line. ────────── */
+function vbBridge(){
+  var b = window.ue && window.ue.taa;
+  return (b && typeof b.savefile === 'function') ? b : null;
+}
+/* HOST IS NOT INFERRED FROM THE BINDING. Deriving it from window.ue.taa means
+   any read taken before the bridge attaches answers "browser" — and then the
+   engine would pick the <a download> path, which the editor drops with NO error.
+   The safe-looking default is the silent one.
+
+   The user agent does not race. MEASURED in an editor tab on 5.7:
+     Mozilla/5.0 (…) GuiVerifyTAASuite57/++UE5+Release-5.7-CL-51494982
+     UnrealEngine/5.7.4-51494982+++UE5+Release-5.7 Chrome/128.0.6613.138 …
+   TOOL RECORDER hit the same trap in cefMicStatus, where it would have told a
+   PLUGIN user to "allow the microphone in a browser". */
+function vbIsUnrealHost(){
+  var ua = (typeof navigator!=='undefined' && navigator.userAgent) || '';
+  if(ua.indexOf('UnrealEngine/') >= 0) return true;
+  /* Belt: a host that binds the bridge is a host, whatever it calls itself. */
+  return !!(window.ue && window.ue.taa);
+}
+var _forcePath = null;                                   /* TEST ONLY */
+function forceDeliveryPath(p){ _forcePath = p || null; return vbDeliveryPath(); }
+function vbDeliveryPath(){
+  if(_forcePath) return _forcePath;
+  if(vbBridge()) return 'bridge';
+  if(vbIsUnrealHost()) return 'none';        /* CEF, and no file bridge present */
+  return 'download';
+}
+/* ⚠ THE BINDING IS NOT THERE AT LOAD. MEASURED, in the plugin skeleton:
+   window.ue.taa already exists when the page script runs on UE 5.6 (CEF 90),
+   and does NOT yet exist on 5.7 / 5.8 (CEF 128). Injection and first paint are
+   not ordered, and 5.6 was simply winning a race.
+
+   Anything that asks "can I write a file?" ONCE AT BOOT will therefore answer
+   'none' on two engines out of three and be wrong about it — a SAVE button that
+   paints itself dead and then works, which is a lie in the safer direction but
+   still a lie. saveBlob() itself is fine because it re-checks at call time; it
+   is the BOOT-TIME PAINT that needs this.
+
+   Calls back immediately if the bridge is already there, once when it arrives,
+   or never if it does not (a plain browser — where 'download' is the right
+   answer anyway, so no callback is the correct outcome). */
+function vbBridgeReady(cb, limitMs){
+  if(typeof cb!=='function') return;
+  if(vbBridge()){ cb(vbBridge()); return; }
+  var waited=0, step=50, limit=(limitMs===undefined)?10000:limitMs;
+  (function poll(){
+    if(vbBridge()){ cb(vbBridge()); return; }
+    waited+=step;
+    if(waited>=limit) return;      /* no bridge here; not an error */
+    setTimeout(poll, step);
+  })();
+}
+
+var VB_NO_PATH_MSG =
+  'this host cannot write files — the editor browser drops downloads and no file '+
+  'bridge is present. NO FILE WAS WRITTEN.';
+
+/* The delivery outcome is deliberately the LAST word on the status line. A tool
+   that says "bounced 2.5s to one WAV" the instant after calling this is being
+   optimistic on the page's behalf, and that sentence must not be the one left
+   standing when nothing was written. */
+function saySoon(msg){ setTimeout(function(){ try{ setS(msg); }catch(e){} },0); }
+
+function blobToB64(blob, cb){
+  try{
+    var fr=new FileReader();
+    fr.onload=function(){
+      var s=String(fr.result||''), c=s.indexOf(',');
+      cb(c>=0? s.slice(c+1) : s, null);
+    };
+    fr.onerror=function(){ cb(null, fr.error||new Error('read failed')); };
+    fr.readAsDataURL(blob);
+  }catch(e){ cb(null,e); }
+}
+
+function saveBlob(blob,name,done){
+  var path=vbDeliveryPath();
+  function finish(r){
+    if(r.msg) saySoon(r.msg);
+    if(typeof done==='function'){ try{ done(r); }catch(e){} }
+    return r;
+  }
+
+  /* 1. NO PATH. The whole reason this function grew: refuse loudly. */
+  if(path==='none') return finish({ok:false, path:'none', name:name, msg:VB_NO_PATH_MSG});
+
+  /* 2. BRIDGE. Only the native side can say whether a file exists, so only it
+        is allowed to produce the word SAVED. */
+  if(path==='bridge'){
+    blobToB64(blob, function(b64, err){
+      if(err||!b64) return finish({ok:false, path:'bridge', name:name,
+        msg:'could not encode '+name+' — NO FILE WAS WRITTEN.'});
+      var p;
+      try{ p=vbBridge().savefile(name,b64); }
+      catch(e){ return finish({ok:false, path:'bridge', name:name,
+        msg:'the file bridge threw on '+name+' — NO FILE WAS WRITTEN.'}); }
+      Promise.resolve(p).then(function(json){
+        var r={}; try{ r=(typeof json==='string')? JSON.parse(json) : (json||{}); }catch(e){}
+        if(r && r.ok) finish({ok:true, path:'bridge', name:name, file:r.path,
+          msg:'SAVED '+name+(r.path? (' — '+r.path) : ' into the project')});
+        else finish({ok:false, path:'bridge', name:name,
+          msg:'the file bridge refused '+name+(r&&r.error? (' — '+r.error):'')+
+              '. NO FILE WAS WRITTEN.'});
+      }, function(e){
+        finish({ok:false, path:'bridge', name:name,
+          msg:'the file bridge failed on '+name+': '+((e&&e.message)||e)+
+              ' — NO FILE WAS WRITTEN.'});
+      });
+    });
+    return {ok:null, path:'bridge', name:name, pending:true};
+  }
+
+  /* 3. DOWNLOAD. The one path whose completion cannot be observed from here —
+        and the one where that is acceptable, because a real browser either
+        saves the file or tells the user why not. CEF does neither, which is
+        exactly why case 1 exists. */
+  try{
+    var a=document.createElement('a'), url=URL.createObjectURL(blob);
+    a.href=url; a.download=name; document.body.appendChild(a); a.click();
+    document.body.removeChild(a); setTimeout(function(){URL.revokeObjectURL(url)},4000);
+  }catch(e){
+    return finish({ok:false, path:'download', name:name,
+      msg:'the browser refused the download of '+name+' — NO FILE WAS WRITTEN.'});
+  }
+  return finish({ok:true, path:'download', name:name,
+    msg:'SAVED '+name+' — your browser has it'});
+}
+
+/* ══ STAGE WATCH — redraw when your box changes ══════════════════════
+   Measured by TOOL RECORDER in a real 5.6 editor tab: CEF reports readyState
+   'complete' while the Slate widget still has NO rectangle (stage 18×2), so a
+   canvas sized once at draw time gets a 16×1 backing store that CSS then
+   stretches into a gradient wash. The real box arrived between 600 ms and
+   2100 ms after load.
+
+   "Redraw when your box changes" is not recorder behaviour, it is CANVAS
+   behaviour — so it lives here once instead of in three tools, and the DAW
+   timeline and the take sheet stop rendering the same wash. Returns a stop
+   function. */
+function vbWatchStage(el, redraw){
+  if(!el || typeof redraw!=='function') return function(){};
+  var last='', stopped=false, iv=0, burst=[], muted=false;
+  function check(){
+    if(stopped) return;
+    var r=el.getBoundingClientRect();
+    var key=Math.round(r.width)+'x'+Math.round(r.height);
+    if(key===last) return;
+    last=key;
+    if(!(r.width>0 && r.height>0)) return;
+
+    /* BURST CAP. A redraw can change the size of the very box being watched —
+       measured: one 0→rectangle transition fires this callback TWICE, because
+       repainting changes the container's content height. That settles, but a
+       layout where every redraw moves the box would loop forever, and an
+       unbounded layout loop is a frozen page with nothing in a console to read.
+       Same instinct as the repaint kernel's re-entrancy guard; a re-entrancy
+       guard cannot catch this one because ResizeObserver delivers on a later
+       frame, so the bound is on RATE instead. */
+    var now=(new Date()).getTime();
+    burst.push(now);
+    while(burst.length && now-burst[0]>1000) burst.shift();
+    if(burst.length>12){
+      if(!muted){
+        muted=true;
+        try{ console.warn('vbWatchStage: >12 redraws in 1s — the redraw is '+
+                          'resizing its own box. Watch a container whose size '+
+                          'does not depend on its content.'); }catch(e){}
+      }
+      return;
+    }
+    if(muted && burst.length<=2) muted=false;
+    try{ redraw(); }catch(e){}
+  }
+  if(window.ResizeObserver){ try{ new ResizeObserver(check).observe(el); }catch(e){} }
+  window.addEventListener('resize', check);
+  /* Belt as well as braces: an older CEF may not deliver ResizeObserver
+     callbacks for a Slate-hosted widget, so poll briefly at boot too. */
+  var n=0; iv=setInterval(function(){ check(); if(++n>40||stopped) clearInterval(iv); },150);
+  check();
+  return function(){ stopped=true; clearInterval(iv); };
+}
+function padNum(v,w){var s=String(v);while(s.length<w)s='0'+s;return s;}
+
+/* ══ PACK — kept + open takes only; culled never leave the app (§9) ═══════ */
+function pack(){
+  if(latchGain===null) latch();
+  var files=[], manifest={
+    taaBridge:1, tool:'variation-bench', toolVersion:VERSION, title:M.name,
+    buildTarget:'soundcue', sampleRate:M.rate, bounces:[],
+    output:{chainApplied:true, chain:SPEC.ORDER},
+    dials:{ variation:M.knob, count:M.count, seed:M.seed, rolls:rolls.slice(),
+            normalise:M.normalise, trim:M.trim, tailFade:M.tailFade,
+            maxLength:M.maxLength, headPadMs:SPEC.HEAD_MS, channels:M.channels, bits:M.bits,
+            layers:L.map(function(l){return {id:l.id, name:l.name, files:l.files.map(function(f){return f.name;}),
+              pick:l.pick, level:l.level, delay:l.delay, pan:l.pan, lp:l.lp, hp:l.hp,
+              trimIn:l.trimIn, trimOut:l.trimOut, offset:l.r.offset, pitch:l.r.pitch,
+              gain:l.r.gain, tone:l.r.tone, spread:l.r.spread, reverse:l.r.reverse, start:l.r.start};})},
+    takes:[]
+  };
+  var w=Math.max(2,String(M.count).length), n=0;
+  for(var i=0;i<M.count;i++){
+    if(marks[i]==='cull') continue;
+    var ch=renderTakeCh(i), nm=M.name+'_'+padNum(n+1,w)+'.wav';
+    files.push({name:nm, data:encWAV(ch,M.bits,M.rate)});
+    manifest.bounces.push(nm);
+    manifest.takes.push({file:nm, index:i, roll:rolls[i]||0, trimmed:!!ch._trimmed,
+      recipe:recipe(i).map(function(r){return {slot:r.slot,file:r.file,offsetMs:+r.offsetMs.toFixed(3),
+        cents:+r.cents.toFixed(2),dB:+r.dB.toFixed(3),toneOct:+r.toneOct.toFixed(3),
+        pan:+r.pan.toFixed(1),reversed:r.reversed,startMs:+r.startMs.toFixed(2)};})});
+    n++;
+  }
+  files.push({name:'manifest.json', data:new TextEncoder().encode(JSON.stringify(manifest,null,2)).buffer});
+  return {files:files, manifest:manifest};
+}
+
+
+/* ══ THE REPAINT KERNEL ═══════════════════════════════════════════════════
+   The engine must never call a tool's paint function by name - that is what
+   welded three tools into one file. Instead every tool registers a repaint and
+   the engine says "something changed". */
+var VBUI = (function(){
+  var fns=[], busy=false;
+  return {
+    onChange:function(fn){ fns.push(fn); },
+    /* RE-ENTRANCY GUARD. A painter that (directly or otherwise) triggers another
+       notify would recurse until the tab dies - which is exactly what happened
+       once during the split, and it hangs with no error to read. One level only. */
+    notify:function(){
+      if(busy) return;
+      busy=true;
+      try{ for(var i=0;i<fns.length;i++){ try{ fns[i](); }catch(e){ /* a broken painter must not stop the engine */ } } }
+      finally{ busy=false; }
+    }
+  };
+})();
+function onEdit(){ markStale(); VBUI.notify(); commitSoon(); }
+function bounceCount(n){
+  if(!anyLoaded()){ setS('load some files first — or press LOAD DEMO KIT'); return false; }
+  resetSheet(n||M.count); latch(); VBUI.notify(); commitUndo(); return true;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   UI
+   ══════════════════════════════════════════════════════════════════════════ */
+function $(id){return document.getElementById(id);}
+function setS(t){ $('statusText').textContent=t; var d=$('dot');
+  d.classList.add('on'); setTimeout(function(){d.classList.remove('on');},550); }
+function fitCv(cv){
+  var r=cv.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  var w=Math.max(1,Math.round(r.width*dpr)), h=Math.max(1,Math.round(r.height*dpr));
+  if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}
+  return cv.getContext('2d');
+}
+/* TRUE min/max peak envelope — not a squiggle. */
+function drawWave(cv,samples,opt){
+  opt=opt||{};
+  var c=fitCv(cv), W=cv.width, H=cv.height, mid=H/2;
+  if(!opt.keep) c.clearRect(0,0,W,H);
+  if(opt.zero!==false){ c.strokeStyle='rgba(255,255,255,.09)'; c.lineWidth=1;
+    c.beginPath(); c.moveTo(0,Math.round(mid)+.5); c.lineTo(W,Math.round(mid)+.5); c.stroke(); }
+  if(!samples||!samples.length) return;
+  var s0=opt.s0||0, sN=opt.sN||samples.length, g=opt.gain||1;
+  c.strokeStyle=opt.col||'#2dd4bf'; c.lineWidth=(opt.lw||1)*(window.devicePixelRatio||1);
+  if(opt.alpha!==undefined) c.globalAlpha=opt.alpha;
+  c.beginPath();
+  for(var x=0;x<W;x++){
+    var a=s0+Math.floor(x/W*sN), b=s0+Math.floor((x+1)/W*sN); if(b<=a)b=a+1;
+    var mn=0,mx=0,any=false;
+    for(var i=a;i<b && i<samples.length;i++){ var v=samples[i];
+      if(!any){mn=mx=v;any=true;} else { if(v<mn)mn=v; if(v>mx)mx=v; } }
+    if(!any) continue;
+    c.moveTo(x+.5, mid-Math.max(-1,Math.min(1,mx*g))*mid*.94);
+    c.lineTo(x+.5, mid-Math.max(-1,Math.min(1,mn*g))*mid*.94);
+  }
+  c.stroke(); c.globalAlpha=1;
+}
+
+/* ── DECODE: drop files on a slot ─────────────────────────────────────── */
+function addFiles(si,fileList){
+  var l=L[si], list=[].slice.call(fileList), done=0;
+  if(!list.length) return;
+  setS('decoding '+list.length+' file'+(list.length>1?'s':'')+'…');
+  list.forEach(function(f){
+    var rd=new FileReader();
+    rd.onload=function(){
+      /* decodeAudioData on a context created at SR resamples for us, and it
+         handles 24-bit, EXTENSIBLE and BWF-with-bext (measured: INFRA.md §1). */
+      audioReady().decodeAudioData(rd.result).then(function(ab){
+        var n=ab.length, mono=new Float32Array(n), c;
+        for(c=0;c<ab.numberOfChannels;c++){
+          var d=ab.getChannelData(c);
+          for(var i=0;i<n;i++) mono[i]+=d[i];
+        }
+        if(ab.numberOfChannels>1) for(var i=0;i<n;i++) mono[i]/=ab.numberOfChannels;
+        if(l.files.length<32) l.files.push({name:f.name.replace(/\.[^.]+$/,''),samples:mono,
+          durMs:n/SR*1000, stereo:ab.numberOfChannels>1});
+        if(!l.name) l.name=f.name.replace(/\.[^.]+$/,'').slice(0,14);
+        if(++done===list.length){ l.trimIn=0; l.trimOut=-1; afterLoad(); }
+      }).catch(function(e){
+        if(++done===list.length) afterLoad();
+        setS('could not decode '+f.name+' — '+(e&&e.message?e.message:e));
+      });
+    };
+    rd.readAsArrayBuffer(f);
+  });
+}
+function afterLoad(){
+  resetSheet(M.count); VBUI.notify();
+  setS(anyLoaded()? 'loaded — press BOUNCE' : 'drop WAVs on a slot');
+}
+
+/* ── DEMO KIT: four synthesised layers so the bench works with no files ── */
+function demoKit(){
+  function synth(kind,seedName,secs){
+    var rng=mulberry32(hashTag(seedName)), n=Math.round(SR*secs), out=new Float32Array(n), i,t,env;
+    if(kind==='heel'){ var f=88+rng()*16;
+      for(i=0;i<n;i++){ t=i/SR; env=Math.exp(-t*48);
+        out[i]=Math.sin(2*Math.PI*f*t)*env*.72 + (i<70?(rng()*2-1)*Math.exp(-i/22)*.9:0); } }
+    else if(kind==='scuff'){ var lp=0,hp=0,pv=0;
+      for(i=0;i<n;i++){ t=i/SR; env=(t<.004? t/.004 : Math.exp(-(t-.004)*30));
+        var w=rng()*2-1; lp+=(w-lp)*.55; hp=.86*(hp+lp-pv); pv=lp; out[i]=hp*env*.85; } }
+    else if(kind==='grit'){ var gr=16+Math.floor(rng()*10);
+      for(var g=0;g<gr;g++){ var at=Math.floor(Math.pow(rng(),1.6)*n*.8), ln=40+Math.floor(rng()*160), am=.25+rng()*.6;
+        for(i=0;i<ln&&at+i<n;i++) out[at+i]+=(rng()*2-1)*Math.exp(-i/(ln*.32))*am*.5; } }
+    else { var f0=52+rng()*10;
+      for(i=0;i<n;i++){ t=i/SR; var fr=f0*(1+.5*Math.exp(-t*40));
+        env=Math.exp(-t*24)*(t<.002?t/.002:1); out[i]=Math.sin(2*Math.PI*fr*t)*env*.95; } }
+    var pk=0; for(i=0;i<n;i++) pk=Math.max(pk,Math.abs(out[i]));
+    if(pk>1e-9) for(i=0;i<n;i++) out[i]/=pk;
+    return out;
+  }
+  var kit=[
+    {k:'heel', nm:'heel',  files:['heel_01','heel_02','heel_03','heel_04','heel_05'], secs:.20, delay:0,  level:0},
+    {k:'scuff',nm:'scuff', files:['scuff_01','scuff_02','scuff_03'],                  secs:.14, delay:22, level:-3},
+    {k:'grit', nm:'grit',  files:['gravel_a','gravel_b','gravel_c','gravel_d'],       secs:.22, delay:8,  level:-7},
+    {k:'body', nm:'body',  files:['thud_01','thud_02'],                               secs:.28, delay:2,  level:-11}
+  ];
+  kit.forEach(function(spec,si){
+    var l=L[si]=mkLayer(si);
+    l.name=spec.nm; l.delay=spec.delay; l.level=spec.level;
+    spec.files.forEach(function(fn){
+      var s=synth(spec.k,fn,spec.secs);
+      l.files.push({name:fn, samples:s, durMs:s.length/SR*1000, stereo:false});
+    });
+  });
+  afterLoad();
+  setS('demo kit loaded — 4 layers, 14 files. Press BOUNCE.');
+}
+
+/* ── build the DESIGN pane ────────────────────────────────────────────── */
+var layerEls=[];
+function segWire(id,fn){
+  document.querySelectorAll('#'+id+' b').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('#'+id+' b').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on'); fn(b.dataset.v||b.dataset.mix);
+    });
+  });
+}
+function askDialog(msg,cb){
+  $('dlgMsg').textContent=msg; dlgCb=cb;
+  if(dlgInput){ dlgInput.remove(); dlgInput=null; }
+  $('ov').classList.add('show');
+}
+function askInput(msg,def,cb){
+  $('dlgMsg').textContent=msg;
+  if(dlgInput) dlgInput.remove();
+  dlgInput=document.createElement('input');
+  dlgInput.className='num'; dlgInput.style.cssText='width:100%;text-align:left;padding:6px;font-size:9px';
+  dlgInput.value=def||'';
+  $('dlgMsg').insertAdjacentElement('afterend',dlgInput);
+  dlgCb=function(ok){ cb(ok? dlgInput.value.trim() : null); };
+  $('ov').classList.add('show');
+  setTimeout(function(){ dlgInput.focus(); dlgInput.select(); },30);
+}
+$('dlgYes').addEventListener('click',function(){ $('ov').classList.remove('show'); var c=dlgCb; dlgCb=null; if(c)c(true); });
+$('dlgNo').addEventListener('click',function(){ $('ov').classList.remove('show'); var c=dlgCb; dlgCb=null; if(c)c(false); });
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   UNDO / REDO and PRESETS (APP-BLUEPRINT §3, §4)
+   A snapshot is VB.state() — which already round-trips byte-exact, so undo
+   restores THE SEED and every dial, not just slider positions. Without the seed,
+   "I randomised and lost it" is unrecoverable, which is the whole reason the
+   blueprint insists on it.
+   ══════════════════════════════════════════════════════════════════════════ */
+var UNDO_MAX=60;
+var undoStack=[], redoStack=[], _lastSnap=null, _commitTimer=0;
+function snapKey(o){ return JSON.stringify(o); }
+function commitUndo(){
+  var st=window.VB.state(), k=snapKey(st);
+  if(k===_lastSnap) return;               /* nothing actually changed */
+  if(_lastSnap!==null){
+    undoStack.push(_lastSnap);
+    if(undoStack.length>UNDO_MAX) undoStack.shift();
+    redoStack.length=0;
+  }
+  _lastSnap=k; markDirty(); paintUndo();
+}
+/* slider drags fire dozens of input events; one edit should be one undo step */
+function commitSoon(){ clearTimeout(_commitTimer); _commitTimer=setTimeout(commitUndo,320); }
+function paintUndo(){
+  var u=$('undoBtn'), r=$('redoBtn');
+  if(u) u.disabled=!undoStack.length;
+  if(r) r.disabled=!redoStack.length;
+}
+function doUndo(){
+  if(!undoStack.length) return;
+  var cur=snapKey(window.VB.state());
+  var prev=undoStack.pop(); redoStack.push(cur);
+  _lastSnap=prev; window.VB.restore(JSON.parse(prev)); paintUndo();
+  setS('undo — '+undoStack.length+' steps left');
+}
+function doRedo(){
+  if(!redoStack.length) return;
+  var cur=snapKey(window.VB.state());
+  var nx=redoStack.pop(); undoStack.push(cur);
+  _lastSnap=nx; window.VB.restore(JSON.parse(nx)); paintUndo();
+  setS('redo');
+}
+
+/* ── presets ──────────────────────────────────────────────────────────────
+   A preset carries the dials AND THE SEED, so loading one returns the exact
+   set. It cannot carry the audio — a browser will not hold your files for you —
+   so it stores file NAMES and says so plainly when they are missing (§9). */
+var PRESET_KEY='taa.variationbench.presets.v1';
+var FACTORY=[
+  {name:'footstep gravel', seed:2148294601, knob:35, count:12,
+   layers:[{delay:0,level:0,r:{offset:15,pitch:40,gain:2,tone:1.0}},
+           {delay:22,level:-3,r:{offset:15,pitch:40,gain:2,tone:1.0}},
+           {delay:8,level:-7,r:{offset:15,pitch:40,gain:2,tone:1.0}},
+           {delay:2,level:-11,r:{offset:15,pitch:40,gain:2,tone:1.0}}]},
+  {name:'tight — barely moving', seed:1001, knob:12, count:8,
+   layers:[{delay:0,level:0,r:{offset:8,pitch:15,gain:1,tone:0.4}},
+           {delay:18,level:-4,r:{offset:8,pitch:15,gain:1,tone:0.4}},
+           {delay:6,level:-8,r:{offset:8,pitch:15,gain:1,tone:0.4}},
+           {delay:2,level:-12,r:{offset:8,pitch:15,gain:1,tone:0.4}}]},
+  {name:'wide — obviously different', seed:2002, knob:75, count:16,
+   layers:[{delay:0,level:0,r:{offset:35,pitch:90,gain:3,tone:1.6}},
+           {delay:26,level:-3,r:{offset:35,pitch:90,gain:3,tone:1.6}},
+           {delay:10,level:-6,r:{offset:35,pitch:90,gain:3,tone:1.6}},
+           {delay:3,level:-10,r:{offset:35,pitch:90,gain:3,tone:1.6}}]}
+];
+var presetName='FACTORY / footstep gravel', presetDirty=false;
+function markDirty(){ presetDirty=true; paintPreset(); }
+function paintPreset(){
+  var e=$('presetName'); if(!e) return;
+  e.textContent=presetName+(presetDirty?' *':'');
+  e.className=presetDirty?'dirty':'';
+}
+/* STORAGE MAY NOT EXIST, AND SILENCE ABOUT THAT IS THE BUG.
+   localStorage throws on an opaque origin (a data: URL, some embedded hosts -
+   plausibly the editor's browser). The first version caught that and said
+   NOTHING, so SAVE reported success and saved nothing: the worst failure shape
+   there is. Now we probe once, fall back to an in-session store so the feature
+   still WORKS, and say plainly that it will not survive a reload. */
+var memStore=null, storageOK=(function(){
+  try{ var k='__taa_probe'; localStorage.setItem(k,'1'); localStorage.removeItem(k); return true; }
+  catch(e){ return false; }
+})();
+function blankStore(){ return {version:1,folders:[{name:'MY PRESETS',presets:[]}]}; }
+function loadUserPresets(){
+  if(!storageOK){ if(!memStore) memStore=blankStore(); return memStore; }
+  try{ var raw=localStorage.getItem(PRESET_KEY); if(!raw) return blankStore();
+       var o=JSON.parse(raw.replace(/^﻿/,''));   /* strip a BOM we did not write */
+       if(!o.folders) o={version:1,folders:[{name:'MY PRESETS',presets:o.presets||[]}]};
+       return o;
+  }catch(e){ return blankStore(); }
+}
+function saveUserPresets(o){
+  if(!storageOK){ memStore=o; return false; }
+  try{ localStorage.setItem(PRESET_KEY,JSON.stringify(o)); return true; }
+  catch(e){ storageOK=false; memStore=o; return false; }   /* quota, or revoked */
+}
+function storageNote(){ return storageOK? '' : ' - THIS SESSION ONLY, this host has no storage'; }
+function applyFactory(f){
+  M.seed=f.seed>>>0; M.knob=f.knob; M.count=f.count;
+  f.layers.forEach(function(o,i){
+    var l=L[i]; if(!l) return;
+    l.delay=o.delay; l.level=o.level;
+    for(var k in o.r) l.r[k]=o.r[k];
+  });
+  resetSheet(M.count);
+  presetName='FACTORY / '+f.name; presetDirty=false;
+  _lastSnap=snapKey(window.VB.state()); paintPreset(); paintUndo(); VBUI.notify();
+  if(anyLoaded()) doBounce(M.count);
+  setS('loaded factory preset "'+f.name+'"');
+}
+function applyUserPreset(p){
+  window.VB.restore(p.state);
+  presetName=p.folder+' / '+p.name; presetDirty=false;
+  _lastSnap=snapKey(window.VB.state()); paintPreset(); paintUndo();
+  var missing=[];
+  p.state.layers.forEach(function(o,i){
+    (o.files||[]).forEach(function(fn){
+      var have=L[i].files.some(function(f){return f.name===fn;});
+      if(!have) missing.push(fn);
+    });
+  });
+  setS(missing.length
+    ? ('loaded "'+p.name+'" — re-drop '+missing.length+' file(s) to restore the sound: '+missing.slice(0,3).join(', '))
+    : ('loaded preset "'+p.name+'"'));
+}
+function showPicker(anchorEl){
+  var pk=$('pick'); if(!pk) return;
+  pk.innerHTML='';
+  var store=loadUserPresets();
+  var fold=document.createElement('div'); fold.className='fold'; fold.textContent='★ FACTORY (protected)';
+  pk.appendChild(fold);
+  FACTORY.forEach(function(f){
+    var it=document.createElement('div'); it.className='item';
+    it.innerHTML='<span>'+f.name+'</span><b>seed '+f.seed+'</b>';
+    it.addEventListener('click',function(){ hidePicker(); guardThen(function(){ applyFactory(f); }); });
+    pk.appendChild(it);
+  });
+  store.folders.forEach(function(fo){
+    var fd=document.createElement('div'); fd.className='fold'; fd.textContent=fo.name;
+    pk.appendChild(fd);
+    if(!fo.presets.length){
+      var em=document.createElement('div'); em.className='item'; em.style.color='var(--dim)';
+      em.textContent='(empty — press SAVE)'; pk.appendChild(em);
+    }
+    fo.presets.forEach(function(p2){
+      var it2=document.createElement('div'); it2.className='item';
+      it2.innerHTML='<span>'+p2.name+'</span><b>del</b>';
+      it2.querySelector('span').addEventListener('click',function(){
+        hidePicker(); guardThen(function(){ p2.folder=fo.name; applyUserPreset(p2); });
+      });
+      it2.querySelector('b').addEventListener('click',function(ev){
+        ev.stopPropagation();
+        fo.presets=fo.presets.filter(function(x){return x!==p2;});
+        saveUserPresets(store); showPicker(anchorEl); setS('deleted preset "'+p2.name+'"');
+      });
+      pk.appendChild(it2);
+    });
+  });
+  var r=anchorEl.getBoundingClientRect();
+  pk.style.left=Math.min(r.left,window.innerWidth-250)+'px';
+  pk.style.top=(r.bottom+4)+'px';
+  pk.classList.add('show');
+}
+function hidePicker(){ var pk=$('pick'); if(pk) pk.classList.remove('show'); }
+/* never silently overwrite a designer's work: SAVE / DISCARD / CANCEL */
+function guardThen(fn){
+  if(!presetDirty){ fn(); return; }
+  askDialog('"'+presetName+'" has unsaved changes.\n\nDiscard them and load the other preset?',function(ok){
+    if(ok) fn();
+  });
+}
+function savePreset(){
+  askInput('Save preset as:', presetName.split(' / ').pop(), function(nm){
+    if(!nm) return;
+    var store=loadUserPresets(), fo=store.folders[0];
+    var st=window.VB.state();
+    var existing=fo.presets.filter(function(p){return p.name===nm;})[0];
+    if(existing){ existing.state=st; }
+    else fo.presets.push({name:nm,state:st});
+    saveUserPresets(store);
+    presetName=fo.name+' / '+nm; presetDirty=false; paintPreset();
+    setS('saved preset "'+nm+'" ('+fo.presets.length+' in '+fo.name+')'+storageNote());
+  });
+}
+
+/* ══ THE SHARED HALF OF window.VB ═════════════════════════════════════════
+   Each tool assigns its own members on top of this (Object.assign), so a
+   single-tool build exposes exactly the doors that tool actually has. */
+window.VB={
+  version:VERSION, SR:SR, design:DESIGN_REF,
+  spec:function(){ var s={}; for(var k in SPEC) s[k]=SPEC[k]; return s; },
+  seed:function(){return M.seed;},  setSeed:function(n){M.seed=(n>>>0);markStale();VBUI.notify();},
+  /* §SAVE: where a file can actually go from this host, and a test door to
+     force it so the refusal path can be exercised without an editor. */
+  deliveryPath:function(){ return vbDeliveryPath(); },
+  /* call back when window.ue.taa arrives — see vbBridgeReady's note: on CEF 128
+     it is NOT bound yet when the page script runs. */
+  onBridge:function(cb){ return vbBridgeReady(cb); },
+  forceDeliveryPath:function(p){ return forceDeliveryPath(p); },
+  slotCount:function(i){return L[i]?L[i].files.length:0;},
+  /* STRINGS STAY STRINGS. This used to coerce with +value, so setDial(0,'pick',
+     'FIXED') silently became NaN and the contract could not set PICK at all -
+     a setter that fails in silence is the worst kind. */
+  setDial:function(slot,dial,value){
+    var l=L[slot]; if(!l) return;
+    var num=(typeof value!=='string')||(value.trim()!=='' && isFinite(+value));
+    var v=num?+value:value;
+    if(dial in l.r) l.r[dial]=+v; else if(dial in l) l[dial]=v;
+    markStale(); VBUI.notify();
+  },
+  setMaster:function(dial,value){
+    var strDial=(dial==='normalise'||dial==='name');
+    if(strDial) M[dial]=String(value); else if(dial in M) M[dial]=+value;
+    if(dial==='normalise'){ latchGain=null; latchStale=false; } else markStale();
+    VBUI.notify();
+  },
+  /* §14 trim, through the contract - TESTER asked for it by name */
+  loadLayer:function(slot,o){
+    var l=L[slot]; if(!l) return 0;
+    var s=o.samples;
+    if(o.sampleRate&&o.sampleRate!==SR){    /* linear resample — harness convenience */
+      var ratio=o.sampleRate/SR, m=Math.floor(s.length/ratio), r=new Float32Array(m);
+      for(var i=0;i<m;i++){ var x=i*ratio,i0=Math.floor(x),fr=x-i0;
+        var a=s[i0]||0,b=s[i0+1]||0; r[i]=a+(b-a)*fr; }
+      s=r;
+    }
+    l.files.push({name:o.name||('inject_'+l.files.length), samples:s, durMs:s.length/SR*1000, stereo:false});
+    if(!l.name) l.name=o.name||('slot'+l.id);
+    latchGain=null; VBUI.notify();
+    return l.files.length;
+  },
+  clearLayer:function(slot){ var l=L[slot]; if(!l) return; l.files=[]; l.trimIn=0; l.trimOut=-1;
+    latchGain=null; VBUI.notify(); },
+  state:function(){
+    return { v:1, seed:M.seed, knob:M.knob, count:M.count, trim:M.trim, normalise:M.normalise,
+      tailFade:M.tailFade, maxLength:M.maxLength, rate:M.rate, bits:M.bits, channels:M.channels,
+      name:M.name, rolls:rolls.slice(), marks:marks.slice(), latchGain:latchGain, sel:sel,
+      layers:L.map(function(l){ return {name:l.name, pick:l.pick, fixedIdx:l.fixedIdx, on:l.on,
+        solo:l.solo, mute:l.mute, level:l.level, delay:l.delay, pan:l.pan, lp:l.lp, hp:l.hp,
+        trimIn:l.trimIn, trimOut:l.trimOut, files:l.files.map(function(f){return f.name;}),
+        r:{offset:l.r.offset,pitch:l.r.pitch,gain:l.r.gain,tone:l.r.tone,
+           spread:l.r.spread,reverse:l.r.reverse,start:l.r.start}};})};
+  },
+  restore:function(s){
+    if(!s) return;
+    M.seed=s.seed>>>0; M.knob=s.knob; M.count=s.count; M.trim=s.trim; M.normalise=s.normalise;
+    M.tailFade=s.tailFade; M.maxLength=s.maxLength; M.rate=s.rate; M.bits=s.bits;
+    M.channels=s.channels; M.name=s.name;
+    rolls=s.rolls.slice(); marks=s.marks.slice(); latchGain=s.latchGain; sel=s.sel||0;
+    s.layers.forEach(function(o,i){
+      var l=L[i]; if(!l) return;
+      l.name=o.name; l.pick=o.pick; l.fixedIdx=o.fixedIdx; l.on=o.on; l.solo=o.solo; l.mute=o.mute;
+      l.level=o.level; l.delay=o.delay; l.pan=o.pan; l.lp=o.lp; l.hp=o.hp;
+      l.trimIn=o.trimIn; l.trimOut=o.trimOut;
+      for(var k in o.r) l.r[k]=o.r[k];
+    });
+    /* the engine does not know what a screen looks like - it says "something
+       changed" and every registered tool repaints itself. */
+    VBUI.notify();
+  },
+  loadDemoKit:function(){ demoKit(); if(window.__vbAfterDemo) window.__vbAfterDemo(); },
+  onChange:function(fn){ VBUI.onChange(fn); },
+  undo:function(){ doUndo(); return undoStack.length; },
+  redo:function(){ doRedo(); return redoStack.length; },
+  undoDepth:function(){ return {undo:undoStack.length, redo:redoStack.length, max:UNDO_MAX}; },
+  commitUndo:function(){ commitUndo(); return undoStack.length; },
+  presets:function(){
+    var store=loadUserPresets();
+    return {current:presetName, dirty:presetDirty, persistent:storageOK,
+            factory:FACTORY.map(function(f){return f.name;}),
+            folders:store.folders.map(function(f){return {name:f.name,presets:f.presets.map(function(p){return p.name;})};})};
+  },
+  loadFactory:function(i){ applyFactory(FACTORY[i]); return presetName; },
+  savePresetAs:function(nm){
+    var store=loadUserPresets(), fo=store.folders[0], st=window.VB.state();
+    var ex=fo.presets.filter(function(p){return p.name===nm;})[0];
+    if(ex) ex.state=st; else fo.presets.push({name:nm,state:st});
+    saveUserPresets(store); presetName=fo.name+' / '+nm; presetDirty=false; paintPreset();
+    return nm;
+  },
+  loadPresetNamed:function(nm){
+    var store=loadUserPresets(), found=null;
+    store.folders.forEach(function(fo){ fo.presets.forEach(function(p){ if(p.name===nm){ p.folder=fo.name; found=p; } }); });
+    if(!found) return null;
+    applyUserPreset(found); return presetName;
+  },
+  audioReady:audioReady,
+  play:play
+};
+/* ══ HEADLESS SELF-CHECK ══════════════════════════════════════════════════
+   Once the tools are separate files, a preview pane that re-serves a page as a
+   data: URL cannot load their script tags - so the ONLY honest way to test a
+   split tool is headless. This renders results into the DOM where
+   `chrome --dump-dom` can read them, which is exactly what run-vbench needs.
+   Usage:  <tool>/index.html?selftest      Look for  VBSELFTEST PASS/FAIL. */
+function vbSelfTest(toolName, checks){
+  /* ── ENGINE INVARIANTS — asserted in EVERY tool, for free ─────────────────
+     These belong to the engine, not to any one screen. Copying them into three
+     gates would mean three gates that drift apart, and the one tool that quietly
+     dropped a check would be the one that broke — so they live at the single
+     place every tool already calls. No tool can forget them, and adding a tool
+     cannot lose them. Three sessions now write into one window.VB; the clash
+     check in particular has to run everywhere or it is not a guard at all. */
+  var engine=[
+    {name:'ENGINE · no namespace CLASH — nobody silently overwrote anybody',
+     fn:function(){ var c=(window.VB&&window.VB.nsClashes)?window.VB.nsClashes():[];
+       return {ok:c.length===0, detail:c.length? c.join(', ') : 'none'}; }},
+    {name:'ENGINE · the page NAMES ITSELF (VB.tool)',
+     fn:function(){ var t=window.VB&&window.VB.tool;
+       return {ok:(typeof t==='string')&&!!t, detail:'tool = '+t}; }},
+    {name:'ENGINE · SAVE never claims success without a delivery path',
+     fn:function(){
+       /* The lie this kills: the editor drops <a download> with no error while
+          the status line says it saved. Forced, so it is proven without an
+          editor and in EVERY tool, not just the one that found it. */
+       var was=window.VB.deliveryPath();
+       window.VB.forceDeliveryPath('none');
+       var r=saveBlob(new Blob(['probe']),'probe.wav');
+       window.VB.forceDeliveryPath(null);
+       var m=(r&&r.msg)||'';
+       return {ok: !!r && r.ok===false && m.indexOf('NO FILE WAS WRITTEN')>=0 &&
+                   m.indexOf('SAVED')<0 && window.VB.deliveryPath()===was,
+               detail:'path none → ok='+(r&&r.ok)+', says WRITTEN not SAVED'}; }},
+    {name:'ENGINE · state()/restore() round-trips BYTE-EXACT (CONTRACT)',
+     fn:function(){
+       var a=snapKey(window.VB.state());
+       window.VB.restore(JSON.parse(a));        /* a CLONE — proves no aliasing */
+       var b=snapKey(window.VB.state());
+       return {ok:a===b, detail:(a===b)? (a.length+' bytes, identical') : 'DIFFERS'}; }}
+  ];
+  checks=engine.concat(checks);
+  var out=[], failed=0;
+  checks.forEach(function(c){
+    var ok=false, detail='';
+    try{ var r=c.fn(); if(r&&typeof r==='object'){ ok=!!r.ok; detail=r.detail||''; } else ok=!!r; }
+    catch(e){ ok=false; detail='threw: '+(e&&e.message?e.message:e); }
+    if(!ok) failed++;
+    out.push((ok?'PASS ':'FAIL ')+c.name+(detail?('  ['+detail+']'):''));
+  });
+  var pre=document.createElement('pre');
+  pre.id='vbselftest';
+  pre.style.cssText='position:fixed;inset:0;z-index:999;background:#0b0a06;color:#d6d3d1;'+
+                    'font:12px monospace;padding:12px;overflow:auto;white-space:pre-wrap';
+  pre.textContent='VBSELFTEST '+(failed?'FAIL':'PASS')+' - '+toolName+' - '+
+                  (checks.length-failed)+'/'+checks.length+String.fromCharCode(10,10)+
+                  out.join(String.fromCharCode(10));
+  document.body.appendChild(pre);
+  document.title='VBSELFTEST '+(failed?'FAIL':'PASS')+' '+toolName;
+  return failed===0;
+}
+
+/* boot helper every tool uses. NEVER gate first paint on rAF alone: rAF is
+   PAUSED in a non-compositing webview and the tool would render blank with no
+   error at all (INFRA.md risk 5). */
+function vbBoot(fn){
+  var done=false;
+  function go(){ if(done) return; done=true; fn(); vbAnnounce(); }
+  setTimeout(go,0); requestAnimationFrame(go);
+}
+
+/* ══ ANNOUNCE — one line into the editor log, once ════════════════════
+   THERE IS NO DEVTOOLS WINDOW ON THIS BROWSER. Inside the editor a page is a
+   black box the moment anything goes wrong on a machine that is not ours, so
+   every tool says what it is, what host it thinks it is in, and where it
+   believes a file can go — the three things worth knowing before anything else
+   is diagnosed.
+
+   It also carries the exact phrase `page loaded:` that verify-gui.ps1 greps for,
+   which is what lets a REAL tool be gated in a real editor rather than only a
+   placeholder page that was written to be gateable. A harness that can only
+   verify a stub verifies nothing that ships. */
+function vbAnnounce(){
+  vbBridgeReady(function(bridge){
+    try{
+      bridge.log('page loaded: ' + (window.VB && window.VB.tool || 'unknown') +
+                 ' ' + VERSION +
+                 ' | host=' + (vbIsUnrealHost() ? 'unreal' : 'browser') +
+                 ' | delivery=' + vbDeliveryPath() +
+                 ' | storage=' + (storageOK ? 'persistent' : 'none'));
+    }catch(e){}
+  });
+}
+
+/* ── NAMESPACE REGISTRAR — VB.ns('daw', {…}) ───────────────────────
+   Three sessions now write into one window.VB: the engine here, VB.rec from
+   mini-recorder, VB.daw from mini-daw. A plain `window.VB.rec = {…}` written in
+   two files means THE LAST ONE LOADED WINS and the other disappears without a
+   sound — the exact silent-failure class this build keeps paying for (setDial
+   coercing to NaN, the swallowed storage exception, the contract advertising
+   doors that did not exist).
+
+   So registration MERGES rather than replaces, and every duplicate key is
+   RECORDED so the gate can go red on a collision instead of shipping whichever
+   file happened to load second. A clash is not resolved here on purpose: two
+   sessions disagreeing about who owns a verb is a routing question, and the
+   honest thing is to make it visible, not to pick a winner quietly. */
+var _nsClash=[];
+window.VB.ns=function(name,members){
+  var t=window.VB[name]||(window.VB[name]={});
+  for(var k in members){
+    if(!Object.prototype.hasOwnProperty.call(members,k)) continue;
+    if(Object.prototype.hasOwnProperty.call(t,k)) _nsClash.push(name+'.'+k);
+    t[k]=members[k];
+  }
+  return t;
+};
+window.VB.nsClashes=function(){ return _nsClash.slice(); };
+
+</script>
+<script>
+/* inlined: daw.js */
+/* ══════════════════════════════════════════════════════════════════════════
+   MINI DAW — the tiny Reaper
+   Part of the TAA tool family. Shared engine lives in ../shared/.
+   ══════════════════════════════════════════════════════════════════════════ */
+'use strict';
+/* ══════════════════════════════════════════════════════════════════════════
+   MINI DAW (DESIGN §16) — the tiny Reaper.
+   "were nto replacing that, were replacing thsoe simple tasks" (§0). So: cut,
+   move, snip, zoom, balance, bounce. No automation, no FX chains, no crossfades.
+   The DAW owns the NOMINAL (§16.1): a clip's start IS the layer's DELAY, its
+   in/out ARE the layer's trim, its pitch IS pitchNom. The Variation Designer
+   varies around whatever this window says.
+   ══════════════════════════════════════════════════════════════════════════ */
+var RULER_H=22, TRACK_H=96, DAW_MIN_CLIP_MS=SPEC.MIN_TRIM_MS;
+var daw={
+  tracks:[[],[],[],[]],          /* clips per track, kept sorted by startMs */
+  pxPerSec:220, posMs:0, playing:false, loop:false,
+  selA:null, selB:null, selTrack:0, selClip:null,
+  masterDb:0,                    /* MONITOR level only — see dawApplyLive */
+  trimArmed:[false,false,false,false],   /* TRIM button: reveal the clip handles */
+  _nextId:1, _t0:0, _startPos:0, _nodes:null, _raf:0, _playLevels:[0,0,0,0],
+  _bounceN:0                     /* per-session bounce counter — see dawBounceName */
+};
+
+/* ── THE FADER (REAPER-SPEC items 12-13, 16) ─────────────────────────────
+   Tommy's acceptance test for this whole window is "theres fucking thing i
+   can slide about", so this is a real grabbable cap driven by pointer
+   events, not a restyled <input type=range>. Linear in dB, which is the
+   honest mapping for a tool where the number beside it is also in dB. */
+var FDR_MIN=-60, FDR_MAX=6, FDR_PAD=8;
+function fdrPct(db){ return ((db-FDR_MIN)/(FDR_MAX-FDR_MIN))*100; }
+function fdrFromY(el,clientY){
+  var r=el.getBoundingClientRect();
+  var usable=Math.max(1,r.height-FDR_PAD*2);
+  var y=Math.min(usable,Math.max(0,(clientY-r.top)-FDR_PAD));
+  var v=FDR_MAX-(y/usable)*(FDR_MAX-FDR_MIN);
+  return Math.round(Math.max(FDR_MIN,Math.min(FDR_MAX,v))*10)/10;
+}
+function fdrHTML(key,db,label,tall){
+  return '<div class="fdr'+(tall?' tall':'')+'" data-fader="'+key+'" tabindex="0" role="slider"'+
+    ' aria-label="'+label+'" aria-valuemin="'+FDR_MIN+'" aria-valuemax="'+FDR_MAX+'"'+
+    ' aria-valuenow="'+db+'" title="'+label+' — grab and drag, or focus and use the arrow keys">'+
+    '<div class="fdrslot"></div><div class="fdrcap" style="bottom:'+fdrPct(db).toFixed(1)+'%"></div></div>';
+}
+/* ── THE PANEL KNOB (REAPER-SPEC item 3) ─────────────────────────────────
+   Reaper's track panel carries a small ROUND volume knob, not a slider. It is
+   the same value as the mixer fader — one number, three faces — so it goes
+   through fdrSet/fdrPaint and cannot drift out of step with the strip. */
+var KNB_SWEEP=270;                      /* -135deg .. +135deg */
+function knbDeg(db){ return -KNB_SWEEP/2 + ((db-FDR_MIN)/(FDR_MAX-FDR_MIN))*KNB_SWEEP; }
+function knbHTML(key,db,label){
+  return '<div class="knb" data-knob="'+key+'" tabindex="0" role="slider"'+
+    ' aria-label="'+label+'" aria-valuemin="'+FDR_MIN+'" aria-valuemax="'+FDR_MAX+'"'+
+    ' aria-valuenow="'+db+'" title="'+label+' — drag up/down, or focus and use the arrow keys">'+
+    '<i style="transform:rotate('+knbDeg(db).toFixed(1)+'deg)"></i></div>';
+}
+function fdrGet(key){ return (key==='master')? daw.masterDb : L[+key].level; }
+function fdrSet(key,db){
+  db=Math.round(Math.max(FDR_MIN,Math.min(FDR_MAX,db))*10)/10;
+  if(key==='master') daw.masterDb=db;
+  else { L[+key].level=db; markStale(); }
+  dawApplyLive();
+  fdrPaint(key);
+  if(key!=='master') VBUI.notify();
+  return db;
+}
+function fdrPaint(key){
+  var db=fdrGet(key);
+  document.querySelectorAll('[data-fader="'+key+'"]').forEach(function(el){
+    var cap=el.querySelector('.fdrcap');
+    if(cap) cap.style.bottom=fdrPct(db).toFixed(1)+'%';
+    el.setAttribute('aria-valuenow',db);
+  });
+  var lbl=(key==='master')? $('dMixMasterDb') : $('dMixDb'+key);
+  if(lbl) lbl.textContent=db.toFixed(1);
+  /* the TCP knob and the MCP fader are ONE value, so they repaint together */
+  document.querySelectorAll('[data-knob="'+key+'"]').forEach(function(k){
+    var d=k.querySelector('i');
+    if(d) d.style.transform='rotate('+knbDeg(db).toFixed(1)+'deg)';
+    k.setAttribute('aria-valuenow',db);
+  });
+  if(key!=='master'){
+    var t=$('dTcpDb'+key); if(t) t.textContent=db.toFixed(1);
+    var r=document.querySelector('[data-dg="'+key+'"]');   /* if a slider still exists */
+    if(r){ r.value=db; var b=r.parentNode.querySelector('b'); if(b) b.textContent=db.toFixed(1); }
+  }
+}
+
+/* ── LIVE MONITOR GAINS ──────────────────────────────────────────────────
+   The arrangement is pre-rendered per play with l.level already baked into
+   the samples, so a fader moved DURING playback would otherwise change
+   nothing you can hear until you pressed play again - and mute/solo did
+   exactly that, silently. The live node therefore carries only the DELTA
+   since playback began, which keeps the bounce path untouched. */
+function dawApplyLive(){
+  var n=daw._nodes; if(!n) return;
+  if(n.gains) for(var i=0;i<4;i++){
+    var g=n.gains[i]; if(!g) continue;
+    g.gain.value = dawAudible(i)? Math.pow(10,(L[i].level-(daw._playLevels[i]||0))/20) : 0;
+  }
+  if(n.master) n.master.gain.value=Math.pow(10,daw.masterDb/20);
+}
+function dawTrackName(i){ return L[i].name || ('TRACK '+SLOT_IDS[i]); }
+
+/* build one clip per track from what is loaded — the DAW opens showing the same
+   four layers the Variation window has, because they are the same four layers */
+function dawSync(){
+  for(var i=0;i<4;i++){
+    var l=L[i];
+    if(!l.files.length){ daw.tracks[i]=[]; continue; }
+    if(daw.tracks[i].length) continue;              /* already arranged */
+    var f=l.files[0];
+    daw.tracks[i]=[{id:daw._nextId++, fileIdx:0, startMs:l.delay,
+                    inMs:0, outMs:f.durMs}];
+  }
+}
+function dawLen(){                                   /* arrangement length, ms */
+  var mx=1000;
+  for(var i=0;i<4;i++) daw.tracks[i].forEach(function(c){
+    if(c.startMs+(c.outMs-c.inMs)>mx) mx=c.startMs+(c.outMs-c.inMs); });
+  return mx+500;
+}
+function msToPx(ms){ return ms/1000*daw.pxPerSec; }
+function pxToMs(px){ return px/daw.pxPerSec*1000; }
+
+/* ── ONE CLIP, rendered. Trim -> trim fades -> pitchNom varispeed -> LP/HP ->
+      level. No variation draws: this is the nominal, by definition. ─────── */
+function clipSamples(ti,c){
+  var l=L[ti], f=l.files[c.fileIdx]; if(!f) return new Float32Array(0);
+  var a=Math.max(0,Math.round(c.inMs/1000*SR));
+  var b=Math.min(f.samples.length,Math.round(c.outMs/1000*SR));
+  if(b-a<8) return new Float32Array(0);
+  var n=b-a, out=new Float32Array(n), i;
+  out.set(f.samples.subarray(a,b));
+  /* §14.2 fades on any edge that was actually cut — this is what stops a butt
+     join clicking, and it is the same rule the Variation trim uses */
+  var maxF=Math.floor(n*SPEC.TRIM_FADE_MAX_PCT/100);
+  if(a>0){ var fi=Math.min(Math.round(SPEC.TRIM_FADE_IN_MS/1000*SR),maxF);
+    for(i=0;i<fi;i++) out[i]*=0.5-0.5*Math.cos(Math.PI*i/fi); }
+  if(b<f.samples.length){ var fo=Math.min(Math.round(SPEC.TRIM_FADE_OUT_MS/1000*SR),maxF);
+    for(i=0;i<fo;i++) out[n-1-i]*=0.5-0.5*Math.cos(Math.PI*i/fo); }
+  var cents=l.pitchNom||0;
+  if(Math.abs(cents)>0.001){
+    var rate=Math.pow(2,cents/1200), m=Math.max(2,Math.floor(n/rate)), o2=new Float32Array(m);
+    for(i=0;i<m;i++){ var x=i*rate,i0=Math.floor(x),fr=x-i0;
+      var s0=out[i0]||0,s1=out[i0+1]||0; o2[i]=s0+(s1-s0)*fr; }
+    out=o2; n=m;
+  }
+  if(l.lp<20000){ var cc=Math.exp(-2*Math.PI*l.lp/SR),z=0;
+    for(i=0;i<n;i++){ z=out[i]*(1-cc)+z*cc; out[i]=z; } }
+  if(l.hp>20){ var ch=Math.exp(-2*Math.PI*l.hp/SR),zh=0;
+    for(i=0;i<n;i++){ zh=out[i]*(1-ch)+zh*ch; out[i]=out[i]-zh; } }
+  var g=Math.pow(10,l.level/20);
+  for(i=0;i<n;i++) out[i]*=g;
+  return out;
+}
+/* the whole track, laid out in time. PURE: no device, no UI. */
+function trackArrangement(ti,lenMs){
+  var N=Math.round((lenMs||dawLen())/1000*SR), buf=new Float32Array(N);
+  daw.tracks[ti].forEach(function(c){
+    var s=clipSamples(ti,c), off=Math.round(c.startMs/1000*SR);
+    for(var i=0;i<s.length;i++){ var j=off+i; if(j>=0&&j<N) buf[j]+=s[i]; }
+  });
+  return buf;
+}
+function dawAudible(ti){
+  return !!(daw.tracks[ti].length && audibleSlot(L[ti]));
+}
+
+/* ── NO OVERLAP, EVER (§16.5). A move that would overlap is CLAMPED, and the
+      clamped value is what the caller gets back — so it is observable. ──── */
+function clipLen(c){ return c.outMs-c.inMs; }
+function clampClip(ti,c,wantStart){
+  var others=daw.tracks[ti].filter(function(x){return x!==c;})
+                           .sort(function(a,b){return a.startMs-b.startMs;});
+  var start=Math.max(0,wantStart), end=start+clipLen(c), guard=0;
+  for(var i=0;i<others.length;i++){
+    var o=others[i], oe=o.startMs+clipLen(o);
+    if(start<oe && end>o.startMs){
+      /* Butt it against whichever edge it is nearer — never overlap, never
+         crossfade; §16.5 says two clips may not share an instant.
+         THE `>= 0` IS THE WHOLE FIX (ENGINE handoff, 25 Aug): the left branch
+         is only taken when the clip actually FITS before the neighbour.
+         Without it, dragging a clip left onto a neighbour that starts nearer
+         the origin than the clip is long clamped to 0, STILL overlapped, and
+         restarted the scan forever — freezing the window with no console
+         error. The gate never caught it because every existing check splits
+         clips into EQUAL halves, where the midpoint test happens to take the
+         other branch: a pass by coincidence, not by correctness. */
+      if((start+end)/2 < (o.startMs+oe)/2 && o.startMs-clipLen(c) >= 0)
+           start=o.startMs-clipLen(c);
+      else start=oe;
+      end=start+clipLen(c);
+      /* a loop that can only be re-entered by accident should SAY so, not spin */
+      if(++guard>1000) throw new Error('clampClip did not settle: ti='+ti+
+        ' want='+wantStart+' len='+clipLen(c)+' start='+start);
+      i=-1;                       /* re-check against everything after moving */
+    }
+  }
+  return start;
+}
+function sortTrack(ti){ daw.tracks[ti].sort(function(a,b){return a.startMs-b.startMs;}); }
+
+function dawSplit(ti,atMs){
+  var list=daw.tracks[ti], made=null;
+  for(var i=0;i<list.length;i++){
+    var c=list[i], len=clipLen(c);
+    if(atMs>c.startMs+DAW_MIN_CLIP_MS && atMs<c.startMs+len-DAW_MIN_CLIP_MS){
+      var cut=atMs-c.startMs;
+      var right={id:daw._nextId++, fileIdx:c.fileIdx, startMs:atMs,
+                 inMs:c.inMs+cut, outMs:c.outMs};
+      c.outMs=c.inMs+cut;
+      list.push(right); sortTrack(ti);
+      made=[c.id,right.id];
+      break;
+    }
+  }
+  return made;
+}
+
+/* ══ PLAYBACK — one buffer per track so mute/solo/gain/pan and the per-track
+     meters are all real, not simulated. ═══════════════════════════════════ */
+/* the transport strip's own paint: the play lamp and the status word */
+function dawTransportPaint(){
+  var p=$('dPlay'); if(p) p.classList.toggle('on',daw.playing);
+  var l=$('dLoop'); if(l) l.classList.toggle('on',daw.loop);
+  var s=$('dState');
+  if(s){ s.textContent=daw.playing?'[Playing]':'[Stopped]'; s.classList.toggle('live',daw.playing); }
+}
+function dawStop(){
+  daw.playing=false;
+  if(daw._nodes){ daw._nodes.srcs.forEach(function(s){ try{s.stop();}catch(e){} }); daw._nodes=null; }
+  if(daw._raf){ cancelAnimationFrame(daw._raf); daw._raf=0; }
+  dawTransportPaint();
+  dawPaintMeters(null);
+}
+/* ── §16.2 TRANSPORT SEMANTICS ───────────────────────────────────────────
+   "Stop returns the playhead to where playback started; a second stop
+   returns it to zero (the Reaper behaviour people expect)." The window had
+   never implemented this — stop simply left the playhead wherever the tick
+   had got to. The STOP button is new furniture, so this is where the spec
+   finally gets honoured. PAUSE is the opposite by design: it holds. */
+function dawTransportStop(){
+  if(daw.playing){ var back=daw._startPos; dawStop(); daw.posMs=Math.max(0,back); }
+  else { daw.posMs=0; }
+  dawPaintPlayhead(); dawTransportPaint(); dawPaint();
+}
+function dawTransportPause(){
+  if(daw.playing) dawStop();               /* hold position — do NOT rewind */
+  dawPaintPlayhead(); dawTransportPaint();
+}
+function dawGoStart(){ if(daw.playing) dawStop(); daw.posMs=0;
+  dawPaintPlayhead(); dawTransportPaint(); dawPaint(); }
+function dawGoEnd(){ if(daw.playing) dawStop(); daw.posMs=Math.max(0,dawLen()-500);
+  dawPaintPlayhead(); dawTransportPaint(); dawPaint(); }
+function dawPlay(){
+  if(daw.playing){ dawTransportStop(); return; }   /* §16.2: Space is play / STOP */
+  if(!anyLoaded()){ setS('load some files first'); return; }
+  dawSync();
+  var ctx=audioReady(), lenMs=dawLen();
+  var master=ctx.createGain(); master.gain.value=Math.pow(10,daw.masterDb/20);
+  var mAn=ctx.createAnalyser(); mAn.fftSize=1024;
+  master.connect(mAn); mAn.connect(ctx.destination);
+  var srcs=[], ans=[], gains=[];
+  for(var i=0;i<4;i++){
+    var buf=ctx.createBuffer(1,Math.max(1,Math.round(lenMs/1000*SR)),SR);
+    buf.getChannelData(0).set(trackArrangement(i,lenMs));
+    var src=ctx.createBufferSource(); src.buffer=buf;
+    var g=ctx.createGain(); g.gain.value=dawAudible(i)?1:0;
+    var pan=ctx.createStereoPanner? ctx.createStereoPanner():null;
+    if(pan) pan.pan.value=Math.max(-1,Math.min(1,(L[i].pan||0)/100));
+    var an=ctx.createAnalyser(); an.fftSize=1024;
+    src.connect(g); g.connect(an);
+    if(pan){ an.connect(pan); pan.connect(master); } else an.connect(master);
+    var a=daw.posMs/1000;
+    if(daw.loop && daw.selA!==null && daw.selB!==null){
+      src.loop=true; src.loopStart=Math.min(daw.selA,daw.selB)/1000;
+      src.loopEnd=Math.max(daw.selA,daw.selB)/1000;
+    } else if(daw.loop){ src.loop=true; }
+    src.start(0,a);
+    srcs.push(src); ans.push(an); gains.push(g);
+    daw._playLevels[i]=L[i].level;      /* what is BAKED into this render */
+  }
+  daw._nodes={srcs:srcs, ans:ans, mAn:mAn, gains:gains, master:master};
+  daw._t0=ctx.currentTime; daw._startPos=daw.posMs; daw.playing=true;
+  dawTransportPaint();
+  dawTick();
+}
+function dawTick(){
+  if(!daw.playing) return;
+  var ctx=audioReady(), lenMs=dawLen();
+  var pos=daw._startPos+(ctx.currentTime-daw._t0)*1000;
+  if(daw.loop && daw.selA!==null && daw.selB!==null){
+    var a=Math.min(daw.selA,daw.selB), b=Math.max(daw.selA,daw.selB);
+    if(pos>b) pos=a+((pos-a)%(b-a||1));
+  } else if(pos>lenMs){ daw.posMs=0; dawStop(); dawPaintPlayhead(); return; }
+  daw.posMs=pos;
+  dawPaintPlayhead(); dawPaintMeters(daw._nodes);
+  daw._raf=requestAnimationFrame(dawTick);
+}
+/* peak meters with the §16.3 ballistics, and the CLIP LED reads the signal
+   BEFORE any guard (ruling, 25 Aug) — a LED on the output can never light */
+var meterHold=[0,0,0,0,0], meterClip=[false,false,false,false,false], meterVal=[0,0,0,0,0];
+function analyserPeak(an){
+  var d=new Float32Array(an.fftSize); an.getFloatTimeDomainData(d);
+  var m=0; for(var i=0;i<d.length;i++){ var v=d[i]<0?-d[i]:d[i]; if(v>m)m=v; }
+  return m;
+}
+function analyserRms(an){
+  var d=new Float32Array(an.fftSize); an.getFloatTimeDomainData(d);
+  var s=0; for(var i=0;i<d.length;i++) s+=d[i]*d[i];
+  return Math.sqrt(s/d.length);
+}
+/* one bar, painted from the values §16.3 already decided. Kept as a helper so
+   the SAME numbers drive the TCP meter and its twin in the mixer strip. */
+function paintOneBar(bar,vLin,hLin){
+  if(!bar) return;
+  var dbv=20*Math.log10(Math.max(1e-5,vLin));
+  var h=Math.max(0,Math.min(1,(dbv+60)/60));
+  bar.querySelector('b').style.height=(h*100)+'%';
+  var hb=20*Math.log10(Math.max(1e-5,hLin));
+  var hh=Math.max(0,Math.min(1,(hb+60)/60));
+  var hold=bar.querySelector('i');
+  hold.style.display=hLin>0.001?'':'none';
+  hold.style.bottom=(hh*100)+'%';
+}
+function dawPaintMeters(nodes){
+  for(var i=0;i<5;i++){
+    var pk=0;
+    if(nodes){ pk = (i<4)? analyserPeak(nodes.ans[i]) : analyserPeak(nodes.mAn); }
+    var rel=Math.pow(10,-(SPEC.METER_RELEASE_DB_S||20)/20*0.033);
+    meterVal[i]=Math.max(pk, meterVal[i]*rel);
+    if(pk>=meterHold[i]) meterHold[i]=pk; else meterHold[i]*=0.995;
+    if(pk>=1.0) meterClip[i]=true;
+    var led=(i<4)? document.querySelector('#dMtr'+i+' .dled') : $('dMasterLed');
+    paintOneBar((i<4)? document.querySelector('#dMtr'+i+' .dbar') : $('dMasterBar'),
+                meterVal[i], meterHold[i]);
+    paintOneBar((i<4)? $('dMixMtr'+i) : $('dMixMasterBar'), meterVal[i], meterHold[i]);
+    if(led) led.classList.toggle('hot',meterClip[i]);
+  }
+  /* MASTER RMS readout — Reaper's master shows peak AND RMS. This is a
+     separate instantaneous reading; it does NOT touch the §16.3 peak
+     ballistics above, which stay peak-reading exactly as specified. */
+  var rl=$('dMixMasterRms');
+  if(rl){
+    var rms=nodes? analyserRms(nodes.mAn) : 0;
+    rl.textContent=(rms>0.00002)? (20*Math.log10(rms)).toFixed(1) : '−∞';
+  }
+}
+function dawClearClip(){ for(var i=0;i<5;i++){meterClip[i]=false;meterHold[i]=0;} dawPaintMeters(daw._nodes); }
+
+/* ── THE BOUNCE FILENAME (TOOL RECORDER's find, 25 Aug) ──────────────────
+   It used to be `M.name + '_bounce.wav'`, which is TWO bugs in one string.
+   M.name defaults to 'variation', so the Mini DAW was writing
+   `variation_bounce.wav` — a name that belongs to the Variation Designer — and
+   in the plugin BOTH tools write into the SAME project folder, so a shared
+   default meant one tool silently overwriting the other's file.
+   The tool tag goes in the name so it can never be mistaken for the other
+   tool's output, and a per-session counter stops a second bounce quietly
+   landing on the first.
+   HONEST LIMIT, stated rather than implied away: this counter resets when the
+   page reloads, so a bounce in a NEW session can still overwrite an old file of
+   the same name. The page cannot see the disk, so it cannot know. What covers
+   that is the engine's delivery verdict, which prints the exact path it wrote —
+   an overwrite is visible rather than silent, which was the actual ask. */
+var DAW_BOUNCE_TAG='mini-daw';
+function dawBounceName(){
+  daw._bounceN++;
+  return (M.name||'mix')+'_'+DAW_BOUNCE_TAG+'_bounce'+
+         (daw._bounceN>1? ('-'+daw._bounceN) : '')+'.wav';
+}
+
+/* ── BOUNCE SELECTION -> one WAV (Tommy's "mix 2-4 sounds into one") ───── */
+function dawBounceSelection(){
+  dawSync();
+  var a=(daw.selA!==null&&daw.selB!==null)?Math.min(daw.selA,daw.selB):0;
+  var b=(daw.selA!==null&&daw.selB!==null)?Math.max(daw.selA,daw.selB):dawLen();
+  if(b-a<10){ setS('selection too short'); return null; }   /* null = nothing came back */
+  var lenMs=dawLen(), N=Math.round((b-a)/1000*SR), s0=Math.round(a/1000*SR);
+  var mix=new Float32Array(N);
+  for(var t=0;t<4;t++){
+    if(!dawAudible(t)) continue;
+    var arr=trackArrangement(t,lenMs);
+    for(var i=0;i<N;i++){ var j=s0+i; if(j<arr.length) mix[i]+=arr[j]; }
+  }
+  /* CLIP is judged PRE-guard (ruling); the written file is guarded */
+  var pk=0; for(i=0;i<N;i++){ var v=mix[i]<0?-mix[i]:mix[i]; if(v>pk)pk=v; }
+  var clipped=pk>1.0;
+  var G=Math.pow(10,-0.1/20), g=(pk>G)?G/pk:1;
+  for(i=0;i<N;i++) mix[i]*=g;
+  var fo=Math.min(Math.round(M.tailFade/1000*SR),N-1);
+  for(i=0;i<fo;i++) mix[N-1-i]*=0.5-0.5*Math.cos(Math.PI*i/fo);
+  if(N>0) mix[N-1]=0;
+  var outName=dawBounceName();
+  saveBlob(new Blob([encWAV([mix],M.bits,M.rate)],{type:'audio/wav'}), outName);
+  /* Names the FILE, and does not use the word SAVED — the engine's delivery
+     verdict lands a tick later and replaces this line with SAVED + the real
+     path, or with NO FILE WAS WRITTEN. An optimistic message must not be the
+     last word standing when nothing exists. */
+  setS('bounced '+((b-a)/1000).toFixed(2)+'s to '+outName+
+       (clipped?' — it was clipping before the guard':''));
+  /* Return the SAME array that was just encoded, not a second computation:
+     two code paths that are supposed to agree eventually stop agreeing.
+     VB.daw.bounceSelection() already passes this straight through. */
+  return {samples:mix, sampleRate:M.rate, lenMs:b-a, clipped:clipped, gain:g,
+          rangeMs:[a,b]};
+}
+
+/* ══ DAW UI ═══════════════════════════════════════════════════════════════ */
+function dawBuild(){
+  dawSync();
+  var hdrs=$('dHdrs'), mtrs=$('dMtrs'), lanes=$('dLanes');
+  hdrs.innerHTML='<div class="dspacer"></div>';
+  mtrs.innerHTML='<div class="dspacer"></div>';
+  lanes.innerHTML='';
+  for(var i=0;i<4;i++){
+    var l=L[i];
+    var h=document.createElement('div');
+    h.className='dhdr'+(i===daw.selTrack?' sel':''); h.id='dHdr'+i;
+    h.innerHTML='<div class="dhrow"><span class="badge" style="background:'+l.col+'">'+l.id+'</span>'+
+      '<span style="font-size:14px;overflow:hidden;white-space:nowrap;flex:1">'+dawTrackName(i)+'</span>'+
+      '<span class="dms'+(l.mute?' on':'')+'" data-m="'+i+'" title="MUTE — key M">M</span>'+
+      '<span class="dms'+(l.solo?' so':'')+'" data-o="'+i+'" title="SOLO — key O">S</span></div>'+
+      '<div class="dknob knobrow"><span>VOL</span>'+
+        knbHTML(String(i), l.level, dawTrackName(i)+' volume in decibels')+
+        '<b id="dTcpDb'+i+'">'+l.level.toFixed(1)+'</b>'+
+        '<span class="dms trim'+(daw.trimArmed[i]?' on':'')+'" data-trim="'+i+'"'+
+        ' title="TRIM — show this track\'s clip trim handles so you can drag the ends">TRIM</span>'+
+      '</div>'+
+      '<div class="dknob"><span>PAN</span><input type="range" data-dp="'+i+'" min="-100" max="100" step="1" value="'+(l.pan||0)+'"><b>'+(l.pan||0)+'</b></div>'+
+      '<div class="dknob"><span>PITCH</span><input type="range" data-dt="'+i+'" min="-1200" max="1200" step="10" value="'+(l.pitchNom||0)+'"><b>'+(l.pitchNom||0)+'</b></div>'+
+      '<div style="font-size:12px;color:var(--dim)" id="dClipCount'+i+'"></div>';
+    hdrs.appendChild(h);
+    var m=document.createElement('div');
+    m.className='dmtr'; m.id='dMtr'+i;
+    m.innerHTML='<div class="dbar"><b style="height:0"></b><i style="bottom:0;display:none"></i></div>'+
+                '<span class="dled"></span>';
+    mtrs.appendChild(m);
+    var ln=document.createElement('div');
+    ln.className='dlane'+(i===daw.selTrack?' sel':'')+(daw.trimArmed[i]?' trimon':'');
+    ln.id='dLane'+i; ln.dataset.t=i;
+    lanes.appendChild(ln);
+  }
+  dawBuildMixer();
+  dawWire();
+  dawPaint();
+}
+/* the MCP: one channel strip per track, M/S above the fader, name below */
+function dawBuildMixer(){
+  var mix=$('dMixTracks'); if(!mix) return;
+  mix.innerHTML='';
+  for(var i=0;i<4;i++){
+    var l=L[i];
+    var st=document.createElement('div');
+    st.className='mstrip'+(i===daw.selTrack?' sel':''); st.id='dMixStrip'+i;
+    st.dataset.mt=i;
+    st.innerHTML='<div class="mbtns">'+
+        '<span class="dms'+(l.mute?' on':'')+'" data-m="'+i+'" title="MUTE — key M">M</span>'+
+        '<span class="dms'+(l.solo?' so':'')+'" data-o="'+i+'" title="SOLO — key O">S</span></div>'+
+      '<div class="mfrow">'+
+        fdrHTML(String(i), l.level, dawTrackName(i)+' volume in decibels', false)+
+        '<div class="dbar" id="dMixMtr'+i+'"><b style="height:0"></b><i style="bottom:0;display:none"></i></div>'+
+      '</div>'+
+      '<div class="mdb" id="dMixDb'+i+'">'+l.level.toFixed(1)+'</div>'+
+      '<div class="mname">'+dawTrackName(i)+'</div>';
+    mix.appendChild(st);
+  }
+  fdrPaint('master');
+}
+function dawPaint(){
+  dawSync();
+  var lenMs=dawLen(), W=msToPx(lenMs);
+  $('dInner').style.width=Math.max(W,400)+'px';
+  /* ruler ticks at a sensible step for the current zoom */
+  var step=0.1; var cands=[0.01,0.02,0.05,0.1,0.25,0.5,1,2,5,10];
+  for(var ci=0;ci<cands.length;ci++){ if(msToPx(cands[ci]*1000)>=54){ step=cands[ci]; break; } step=cands[cands.length-1]; }
+  var r=$('dRuler'); r.innerHTML='';
+  for(var t=0;t<=lenMs/1000;t+=step){
+    var i2=document.createElement('i');
+    i2.style.left=msToPx(t*1000)+'px';
+    i2.textContent=(step<1? t.toFixed(2) : t.toFixed(1))+'s';
+    r.appendChild(i2);
+  }
+  /* selection band */
+  var old=document.getElementById('dSelBand'); if(old) old.remove();
+  if(daw.selA!==null&&daw.selB!==null){
+    var band=document.createElement('div'); band.className='dselrange'; band.id='dSelBand';
+    var a=Math.min(daw.selA,daw.selB), b=Math.max(daw.selA,daw.selB);
+    band.style.left=msToPx(a)+'px'; band.style.width=Math.max(1,msToPx(b-a))+'px';
+    $('dInner').appendChild(band);
+    $('dSel').textContent='SEL '+(a/1000).toFixed(3)+'s – '+(b/1000).toFixed(3)+'s  ('+((b-a)/1000).toFixed(2)+'s)';
+  } else $('dSel').textContent='no selection — drag on the ruler';
+  /* clips */
+  for(var ti=0;ti<4;ti++){
+    var lane=$('dLane'+ti); if(!lane) continue;
+    lane.innerHTML='';
+    lane.classList.toggle('sel',ti===daw.selTrack);
+    var cc=$('dClipCount'+ti);
+    if(cc) cc.textContent=daw.tracks[ti].length? (daw.tracks[ti].length+' clip'+(daw.tracks[ti].length>1?'s':'')+(daw.tracks[ti].length>1?' · 1st = the layer':'')) : 'empty';
+    daw.tracks[ti].forEach(function(c){
+      var el=document.createElement('div');
+      el.className='clip'+(daw.selClip===c.id?' sel':'');
+      el.style.left=msToPx(c.startMs)+'px';
+      el.style.width=Math.max(6,msToPx(clipLen(c)))+'px';
+      el.dataset.t=ti; el.dataset.c=c.id;
+      el.innerHTML='<canvas></canvas><span class="ctag">'+(L[ti].files[c.fileIdx]?L[ti].files[c.fileIdx].name:'')+'</span>'+
+                   '<span class="ctab l"></span><span class="ctab r"></span>';
+      lane.appendChild(el);
+      var cv=el.querySelector('canvas');
+      var f=L[ti].files[c.fileIdx];
+      if(f) drawWave(cv,f.samples,{col:L[ti].wave,zero:false,
+        s0:Math.round(c.inMs/1000*SR), sN:Math.round(clipLen(c)/1000*SR)});
+    });
+  }
+  dawPaintPlayhead();
+  for(var k=0;k<4;k++){
+    var hh=$('dHdr'+k); if(hh) hh.classList.toggle('sel',k===daw.selTrack);
+  }
+}
+function dawPaintPlayhead(){
+  var ph=$('dPh'); if(ph) ph.style.left=msToPx(daw.posMs)+'px';
+  var t=daw.posMs/1000;
+  var mm=Math.floor(t/60), ss=Math.floor(t%60), ms=Math.floor((t*1000)%1000);
+  $('dTime').textContent=padNum(mm,2)+':'+padNum(ss,2)+'.'+padNum(ms,3);
+}
+function dawWire(){
+  document.querySelectorAll('[data-m]').forEach(function(b){
+    b.addEventListener('click',function(e){ var i=+b.dataset.m; L[i].mute=!L[i].mute;
+      dawApplyLive(); dawBuild(); onEdit(); e.stopPropagation(); });
+  });
+  document.querySelectorAll('[data-o]').forEach(function(b){
+    b.addEventListener('click',function(e){ var i=+b.dataset.o; L[i].solo=!L[i].solo;
+      dawApplyLive(); dawBuild(); onEdit(); e.stopPropagation(); });
+  });
+  /* clicking a mixer strip selects that track, same as clicking its TCP panel */
+  document.querySelectorAll('[data-mt]').forEach(function(s){
+    s.addEventListener('click',function(){ daw.selTrack=+s.dataset.mt; dawBuild(); });
+  });
+  /* TRIM — reveals this track's clip trim handles. Furniture doing furniture's
+     job: it changes what you can SEE, never a sample. The §14 handles were
+     always draggable but nobody could tell they were there. */
+  document.querySelectorAll('[data-trim]').forEach(function(b){
+    b.addEventListener('click',function(e){
+      var i=+b.dataset.trim; daw.trimArmed[i]=!daw.trimArmed[i];
+      dawBuild();
+      setS(daw.trimArmed[i]
+        ? ('trim handles shown on '+dawTrackName(i)+' — drag a clip edge to trim it')
+        : ('trim handles hidden on '+dawTrackName(i)));
+      e.stopPropagation();
+    });
+  });
+  /* THE PANEL KNOBS — same value as the mixer fader, dragged vertically */
+  document.querySelectorAll('[data-knob]').forEach(function(k){
+    var key=k.dataset.knob;
+    k.addEventListener('pointerdown',function(e){
+      if(e.isTrusted){ try{ k.setPointerCapture(e.pointerId); }catch(_){} }
+      k.dataset.drag='1'; k.dataset.y=e.clientY; k.dataset.v=fdrGet(key);
+      e.preventDefault(); e.stopPropagation();
+    });
+    k.addEventListener('pointermove',function(e){
+      if(k.dataset.drag!=='1') return;
+      var dy=(+k.dataset.y)-e.clientY;            /* up = louder */
+      fdrSet(key, (+k.dataset.v) + dy*0.5);       /* 0.5 dB per pixel */
+    });
+    function kend(e){ if(k.dataset.drag==='1'){ k.dataset.drag=''; onEdit(); }
+      try{ k.releasePointerCapture(e.pointerId); }catch(_){} }
+    k.addEventListener('pointerup',kend);
+    k.addEventListener('pointercancel',kend);
+    k.addEventListener('keydown',function(e){
+      var step=e.shiftKey?0.1:1, v=fdrGet(key), used=true;
+      if(e.key==='ArrowUp'||e.key==='ArrowRight') fdrSet(key,v+step);
+      else if(e.key==='ArrowDown'||e.key==='ArrowLeft') fdrSet(key,v-step);
+      else if(e.key==='Home') fdrSet(key,FDR_MAX);
+      else if(e.key==='End') fdrSet(key,FDR_MIN);
+      else used=false;
+      if(used){ onEdit(); e.preventDefault(); e.stopPropagation(); }
+    });
+    k.addEventListener('dblclick',function(e){ fdrSet(key,0); onEdit(); e.stopPropagation(); });
+  });
+  /* THE FADERS — grab, drag, or focus and arrow. This is the acceptance test. */
+  document.querySelectorAll('[data-fader]').forEach(function(el){
+    var key=el.dataset.fader;
+    el.addEventListener('pointerdown',function(e){
+      /* Capture only for a REAL pointer. A synthetic test event carries an id
+         no pointer owns, and capturing it makes Chrome retarget the events we
+         are about to dispatch — which killed the renderer outright rather than
+         failing a test. Real drags still capture, so dragging off the fader
+         keeps working; scripted drags simply skip it. */
+      if(e.isTrusted){ try{ el.setPointerCapture(e.pointerId); }catch(_){} }
+      el.dataset.drag='1';
+      fdrSet(key,fdrFromY(el,e.clientY));
+      e.preventDefault(); e.stopPropagation();
+    });
+    el.addEventListener('pointermove',function(e){
+      if(el.dataset.drag!=='1') return;
+      fdrSet(key,fdrFromY(el,e.clientY));
+    });
+    function end(e){ if(el.dataset.drag==='1'){ el.dataset.drag=''; onEdit(); }
+      try{ el.releasePointerCapture(e.pointerId); }catch(_){} }
+    el.addEventListener('pointerup',end);
+    el.addEventListener('pointercancel',end);
+    el.addEventListener('keydown',function(e){
+      var step=e.shiftKey?0.1:1, v=fdrGet(key), used=true;
+      if(e.key==='ArrowUp'||e.key==='ArrowRight') fdrSet(key,v+step);
+      else if(e.key==='ArrowDown'||e.key==='ArrowLeft') fdrSet(key,v-step);
+      else if(e.key==='Home') fdrSet(key,FDR_MAX);
+      else if(e.key==='End') fdrSet(key,FDR_MIN);
+      else if(e.key==='PageUp') fdrSet(key,v+6);
+      else if(e.key==='PageDown') fdrSet(key,v-6);
+      else used=false;
+      if(used){ onEdit(); e.preventDefault(); e.stopPropagation(); }
+    });
+    el.addEventListener('dblclick',function(e){ fdrSet(key,0); onEdit(); e.stopPropagation(); });
+  });
+  document.querySelectorAll('[data-dg]').forEach(function(r){
+    r.addEventListener('input',function(){ var i=+r.dataset.dg; L[i].level=+r.value;
+      r.parentNode.querySelector('b').textContent=L[i].level.toFixed(1);
+      dawApplyLive(); fdrPaint(String(i));      /* the MCP fader follows the TCP slider */
+      markStale(); VBUI.notify(); });
+  });
+  document.querySelectorAll('[data-dp]').forEach(function(r){
+    r.addEventListener('input',function(){ var i=+r.dataset.dp; L[i].pan=+r.value;
+      r.parentNode.querySelector('b').textContent=L[i].pan; markStale(); });
+  });
+  document.querySelectorAll('[data-dt]').forEach(function(r){
+    r.addEventListener('input',function(){ var i=+r.dataset.dt; L[i].pitchNom=+r.value;
+      r.parentNode.querySelector('b').textContent=L[i].pitchNom; markStale(); VBUI.notify(); });
+  });
+}
+/* ruler: click = locate, drag = selection (§16.2) */
+(function(){
+  var rl=null, dragging=false, downX=0, moved=false;
+  function ready(){ rl=$('dRuler'); if(!rl) return;
+    rl.addEventListener('pointerdown',function(e){
+      var r=rl.getBoundingClientRect(), x=e.clientX-r.left+$('dScroll').scrollLeft;
+      downX=x; moved=false; dragging=true; rl.setPointerCapture(e.pointerId);
+      daw.selA=pxToMs(x); daw.selB=null; dawPaint();
+    });
+    rl.addEventListener('pointermove',function(e){
+      if(!dragging) return;
+      var r=rl.getBoundingClientRect(), x=e.clientX-r.left+$('dScroll').scrollLeft;
+      if(Math.abs(x-downX)>3){ moved=true; daw.selB=pxToMs(x); dawPaint(); }
+    });
+    rl.addEventListener('pointerup',function(e){
+      if(!dragging) return; dragging=false;
+      if(!moved){ daw.posMs=Math.max(0,pxToMs(downX)); daw.selA=daw.selB=null; }
+      dawPaint();
+    });
+  }
+  setTimeout(ready,0);
+})();
+/* clips: drag body = move (clamped), drag a tab = trim */
+document.addEventListener('pointerdown',function(e){
+  var el=e.target.closest? e.target.closest('.clip') : null;
+  if(!el || !$('dawPane').classList.contains('on')) return;
+  var ti=+el.dataset.t, id=+el.dataset.c;
+  var c=daw.tracks[ti].filter(function(x){return x.id===id;})[0]; if(!c) return;
+  daw.selTrack=ti; daw.selClip=id;
+  var tab=e.target.classList&&e.target.classList.contains('ctab')?
+          (e.target.classList.contains('l')?'l':'r') : null;
+  var x0=e.clientX, s0=c.startMs, in0=c.inMs, out0=c.outMs;
+  var f=L[ti].files[c.fileIdx];
+  function mv(ev){
+    var dms=pxToMs(ev.clientX-x0);
+    if(tab==='l'){
+      var ni=Math.max(0,Math.min(in0+dms,out0-DAW_MIN_CLIP_MS));
+      c.inMs=ni; c.startMs=Math.max(0,s0+(ni-in0));
+    }else if(tab==='r'){
+      c.outMs=Math.min(f?f.durMs:out0, Math.max(in0+DAW_MIN_CLIP_MS,out0+dms));
+    }else{
+      c.startMs=clampClip(ti,c,s0+dms);
+    }
+    sortTrack(ti); dawPaint();
+  }
+  function up(){ document.removeEventListener('pointermove',mv);
+    document.removeEventListener('pointerup',up);
+    /* the FIRST clip defines the layer (§16.1b) — push it back to the engine */
+    dawCommitNominal(ti); onEdit(); }
+  document.addEventListener('pointermove',mv);
+  document.addEventListener('pointerup',up);
+  e.preventDefault(); dawPaint();
+});
+/* §16.1b: the first clip's start IS the layer's DELAY and its in/out ARE the trim */
+function dawCommitNominal(ti){
+  var list=daw.tracks[ti]; if(!list.length) return;
+  var c=list[0];
+  L[ti].delay=Math.round(c.startMs);
+  L[ti].trimIn=c.inMs;
+  L[ti].trimOut=c.outMs;
+}
+var _dawFitted=false;
+function dawFitZoom(force){
+  if(_dawFitted && !force) return;
+  var sc=$('dScroll'); if(!sc) return;
+  var w=sc.clientWidth||900, lenS=dawLen()/1000;
+  if(lenS>0.05){ daw.pxPerSec=Math.max(40,Math.min(4000,(w-24)/lenS)); _dawFitted=true; dawPaint(); }
+}
+function dawZoom(mult){
+  daw.pxPerSec=Math.max(40,Math.min(4000,daw.pxPerSec*mult));
+  dawPaint();
+}
+
+
+
+</script>
+<script>
+/* inlined: daw-app.js */
+/* ══════════════════════════════════════════════════════════════════════════
+   MINI DAW — wiring, contract and boot.
+   daw.js is the engine (clips, arrangement, transport, meters). This file is
+   the screen's plumbing and the tool's half of window.VB.
+   ══════════════════════════════════════════════════════════════════════════ */
+'use strict';
+
+function dawDoSplit(){
+  var made=dawSplit(daw.selTrack,daw.posMs);
+  dawPaint();
+  setS(made? ('split track '+SLOT_IDS[daw.selTrack]+' at '+(daw.posMs/1000).toFixed(3)+'s')
+           : 'nothing under the playhead on track '+SLOT_IDS[daw.selTrack]);
+}
+
+$('dPlay').addEventListener('click',dawPlay);
+$('dLoop').addEventListener('click',function(){
+  daw.loop=!daw.loop; dawTransportPaint();
+  setS(daw.loop?'loop on':'loop off');
+});
+/* the rest of the round transport buttons (§16.2). Still NO record button. */
+$('tStop').addEventListener('click',function(){ dawTransportStop();
+  setS('stopped — playhead at '+(daw.posMs/1000).toFixed(3)+'s'); });
+$('tPause').addEventListener('click',function(){ dawTransportPause();
+  setS('paused at '+(daw.posMs/1000).toFixed(3)+'s'); });
+$('tPrev').addEventListener('click',function(){ dawGoStart(); setS('at start'); });
+$('tNext').addEventListener('click',function(){ dawGoEnd(); setS('at end'); });
+$('dZoomIn').addEventListener('click',function(){ dawZoom(1.5); });
+$('dZoomOut').addEventListener('click',function(){ dawZoom(1/1.5); });
+$('dSplit').addEventListener('click',dawDoSplit);
+$('dBounce').addEventListener('click',dawBounceSelection);
+$('dMasterLed').addEventListener('click',dawClearClip);
+$('dScroll').addEventListener('wheel',function(e){
+  /* wheel over the timeline zooms — the Reaper reflex. Shift-wheel scrolls. */
+  if(e.shiftKey) return;
+  e.preventDefault(); dawZoom(e.deltaY<0?1.18:1/1.18);
+},{passive:false});
+$('demoBtn').addEventListener('click',function(){
+  demoKit(); daw.tracks=[[],[],[],[]]; dawBuild(); dawFitZoom(true); commitUndo();
+});
+
+/* preset + undo furniture, identical in all three tools */
+$('undoBtn').addEventListener('click',doUndo);
+$('redoBtn').addEventListener('click',doRedo);
+$('presetBtn').addEventListener('click',function(e){
+  var pk=$('pick');
+  if(pk.classList.contains('show')) hidePicker(); else showPicker(this);
+  e.stopPropagation();
+});
+$('saveBtn').addEventListener('click',savePreset);
+document.addEventListener('click',function(e){
+  var pk=$('pick');
+  if(pk&&pk.classList.contains('show')&&!pk.contains(e.target)&&e.target.id!=='presetBtn') hidePicker();
+});
+
+/* DAW keys. S is SPLIT (Reaper muscle memory, Tommy's explicit ask), so solo
+   moved to O — one key cannot serve two masters. Director blessed 25 Aug. */
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z')){ doUndo(); e.preventDefault(); return; }
+  if((e.ctrlKey||e.metaKey)&&(e.key==='y'||e.key==='Y')){ doRedo(); e.preventDefault(); return; }
+  if(/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+  var k=e.key.toLowerCase();
+  if(k==='s'){ dawDoSplit(); }
+  else if(k==='m'){ L[daw.selTrack].mute=!L[daw.selTrack].mute; dawBuild(); }
+  else if(k==='o'){ L[daw.selTrack].solo=!L[daw.selTrack].solo; dawBuild(); }
+  else if(e.key===' '){ dawPlay(); }
+  else if(e.key==='+'||e.key==='='){ dawZoom(1.5); }
+  else if(e.key==='-'||e.key==='_'){ dawZoom(1/1.5); }
+  else if(e.key==='ArrowUp'){ daw.selTrack=Math.max(0,daw.selTrack-1); dawPaint(); }
+  else if(e.key==='ArrowDown'){ daw.selTrack=Math.min(3,daw.selTrack+1); dawPaint(); }
+  else return;
+  e.preventDefault();
+});
+
+/* ── §16.1 THE POSITION IS **ONE FIELD** ───────────────────────────
+   clip[0].startMs IS layer.delay — not a copy of it. Dragging the first clip
+   moves the deviation-bar centre; clips[1..n] are ARRANGEMENT and never do.
+
+   The bug this closes: the engine writes `l.delay` in three places nothing in
+   this window was listening to — the demo kit, preset load, and UNDO. dawSync()
+   only builds clips when a track has none, so after an undo the layer's nominal
+   moved and the clip on screen stayed exactly where it was. Two fields claiming
+   to be one, disagreeing in silence.
+
+   The loop is closed deliberately in both directions: the field drives the clip,
+   the clip is CLAMPED against its neighbour, and the clamped truth is written
+   straight back to the field. If a neighbour refuses the move, the number you
+   read is the number that happened — never the number that was asked for. */
+function dawNominalFits(t,c0,want){
+  if(!(want>=0)) return false;
+  var len=c0.outMs-c0.inMs, list=daw.tracks[t];
+  for(var i=0;i<list.length;i++){
+    var o=list[i]; if(o===c0) continue;
+    if(want < o.startMs+(o.outMs-o.inMs) && want+len > o.startMs) return false;
+  }
+  return true;
+}
+function dawAdoptNominal(){
+  for(var t=0;t<4;t++){
+    var list=daw.tracks[t]; if(!list||!list.length) continue;
+    var c0=list[0], want=L[t].delay;
+    if(Math.round(c0.startMs)===Math.round(want)) continue;
+    if(dawNominalFits(t,c0,want)) c0.startMs=want;
+    /* Either way the FIELD is written from the CLIP, so the two can never
+       disagree in silence. If a later clip blocks the move the timeline wins
+       and the number is corrected to what actually happened — a nominal that
+       cannot be represented on the timeline is not a nominal, it is a lie.
+
+       This deliberately does NOT call clampClip(): that function restarts its
+       scan with `i=-1` and OSCILLATES FOREVER when a clip is pulled left onto a
+       neighbour it cannot fit before (proven: want=0, len=50, others=[[40,50]]
+       — it clamps to 0, still overlaps, and restarts). That hang is reachable
+       from an ordinary drag and is reported to TOOL DAW, whose file it is. */
+    dawCommitNominal(t);
+  }
+}
+
+/* the tool's half of the contract (§16.6, §16.6b) — NAMESPACED, 25 Aug.
+   Director's ruling: core stays core, each tool registers its own namespace.
+   `tool` stays flat because it names the PAGE, not a DAW verb. */
+window.VB.tool='mini-daw';
+VB.ns('daw',{
+  transport:function(){
+    return {playing:daw.playing, positionMs:daw.posMs, loop:daw.loop,
+            selectionMs:(daw.selA!==null&&daw.selB!==null)?
+              [Math.min(daw.selA,daw.selB),Math.max(daw.selA,daw.selB)]:null};
+  },
+  setTransport:function(o){
+    if(!o) return window.VB.daw.transport();
+    if(o.positionMs!==undefined){ daw.posMs=Math.max(0,+o.positionMs); dawPaintPlayhead(); }
+    if(o.loop!==undefined) daw.loop=!!o.loop;
+    if(o.selectionMs===null){ daw.selA=daw.selB=null; }
+    else if(o.selectionMs){ daw.selA=+o.selectionMs[0]; daw.selB=+o.selectionMs[1]; }
+    if(o.playing===true && !daw.playing) dawPlay();
+    if(o.playing===false && daw.playing) dawStop();
+    dawPaint();
+    return window.VB.daw.transport();
+  },
+  trackState:function(i){
+    var l=L[i]; if(!l) return null;
+    return {mute:!!l.mute, solo:!!l.solo, audible:dawAudible(i), gainDb:l.level,
+            pan:l.pan||0, pitchCents:l.pitchNom||0,
+            clipStartMs:daw.tracks[i].length?daw.tracks[i][0].startMs:null,
+            clipCount:daw.tracks[i].length};
+  },
+  setTrack:function(i,k,v){
+    var l=L[i]; if(!l) return null;
+    if(k==='mute'||k==='solo') l[k]=!!v;
+    else if(k==='gainDb') l.level=+v;
+    else if(k==='pitchCents') l.pitchNom=+v;
+    else if(k in l) l[k]=(typeof v==='string' && !isFinite(+v))? v : +v;   /* strings stay strings */
+    markStale(); dawAdoptNominal(); dawBuild();
+    return window.VB.daw.trackState(i);
+  },
+  meter:function(i){
+    var idx=(i==='master')?4:+i;
+    return {peakDb:20*Math.log10(Math.max(1e-5,meterVal[idx])),
+            holdDb:20*Math.log10(Math.max(1e-5,meterHold[idx])),
+            clipped:!!meterClip[idx]};
+  },
+  clips:function(t){
+    dawSync();
+    return daw.tracks[t].map(function(c){
+      return {id:c.id, startMs:c.startMs, inMs:c.inMs, outMs:c.outMs,
+              lenMs:c.outMs-c.inMs, srcName:(L[t].files[c.fileIdx]||{}).name||''};
+    });
+  },
+  splitClip:function(t,atMs){ dawSync(); var r=dawSplit(t,+atMs); dawPaint(); return r; },
+  moveClip:function(id,toTrack,toMs){
+    dawSync();
+    var from=-1,c=null;
+    for(var t=0;t<4;t++) daw.tracks[t].forEach(function(x){ if(x.id===id){from=t;c=x;} });
+    if(!c) return null;
+    var tt=(toTrack===undefined||toTrack===null)?from:+toTrack;
+    if(tt!==from){ daw.tracks[from]=daw.tracks[from].filter(function(x){return x!==c;});
+                   daw.tracks[tt].push(c); }
+    c.startMs=clampClip(tt,c,+toMs);          /* the CLAMPED start is the return */
+    sortTrack(tt); dawCommitNominal(tt); if(from!==tt) dawCommitNominal(from);
+    dawPaint();
+    return c.startMs;
+  },
+  zoom:function(){ return {pxPerSec:daw.pxPerSec, scrollMs:pxToMs($('dScroll')?$('dScroll').scrollLeft:0)}; },
+  setZoom:function(pps,scrollMs){
+    daw.pxPerSec=Math.max(40,Math.min(4000,+pps||daw.pxPerSec));
+    dawPaint();
+    if(scrollMs!==undefined && $('dScroll')) $('dScroll').scrollLeft=msToPx(scrollMs);
+    return window.VB.daw.zoom();
+  },
+  trackArrangement:function(t){ dawSync(); return trackArrangement(t); },
+  /* The mix this computes is the thing worth asserting on, so the surface
+     carries the return straight through. dawBounceSelection() does not return
+     it yet — that one line lives in daw.js, which another session has open —
+     so this answers null today and answers the mix the moment the engine hands
+     one back, with no further edit here. null is the honest value for "nothing
+     came back"; undefined would read as "no such door". */
+  bounceSelection:function(){
+    var r=dawBounceSelection();
+    return (r===undefined)?null:r;
+  },
+
+  /* ── MIXER surface (NEW — stated to the Director for TESTER contracts) ──
+     The mixer is furniture, and furniture that no contract can see is
+     furniture that can ship broken with every suite green. So the strip
+     census and the fader value are both readable from script. */
+  master:function(){
+    return {db:daw.masterDb, affectsMonitor:true, affectsBounce:false};
+  },
+  setMaster:function(db){ return fdrSet('master',+db); },
+  fader:function(key,db){
+    var k=String(key);
+    if(db!==undefined) return fdrSet(k,+db);
+    return fdrGet(k);
+  },
+  mixer:function(){
+    var strips=[];
+    for(var i=0;i<4;i++){
+      var st=$('dMixStrip'+i);
+      strips.push({
+        track:i,
+        present:!!st,
+        fader:!!(st&&st.querySelector('[data-fader="'+i+'"]')),
+        meter:!!$('dMixMtr'+i),
+        mute:!!(st&&st.querySelector('[data-m]')),
+        solo:!!(st&&st.querySelector('[data-o]')),
+        soloLabel:st? (st.querySelector('[data-o]')||{}).textContent : null,
+        name:st? (st.querySelector('.mname')||{}).textContent : null,
+        db:L[i].level
+      });
+    }
+    return {
+      present:!!$('dMix'),
+      masterFirst:!!($('dMix')&&$('dMix').firstElementChild&&
+                     $('dMix').firstElementChild.id==='dMixMaster'),
+      masterFader:!!$('dMixMasterFdr'),
+      masterMeter:!!$('dMixMasterBar'),
+      masterRms:!!$('dMixMasterRms'),
+      strips:strips
+    };
+  }
+});
+
+VBUI.onChange(function(){
+  dawAdoptNominal();                 /* §16.1: the field moved — the clip follows */
+  if($('dawPane')) dawPaint();
+  if($('verLbl')) $('verLbl').textContent='TAA MINI DAW '+VERSION;
+});
+window.__vbAfterDemo=function(){ daw.tracks=[[],[],[],[]]; dawBuild(); dawFitZoom(true); };
+
+/* ── THE STAGE WATCHER (ENGINE handoff addendum A) ───────────────────────
+   Canvases are sized at draw time, so a canvas drawn before its container has
+   a rectangle gets a 16x1 backing store that CSS then stretches into a
+   gradient wash. TOOL RECORDER measured CEF reporting readyState 'complete'
+   while the Slate widget still had no box, with the real rectangle arriving
+   600-2100 ms later. **It is not editor-only**: in a plain browser the
+   arrangement stays stretched after any window resize until the next edit
+   repaints it. Watch the CONTAINER, not each canvas — one callback covers the
+   ruler, every clip and the meters. dawBuild() ends in dawPaint(), so calling
+   dawPaint() after it as well would just paint twice. */
+function dawRefit(){ dawBuild(); }
+
+vbBoot(function(){
+  dawBuild();
+  daw._stageWatch=vbWatchStage($('dawPane')||document.body, dawRefit);
+  $('verLbl').textContent='TAA MINI DAW '+VERSION;
+  _lastSnap=snapKey(window.VB.state()); presetDirty=false; paintPreset(); paintUndo();
+  setS('drop WAVs on a track — or press DEMO KIT');
+  if(/(^|[?&])demo(=|&|$)/.test(location.search)){
+    demoKit(); daw.tracks=[[],[],[],[]]; dawBuild(); dawFitZoom(true);
+  }
+  if(/(^|[?&])selftest(=|&|$)/.test(location.search)){
+    demoKit(); daw.tracks=[[],[],[],[]]; dawBuild();
+    function eqF(a,b){ if(a.length!==b.length) return false;
+      for(var i=0;i<a.length;i++) if(a[i]!==b[i]) return false; return true; }
+    vbSelfTest('mini-daw',[
+      {name:'boots STANDALONE as its own tool',
+       fn:function(){ return {ok:VB.tool==='mini-daw', detail:'tool = '+VB.tool}; }},
+      {name:'does NOT drag the other tools in',
+       fn:function(){ return {ok: typeof VB.devBar==='undefined' && typeof VB.simulateTake==='undefined'
+                                  && typeof VB.rec==='undefined',
+                              detail:'no devBar, no simulateTake, no VB.rec'}; }},
+      {name:'§16.5 THE DAW DOES NOT RECORD (recordNotInDaw)',
+       fn:function(){ return {ok: typeof VB.record==='undefined' &&
+                                  (!VB.rec || typeof VB.rec.record!=='function'),
+                              detail:'VB.record is '+(typeof VB.record)+
+                                     ', VB.rec is '+(typeof VB.rec)}; }},
+      {name:'no namespace CLASH — nobody silently overwrote anybody',
+       fn:function(){ var c=VB.nsClashes();
+         return {ok:c.length===0, detail:c.length? c.join(', ') : 'none'}; }},
+      {name:'§16.1 ONE FIELD — the engine moves the field, the CLIP follows',
+       fn:function(){
+         /* The headline bug: the engine writes l.delay from the demo kit,
+            preset load and UNDO, and none of it reached the timeline. */
+         var t=1, snap=VB.state(), before=VB.daw.clips(t)[0].startMs;
+         VB.daw.setTrack(t,'delay',before+90);
+         var moved=VB.daw.clips(t)[0].startMs;
+         VB.restore(snap);                       /* the exact path UNDO uses */
+         var back=VB.daw.clips(t)[0].startMs, fld=VB.state().layers[t].delay;
+         return {ok: Math.round(moved)===Math.round(before+90) &&
+                     Math.round(back)===Math.round(fld) &&
+                     Math.round(back)===Math.round(before),
+                 detail:before.toFixed(0)+' →field+90→ clip '+moved.toFixed(0)+
+                        ' →restore→ clip '+back.toFixed(0)+', field '+Math.round(fld)}; }},
+      {name:'§16.1 clips[1..n] are ARRANGEMENT — they never move the field',
+       fn:function(){
+         var t=1, c=VB.daw.clips(t);
+         if(c.length<2){ VB.daw.splitClip(t, c[0].startMs+c[0].lenMs/2); c=VB.daw.clips(t); }
+         if(c.length<2) return {ok:false, detail:'needed two clips to tell them apart'};
+         var fld=VB.state().layers[t].delay;
+         VB.daw.moveClip(c[1].id, t, c[1].startMs+40);      /* RIGHT, into free space */
+         var after=VB.state().layers[t].delay;
+         return {ok:Math.round(after)===Math.round(fld),
+                 detail:'clip[1] moved, delay stayed '+Math.round(fld)+'→'+Math.round(after)}; }},
+      {name:'ZOOM CHANGES NOTHING',
+       fn:function(){ var a=VB.daw.trackArrangement(0).slice();
+         VB.daw.setZoom(40); var z1=VB.daw.trackArrangement(0);
+         VB.daw.setZoom(4000); var z2=VB.daw.trackArrangement(0); VB.daw.setZoom(220);
+         return eqF(a,z1)&&eqF(a,z2); }},
+      {name:'zoom clamps to the spec range',
+       fn:function(){ var lo=VB.daw.setZoom(1).pxPerSec, hi=VB.daw.setZoom(99999).pxPerSec; VB.daw.setZoom(220);
+         return {ok:lo===40&&hi===4000, detail:lo+' … '+hi}; }},
+      {name:'§16.4 SOLO BEATS MUTE',
+       fn:function(){ VB.daw.setTrack(1,'mute',true); VB.daw.setTrack(1,'solo',true);
+         var a=VB.daw.trackState(1).audible, b=VB.daw.trackState(0).audible;
+         VB.daw.setTrack(1,'solo',false); VB.daw.setTrack(1,'mute',false);
+         return {ok:a===true&&b===false, detail:'soloed+muted audible='+a+', others='+b}; }},
+      {name:'transport reports position / loop / selection',
+       fn:function(){ var t=VB.daw.setTransport({positionMs:250,loop:true,selectionMs:[100,750]});
+         return {ok:t.positionMs===250&&t.loop===true&&t.selectionMs[0]===100,
+                 detail:JSON.stringify(t.selectionMs)}; }},
+      {name:'meters answer',
+       fn:function(){ return typeof VB.daw.meter('master').peakDb==='number'; }},
+
+      /* ── THE MIXER (REAPER-SPEC items 12-16). These exist because a mixer
+            can ship broken with every behavioural contract green. ───────── */
+      {name:'THE MIXER EXISTS — MASTER left of 4 channel strips',
+       fn:function(){ var m=VB.daw.mixer();
+         return {ok:m.present&&m.masterFirst&&m.strips.length===4&&
+                    m.strips.every(function(s){return s.present;}),
+                 detail:'master-first='+m.masterFirst+', strips='+m.strips.length}; }},
+      {name:'every strip has a fader, a meter, M/S and a name',
+       fn:function(){ var m=VB.daw.mixer(), bad=m.strips.filter(function(s){
+           return !(s.fader&&s.meter&&s.mute&&s.solo&&s.name); });
+         return {ok:bad.length===0&&m.masterFader&&m.masterMeter&&m.masterRms,
+                 detail:'incomplete strips='+bad.length+', master fader/meter/rms='+
+                        m.masterFader+'/'+m.masterMeter+'/'+m.masterRms}; }},
+      {name:'THE FADER IS GRABBABLE — a real drag moves the gain',
+       fn:function(){
+         var el=document.querySelector('[data-fader="2"]');
+         if(!el) return {ok:false, detail:'no fader on track C'};
+         VB.daw.setTrack(2,'gainDb',0);
+         el=document.querySelector('[data-fader="2"]');
+         var r=el.getBoundingClientRect();
+         if(r.height<10) return {ok:false, detail:'fader has no height: '+r.height};
+         function pev(t,y){ el.dispatchEvent(new PointerEvent(t,{clientY:y,clientX:r.left+5,
+           bubbles:true,cancelable:true,pointerId:1,pointerType:'mouse'})); }
+         pev('pointerdown', r.top+r.height*0.5);       /* grab in the middle */
+         var mid=VB.daw.fader(2);
+         pev('pointermove', r.bottom-6);               /* drag to the bottom */
+         var low=VB.daw.fader(2);
+         pev('pointerup', r.bottom-6);
+         var moved=(mid!==0)&&(low<mid);
+         VB.daw.setTrack(2,'gainDb',0);
+         return {ok:moved, detail:'grab->'+mid+' dB, drag down->'+low+' dB'}; }},
+      {name:'ONE VALUE, THREE FACES — panel knob, mixer fader and readouts agree',
+       fn:function(){ VB.daw.fader(1,-12);
+         var knob=document.querySelector('[data-knob="1"]');
+         var mcp=$('dMixDb1')?$('dMixDb1').textContent:'';
+         var tcp=$('dTcpDb1')?$('dTcpDb1').textContent:'';
+         var aria=knob?+knob.getAttribute('aria-valuenow'):null;
+         var state=VB.daw.trackState(1).gainDb;        /* read BEFORE the reset, or
+                                                          the evidence line lies */
+         var ok=knob&&aria===-12&&state===-12&&mcp==='-12.0'&&tcp==='-12.0';
+         VB.daw.setTrack(1,'gainDb',0);
+         return {ok:!!ok, detail:'set -12 -> knob aria='+aria+', state='+state+
+                 ', mixer "'+mcp+'", panel "'+tcp+'"'}; }},
+      {name:'the panel VOLUME control is a round KNOB, not a slider',
+       fn:function(){
+         var knobs=document.querySelectorAll('.dhdr [data-knob]');
+         var sliders=document.querySelectorAll('.dhdr [data-dg]');
+         return {ok:knobs.length===4&&sliders.length===0,
+                 detail:knobs.length+' knobs, '+sliders.length+' leftover gain sliders'}; }},
+      {name:'TRIM reveals this track\'s clip handles — and changes NO sample',
+       fn:function(){
+         var before=VB.daw.trackArrangement(0).slice();
+         var btn=document.querySelector('[data-trim="0"]');
+         if(!btn) return {ok:false, detail:'no TRIM button on the panel'};
+         btn.click();
+         var armed=$('dLane0')&&$('dLane0').classList.contains('trimon');
+         var after=VB.daw.trackArrangement(0);
+         var same=before.length===after.length;
+         if(same) for(var i=0;i<before.length;i++) if(before[i]!==after[i]){ same=false; break; }
+         document.querySelector('[data-trim="0"]').click();       /* rebuild -> re-query */
+         var off=$('dLane0')&&!$('dLane0').classList.contains('trimon');
+         return {ok:!!(armed&&off&&same),
+                 detail:'armed='+armed+', toggled off='+off+', audio byte-identical='+same}; }},
+      {name:'MASTER fader is MONITOR-only and SAYS SO',
+       fn:function(){ var before=VB.daw.master();
+         var got=VB.daw.setMaster(-9), m=VB.daw.master();
+         var tag=$('dMixMonTag');
+         VB.daw.setMaster(before.db);
+         return {ok:got===-9&&m.affectsBounce===false&&m.affectsMonitor===true&&
+                    !!tag&&/MONITOR/.test(tag.textContent),
+                 detail:'set -9 -> '+got+' dB, affectsBounce='+m.affectsBounce+
+                        ', tag="'+(tag?tag.textContent:'MISSING')+'"'}; }},
+      {name:'master defaults to 0 dB so BOUNCE is untouched at unity',
+       fn:function(){ return {ok:VB.daw.master().db===0, detail:VB.daw.master().db+' dB'}; }},
+      {name:'the solo BUTTON reads S while the S KEY splits (ruling, 25 Aug)',
+       fn:function(){ var m=VB.daw.mixer();
+         var tcp=document.querySelector('#dHdr0 [data-o]');
+         var okLabels=m.strips.every(function(s){return s.soloLabel==='S';})&&
+                      tcp&&tcp.textContent==='S';
+         var tip=tcp&&tcp.getAttribute('title');
+         return {ok:!!okLabels&&/key O/.test(tip||''),
+                 detail:'buttons="'+m.strips[0].soloLabel+'", TCP tooltip="'+tip+'"'}; }},
+      {name:'MUTE IS AUDIBLE MID-PLAYBACK — the live gain follows',
+       fn:function(){
+         /* the arrangement is pre-rendered with level baked in, so before this
+            increment mute/solo during playback were silent no-ops */
+         daw._nodes={gains:[{gain:{value:1}},{gain:{value:1}},{gain:{value:1}},{gain:{value:1}}],
+                     master:{gain:{value:1}}};
+         daw._playLevels=[0,0,0,0];
+         VB.daw.setTrack(0,'mute',true);  dawApplyLive(); var muted=daw._nodes.gains[0].gain.value;
+         VB.daw.setTrack(0,'mute',false); dawApplyLive(); var open=daw._nodes.gains[0].gain.value;
+         VB.daw.setMaster(-6); dawApplyLive(); var mg=daw._nodes.master.gain.value;
+         VB.daw.setMaster(0); daw._nodes=null;
+         return {ok:muted===0&&open===1&&Math.abs(mg-0.5012)<0.01,
+                 detail:'muted='+muted+', open='+open+', master -6dB -> '+mg.toFixed(4)}; }},
+
+      /* ── THE TRANSPORT STRIP (REAPER-SPEC items 7-11) ─────────────────── */
+      {name:'TRANSPORT STRIP — six round buttons, and NO record button',
+       fn:function(){
+         var ids=['tPrev','tNext','dPlay','dLoop','tStop','tPause'];
+         var missing=ids.filter(function(id){ return !$(id); });
+         var round=ids.every(function(id){ return $(id)&&$(id).classList.contains('tbtn'); });
+         /* the absence is asserted, not assumed (§16.5) */
+         var strip=$('dawTp')||document.querySelector('.dawtp');
+         var rec=strip? strip.querySelector('[id*="ec"],[title*="ecord"],.rec') : null;
+         return {ok:missing.length===0&&round&&!rec,
+                 detail:'missing='+(missing.join(',')||'none')+', all round='+round+
+                        ', record button='+(rec?rec.id||'FOUND':'absent')}; }},
+      {name:'the status word reads [Stopped] / [Playing]',
+       fn:function(){ var s=$('dState'); if(!s) return {ok:false,detail:'no status word'};
+         dawTransportPaint(); var stopped=s.textContent;
+         daw.playing=true; dawTransportPaint(); var playing=s.textContent;
+         daw.playing=false; dawTransportPaint();
+         return {ok:stopped==='[Stopped]'&&playing==='[Playing]',
+                 detail:'"'+stopped+'" / "'+playing+'"'}; }},
+      {name:'§16.2 STOP returns to where playback STARTED, then to zero',
+       fn:function(){
+         /* driven through the real verb with a stub node set, so no audio device
+            is needed to prove the semantic the window never implemented */
+         daw._nodes={srcs:[],ans:[],mAn:null,gains:[],master:null};
+         daw._startPos=250; daw.posMs=1370; daw.playing=true;
+         dawTransportStop(); var first=daw.posMs;      /* -> back to 250 */
+         dawTransportStop(); var second=daw.posMs;     /* -> a second stop = zero */
+         daw._nodes=null;
+         return {ok:first===250&&second===0,
+                 detail:'played from 250, stopped at 1370 -> '+first+'ms, again -> '+second+'ms'}; }},
+      {name:'PAUSE holds the playhead where it is',
+       fn:function(){
+         daw._nodes={srcs:[],ans:[],mAn:null,gains:[],master:null};
+         daw._startPos=250; daw.posMs=1370; daw.playing=true;
+         dawTransportPause(); var held=daw.posMs;
+         daw._nodes=null; daw.posMs=0;
+         return {ok:held===1370, detail:'paused at 1370 -> '+held+'ms (stop would have rewound)'}; }},
+      /* ── ENGINE HANDOFF, 25 Aug (docs/handoff/ENGINE-TO-TOOL-DAW.md) ──── */
+      {name:'clampClip CANNOT HANG — the proven left-drag oscillation',
+       fn:function(){
+         /* ENGINE's exact repro: a clip dragged hard left onto a neighbour that
+            starts nearer the origin than the clip is long. It clamped to 0, still
+            overlapped, and restarted the scan forever — freezing the window with
+            no console error. The old gate missed it because every check splits
+            clips into EQUAL halves, where the midpoint test takes the other
+            branch: a pass by coincidence. If this ever regresses, the iteration
+            cap throws instead of hanging, so this test FAILS rather than wedging
+            the whole suite. */
+         var save=daw.tracks[0];
+         var c={id:9003,fileIdx:0,startMs:300,inMs:0,outMs:50};
+         daw.tracks[0]=[{id:9001,fileIdx:0,startMs:40,inMs:0,outMs:50},
+                        {id:9002,fileIdx:0,startMs:140,inMs:0,outMs:100}, c];
+         var got=null, err=null;
+         try{ got=clampClip(0,c,0); }catch(e){ err=e.message; }
+         daw.tracks[0]=save;
+         var overlaps=(got!==null)&&(got<90&&got+50>40);
+         return {ok:err===null&&got!==null&&!overlaps,
+                 detail:err? ('threw: '+err)
+                           : ('dragged hard left to 0 -> settled at '+got+'ms, overlap='+overlaps)}; }},
+      {name:'bounceSelection RETURNS the mix it wrote',
+       fn:function(){
+         /* a test double for saveBlob so the gate does not download a WAV; the
+            returned array is the SAME one that was encoded, by construction */
+         var real=window.saveBlob, wrote=0, r=null, err=null;
+         window.saveBlob=function(){ wrote++; };
+         try{
+           VB.daw.setTransport({positionMs:0,selectionMs:[0,300]});
+           r=VB.daw.bounceSelection();
+         }catch(e){ err=e.message; }
+         window.saveBlob=real;
+         var ok=!err&&r&&r.samples&&r.samples.length>0&&r.sampleRate>0&&
+                Math.abs(r.lenMs-300)<1&&wrote===1;
+         return {ok:!!ok, detail:err? ('threw: '+err)
+           : (r? (r.lenMs+'ms, '+r.samples.length+' samples @ '+r.sampleRate+
+                  'Hz, clipped='+r.clipped+', files written='+wrote)
+               : 'returned '+r)}; }},
+      {name:'BOUNCE writes a DAW-NAMED file, never the Variation Designer\'s',
+       fn:function(){
+         /* TOOL RECORDER's find: the default was M.name+"_bounce.wav" and
+            M.name defaults to 'variation', so this tool wrote
+            variation_bounce.wav — the other tool's name — into the SAME plugin
+            project folder. A shared default is a silent overwrite. */
+         var real=window.saveBlob, names=[], keepN=daw._bounceN;
+         daw._bounceN=0;                    /* own the counter: an earlier test
+                                               bounces too, and this contract
+                                               must not depend on test order */
+         window.saveBlob=function(b,n){ names.push(n); };
+         VB.daw.setTransport({positionMs:0,selectionMs:[0,300]});
+         VB.daw.bounceSelection();
+         VB.daw.bounceSelection();          /* second bounce, same session */
+         window.saveBlob=real;
+         VB.daw.setTransport({selectionMs:null});
+         daw._bounceN=keepN;
+         var a=names[0]||'', b=names[1]||'';
+         var ok=/mini-daw/.test(a) && !/^variation_bounce\./.test(a) &&
+                !/-\d+\.wav$/.test(a) &&    /* first of a session: no suffix */
+                /-2\.wav$/.test(b) &&       /* second: suffixed, not overwriting */
+                a!==b;
+         return {ok:ok, detail:'1st "'+a+'", 2nd "'+b+'" (must differ — no silent overwrite)'}; }},
+      {name:'a too-short selection returns NULL, not undefined',
+       fn:function(){ var real=window.saveBlob, wrote=0;
+         window.saveBlob=function(){ wrote++; };
+         VB.daw.setTransport({selectionMs:[0,5]});
+         var r=VB.daw.bounceSelection();
+         window.saveBlob=real;
+         VB.daw.setTransport({selectionMs:null});
+         return {ok:r===null&&wrote===0,
+                 detail:'returned '+JSON.stringify(r)+', files written='+wrote}; }},
+
+      {name:'HONEST DEGRADATION — all four lanes REACHABLE in a short window',
+       fn:function(){
+         /* Director's 24-Aug window ruling: minimum 1200x660, honest degradation
+            below it, NO CONTROL-CUTTING. A silently clipped track D was worse
+            than a scrollbar because nothing told you the fourth track existed —
+            the invisible-MORE-button bug. DOM-presence is NOT the assertion:
+            each lane must be scrollable INTO VIEW.
+            NOTE, measured by fault injection: setting scrollTop works even on an
+            overflow:hidden box, so the bring-into-view probe alone does NOT catch
+            the clip — a SCRIPT can reach a lane a USER cannot. The overflow-y
+            assertion is the half that proves user-reachability, and both are in
+            the verdict deliberately. Injecting the old overflow-y:hidden takes
+            this contract red at 35/36; it has been seen to fail. */
+         var body=document.querySelector('.dawbody');
+         if(!body) return {ok:false, detail:'no .dawbody scroller'};
+         var prevMax=body.style.maxHeight, prevTop=body.scrollTop;
+         body.style.maxHeight='200px';                  /* force the short case */
+         void body.offsetHeight;                        /* settle layout */
+         var overflows=body.scrollHeight>body.clientHeight+1;
+         var oy=getComputedStyle(body).overflowY;
+         var unreachable=[];
+         for(var i=0;i<4;i++){
+           var ln=$('dLane'+i);
+           if(!ln){ unreachable.push(i+':missing'); continue; }
+           var lr=ln.getBoundingClientRect(), br=body.getBoundingClientRect();
+           body.scrollTop+=(lr.top-br.top);             /* bring it into view */
+           void body.offsetHeight;
+           lr=ln.getBoundingClientRect(); br=body.getBoundingClientRect();
+           var visible=lr.height>0 && lr.bottom>br.top+1 && lr.top<br.bottom-1;
+           if(!visible) unreachable.push(i+':unreachable');
+         }
+         body.style.maxHeight=prevMax; body.scrollTop=prevTop;
+         return {ok:overflows && (oy==='auto'||oy==='scroll') && unreachable.length===0,
+                 detail:'at 200px: overflows='+overflows+', overflow-y='+oy+
+                        ', unreachable=['+(unreachable.join(',')||'none')+']'}; }},
+      {name:'a short window must not DESYNC headers from their lanes',
+       fn:function(){
+         /* the first fix for the above compressed the header column instead of
+            scrolling it: panels went 96px -> 66px and every row pointed at the
+            wrong track. Locking the alignment in. */
+         var body=document.querySelector('.dawbody');
+         var prevMax=body?body.style.maxHeight:'';
+         if(body){ body.style.maxHeight='200px'; void body.offsetHeight; }
+         var bad=[];
+         for(var i=0;i<4;i++){
+           var h=$('dHdr'+i), ln=$('dLane'+i), m=$('dMtr'+i);
+           if(!h||!ln||!m){ bad.push(i+':missing'); continue; }
+           var hh=Math.round(h.getBoundingClientRect().height);
+           var lh=Math.round(ln.getBoundingClientRect().height);
+           var mh=Math.round(m.getBoundingClientRect().height);
+           if(hh!==lh||mh!==lh) bad.push(i+':hdr'+hh+'/lane'+lh+'/mtr'+mh);
+         }
+         if(body){ body.style.maxHeight=prevMax; }
+         return {ok:bad.length===0,
+                 detail:bad.length? bad.join(' ') : 'header, lane and meter all 96px on all four tracks'}; }},
+      {name:'the STAGE WATCHER is adopted — no gradient-wash timeline',
+       fn:function(){
+         /* ENGINE measures the watcher's FIRING in both directions (late
+            rectangle, later resize, quiet when unchanged, clean stop). What is
+            mine to prove is that it is actually wired up here and that MY
+            callback is sound — a watcher pointed at a redraw that throws would
+            be worse than no watcher, because it would fail silently. */
+         var installed=typeof daw._stageWatch==='function';
+         var engine=typeof vbWatchStage==='function';
+         var threw=null;
+         try{ dawRefit(); }catch(e){ threw=e.message; }
+         var lanes=document.querySelectorAll('.dlane').length;
+         var strips=document.querySelectorAll('.mstrip').length;
+         return {ok:installed&&engine&&!threw&&lanes===4&&strips===5,
+                 detail:'watcher='+installed+', vbWatchStage='+engine+
+                        ', refit threw='+(threw||'no')+', after refit: '+lanes+
+                        ' lanes / '+strips+' strips (4 + master)'}; }},
+      {name:'ZOOM / SPLIT / BOUNCE are OFF the transport strip',
+       fn:function(){ var strip=document.querySelector('.dawtp');
+         var stray=['dZoomIn','dZoomOut','dSplit','dBounce'].filter(function(id){
+           return $(id)&&strip&&strip.contains($(id)); });
+         return {ok:stray.length===0,
+                 detail:stray.length? 'still on it: '+stray.join(',') : 'all four moved to the edit bar'}; }}
+    ]);
+  }
+});
+
+</script>
+</body>
+</html>

@@ -4,48 +4,46 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TOMMY ALLEN ACOUSTICS — Variation Bench</title>
-<!-- SKELETON ONLY: keeps an unfinished page out of search results if the repo
-     is pushed for other reasons. DELETE THIS THE DAY THE PAGE GOES LIVE. -->
-<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="Three free browser tools for game sound: record a sound, do the quick edit, turn it into twenty finished variations. No install, no account, nothing uploaded.">
 <!--
-  ===== SKELETON — WEBSITE dept, 21 Aug 2026 =====
-  The Variation Bench product page with PLACEHOLDER copy. It is NOT linked
-  from the hub and must not go live until the placeholders are gone.
+  ===== THE TOOL FAMILY PAGE — WEBSITE dept, 27 Aug 2026 =====
+  This page is LIVE-READY: all three tools it links to are real, committed
+  builds that pass their own self-tests, and it is linked from the hub. The
+  noindex and the UNDER CONSTRUCTION marquee that stood here while it was a
+  skeleton are GONE, deliberately — this is the page the MegaGrant dossier
+  points at.
 
-  RULE: every placeholder carries a data-ph attribute saying what is owed and
-  by whom, and that attribute is what draws the dashed magenta outline and the
-  PLACEHOLDER tag — so a placeholder cannot ship invisibly. To count what is
-  left:
+  ON data-ph: it no longer draws a visible outline. On a skeleton it meant
+  "nothing here yet"; nothing on this page is empty any more. It now means
+  ONE thing: this copy is mine, written from FOCUS-1 / the market notes /
+  DESIGN.md, and GRANT PITCH still owes a pass in Tommy's voice. It reads
+  fine as it stands. Count what is left with:
       grep -c 'data-ph=' unreal-variation-bench.html
-  20 right now (19 real placeholders + the line you are reading; started at
-  22 — the CTA wording and the support route were settled by the Director on
-  21 Aug). It must reach 1. At that point also delete the noindex meta above,
-  the UNDER CONSTRUCTION marquee div, and the [data-ph] CSS block.
+  A visitor must never see a marker on a public page, so if something goes
+  genuinely MISSING again, delete the section rather than shipping an empty
+  box — that is what happened to the video slot (see below).
 
-  NAME: "Variation Bench" is a WORKING TITLE and the rename is TOMMY'S CALL,
-  still pending (Director, 21 Aug 2026 — keep the working title, no git mv
-  until he rules). It appears as  Variation Bench / VARIATION BENCH /
-  variation-bench  — find/replace those three spellings plus a git mv of this
-  file renames everything.
+  THE VIDEO: deliberately NOT on the page. Tommy records it to GRANT PITCH's
+  script; until the ID exists an embedded slot would be an empty black box on
+  a live page. Paste this back in above THE THREE TOOLS when the ID exists:
+    <div class="sec"><h2>&gt;&gt; SEE IT MOVE</h2>
+      <div class="video-frame"><iframe src="https://www.youtube-nocookie.com/embed/VIDEO_ID"
+        title="Variation Bench — the demo" loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen></iframe></div>
+      <div class="cap">Two waves in. Thirty out. One take, no cuts.</div></div>
 
-  WHO OWES WHAT (stated, not acted on — the Director routes):
-    GRANT PITCH  -> hook, WHAT IT DOES, WHAT YOU GET, THE TECHNICAL BIT copy
-    GRANT DEMO   -> the demo itself (variation-bench.html) and the real dial
-                    names/ranges, after the Day 2 design gate
-    TOMMY        -> the video (Day 9) -> paste the ID into the iframe below;
-                    and the product name
-    WEBSITE      -> hero + 3 gallery shots (images/plugins/vb-*.jpg, 16:9,
-                    letterboxed if needed, NEVER stretched), and the hub card
-    SETTLED      -> the second CTA's wording (approved) and the support route
-                    (this page's own IF SOMETHING BREAKS block, nothing else)
+  NAMES (Tommy's call, still pending — PROPOSAL.md has Project Name as his
+  last blocker). The three tools are named here EXACTLY as they render in
+  their own title bars: MINI RECORDER, MINI DAW, VARIATION DESIGNER. The
+  family name "Variation Bench" is the working title used across the studio
+  docs. When he christens it: one string in the <h1>, one in the hub card in
+  home.html, and a git mv of this file.
 
-  HUB CARD — placement RULED by the Director 21 Aug 2026: home.html, the
-  >> FREE BROWSER TOOLS section (h2 at line 94), TOP slot, i.e. immediately
-  after the <div class="nav-grid"> on line 95 and before the IMPACT FORGE
-  card. It is a free browser tool, not a plugin. Paste this in ONLY on Day 9
-  staging, once GRANT DEMO's variation-bench.html actually exists — until
-  then the page stays unlinked and noindex:
-    <a href="unreal-variation-bench.html" class="nav-card"><span class="card-icon">&#127922;</span><span class="card-title">VARIATION BENCH</span><span class="card-desc">2 waves in, 30 out</span></a>
+  THE TOOLS are copied byte-identical from
+  Products/Variation Bench/release/web/ in the other repo. Do NOT hand-edit
+  mini-recorder.html / mini-daw.html / variation-designer.html here — they are
+  GRANT DEMO's tested builds. Re-copy them when a new build lands.
 -->
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Bungee+Shade&display=swap');
@@ -66,8 +64,9 @@
   .header .sub{font-size:19px;color:#a78bfa;letter-spacing:2px;margin-top:10px}
   .hook{background:#1a0a2e;border:2px solid #ffcc00;padding:16px;margin-bottom:20px;text-align:center}
   .hook p{color:#eee;font-size:20px;line-height:1.65}
+  .hook p+p{margin-top:10px}
   .hook b{color:#ffcc00}
-  .shot{width:100%;display:block;border:2px solid #8b5cf6;margin-bottom:6px;background:#0f0520}
+  .shot{width:100%;height:auto;display:block;border:2px solid #8b5cf6;margin-bottom:6px;background:#0f0520}
   .cap{font-size:16px;color:#a78bfa;text-align:center;margin-bottom:20px}
   .sec{margin-bottom:24px}
   .sec h2{font-family:'Press Start 2P',monospace;font-size:11px;color:#ffcc00;letter-spacing:2px;margin-bottom:12px;padding-bottom:6px;border-bottom:2px dashed #8b5cf6;text-shadow:0 0 4px #ffcc00}
@@ -85,12 +84,9 @@
   .cta > a,.cta > span{display:block;text-align:center;padding:20px 14px;text-decoration:none;border:3px solid;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:2px;line-height:1.9}
   .cta .try{border-color:#0f0;color:#0f0;background:#0f0520;text-shadow:0 0 6px #0f0}
   .cta .try:hover{background:#0f0;color:#000;text-shadow:none}
-  .cta .buy{border-color:#ffcc00;color:#ffcc00;background:#1a0a2e;text-shadow:0 0 6px #ffcc00}
-  .cta .buy:hover{background:#ffcc00;color:#000;text-shadow:none}
   .cta .soon{border-color:#8b5cf6;color:#8b5cf6;background:#0f0520;cursor:default}
   .cta .small{display:block;border:none;padding:0;font-family:'VT323',monospace;font-size:17px;letter-spacing:0;margin-top:8px;color:#a78bfa}
   .cta .try .small{color:#7ddb7d}
-  .cta .buy .small{color:#d9b45c}
   .footer{text-align:center;margin-top:26px;padding-top:16px;border-top:2px solid #8b5cf6}
   .back{display:inline-block;font-family:'Press Start 2P',monospace;font-size:9px;color:#ffcc00;text-decoration:none;letter-spacing:2px;border:2px solid #ffcc00;padding:10px 18px;background:#1a0a2e}
   .back:hover{background:#ffcc00;color:#000}
@@ -99,25 +95,29 @@
   .fix{border-left:4px solid #d946ef;margin-bottom:10px}
   .fix .q{color:#d946ef;font-size:19px;margin-bottom:6px}
   .fix .a{color:#ccc;font-size:18px;line-height:1.7}
-  .help{background:#0f0520;border:2px ridge #0f0;padding:14px;text-align:center;margin-top:12px}
-  .help .lbl{font-family:'Press Start 2P',monospace;font-size:9px;color:#0f0;letter-spacing:2px;margin-bottom:8px;text-shadow:0 0 6px #0f0}
-  .help p{font-size:18px;color:#ccc;line-height:1.6;margin:0}
-  .help a{color:#06b6d4;text-decoration:none}.help a:hover{color:#fff}
-  /* video slot — same frame as videos.html */
   .video-frame{position:relative;width:100%;padding-bottom:56.25%;height:0;border:3px solid #06b6d4;box-shadow:0 0 15px rgba(6,182,212,0.2);background:#000;overflow:hidden;margin-bottom:6px}
   .video-frame iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
-  /* UNDER CONSTRUCTION marquee — house element. The SKELETON wording goes when the page is real; keep or drop the bar per Tommy. */
-  .uc{background:repeating-linear-gradient(45deg,#ffcc00 0 14px,#000 14px 28px);padding:3px;margin-bottom:18px}
-  .uc .in{background:#0a0020;overflow:hidden;white-space:nowrap;padding:8px 0}
-  .uc .run{display:inline-block;font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:2px;color:#ffcc00;animation:run 16s linear infinite;padding-left:100%}
-  @keyframes run{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
-  /* ===== PLACEHOLDER MARKING — delete the data-ph attribute and this styling stops ===== */
-  [data-ph]{position:relative;outline:2px dashed #d946ef;outline-offset:4px}
-  [data-ph]:before{content:"PLACEHOLDER";position:absolute;top:-10px;right:6px;background:#d946ef;color:#000;font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:1px;padding:3px 6px;z-index:3;line-height:1}
-  .slot{width:100%;aspect-ratio:16/9;border:2px dashed #d946ef;background:#0f0520;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;margin-bottom:6px;text-align:center;padding:16px}
-  .slot .t{font-family:'Press Start 2P',monospace;font-size:10px;color:#d946ef;letter-spacing:2px}
-  .slot .f{color:#a78bfa;font-size:17px;line-height:1.5;max-width:560px}
-  .video-frame .slot{position:absolute;inset:0;aspect-ratio:auto;border:none;margin:0}
+
+  /* ===== per-tool block ===== */
+  .tool{border:2px solid #8b5cf6;background:#1a0a2e;padding:0;margin-bottom:22px}
+  .tool .head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:14px 16px 10px;border-bottom:2px dashed #2a1050}
+  .tool .num{font-family:'Press Start 2P',monospace;font-size:9px;color:#d946ef;letter-spacing:2px}
+  .tool h3{font-family:'Press Start 2P',monospace;font-size:13px;color:#06b6d4;letter-spacing:2px;text-shadow:0 0 6px rgba(6,182,212,0.4)}
+  .tool .one{color:#ffcc00;font-size:19px;width:100%;line-height:1.5}
+  .tool .body{padding:14px 16px 0}
+  .tool .body p{color:#ccc;font-size:19px;line-height:1.7;margin-bottom:10px}
+  .tool .body b{color:#06b6d4}
+  .tool .shot{border:none;border-top:2px solid #2a1050;border-bottom:2px solid #2a1050;margin:12px 0 0}
+  .tool .go{display:block;text-align:center;padding:18px 14px;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:2px;line-height:1.9;color:#0f0;background:#0f0520;border-top:3px solid #0f0;text-shadow:0 0 6px #0f0}
+  .tool .go:hover{background:#0f0;color:#000;text-shadow:none}
+  .tool .go span{display:block;font-family:'VT323',monospace;font-size:17px;letter-spacing:0;margin-top:8px;color:#7ddb7d}
+  .tool .go:hover span{color:#063}
+  .flow{display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:8px;align-items:stretch;margin-top:12px}
+  .flow .step{background:#0f0520;border:2px solid #8b5cf6;padding:12px 8px;text-align:center}
+  .flow .step .t{font-family:'Press Start 2P',monospace;font-size:8px;color:#ffcc00;letter-spacing:1px;line-height:1.8}
+  .flow .step .d{color:#a78bfa;font-size:16px;line-height:1.4;margin-top:8px}
+  .flow .arr{align-self:center;color:#d946ef;font-size:26px}
+  @media(max-width:560px){.flow{grid-template-columns:1fr}.flow .arr{transform:rotate(90deg)}}
 </style>
 </head>
 <body>
@@ -126,96 +126,142 @@
 
   <div class="crumb"><a href="home.html">&lt;&lt; back to the hub</a></div>
 
-  <div class="uc"><div class="in"><span class="run">&#9888; UNDER CONSTRUCTION &#9888; SKELETON PAGE &mdash; PLACEHOLDER COPY &mdash; NOT LINKED FROM THE HUB &mdash; THE GRANT DEMO LIVES HERE &#9888; UNDER CONSTRUCTION &#9888;</span></div></div>
-
   <div class="header">
     <h1>Variation Bench</h1>
-    <div class="sub" data-ph="strapline — GRANT PITCH. Working title; Tommy may rename (FOCUS-1 decision 1)">VARIATION ENGINE FOR GAME SOUND</div>
+    <div class="sub">THREE FREE BROWSER TOOLS FOR GAME SOUND</div>
   </div>
 
-  <!-- ===== HOOK ===== -->
-  <div class="hook" data-ph="hook copy — GRANT PITCH briefs it. Stand-in below is the Director's own one-liner from FOCUS-1"><p>Drag up to <b>four WAV layers</b> into a tiny mixer, turn <b>one variation knob</b>, bounce thirty finished variations. It turns 2 waves into 30 &mdash; in your browser, with no DAW round trip.</p></div>
+  <div class="hook" data-ph="hook copy — GRANT PITCH owes the pass in Tommy's voice; this is mine, from FOCUS-1"><p>Get a sound in. Do the quick edit. Turn it into twenty. <b>Three small tools</b> that hand work to each other, and not one of them asks you to open a DAW.</p><p>They run <b>in this browser, free, right now</b> &mdash; no install, no account, and your files never leave your machine.</p></div>
 
-  <!-- ===== HERO ===== -->
-  <div class="slot" data-ph="hero shot — WEBSITE, screenshotted from the real demo UI. 16:9, letterbox if needed, NEVER stretch"><div class="t">HERO SHOT</div><div class="f">images/plugins/vb-01-featured.jpg &mdash; the bench with four layers loaded and the VARIATION knob mid-turn</div></div>
-  <div class="cap" data-ph="hero caption">Four layers, one knob, thirty takes.</div>
+  <img class="shot" src="images/tools/tool-03-variation.jpg" width="1400" height="788" alt="The Variation Designer: four layers of a footstep, and the bounced result." loading="lazy">
+  <div class="cap">Four layers, one knob, twelve finished takes.</div>
 
-  <!-- ===== CTA (top) ===== -->
   <div class="cta">
-    <a class="try" data-ph="TRY IT FREE target — GRANT DEMO delivers variation-bench.html. This link 404s until it lands" href="variation-bench.html">&#9654; TRY IT FREE<span class="small">runs in your browser &mdash; no install, no account</span></a>
-    <!-- Wording APPROVED by the Director 21 Aug 2026: it matches the grant framing — browser demo now, plugin on the roadmap. Not a placeholder. -->
+    <a class="try" href="#tools">&#9654; TRY THEM NOW<span class="small">all three, in your browser, nothing to install</span></a>
     <span class="soon">&#9203; COMING TO UNREAL<span class="small">the editor plugin is on the roadmap</span></span>
   </div>
 
-  <!-- ===== VIDEO — Tommy records Day 9, unlisted YouTube embedded here (FOCUS-1) ===== -->
   <div class="sec">
-    <h2>&gt;&gt; SEE IT MOVE</h2>
-    <div class="video-frame" data-ph="demo video — TOMMY records Day 9 to GRANT PITCH's script. Delete this slot div and uncomment the iframe, with the real ID in place of VIDEO_ID">
-      <div class="slot"><div class="t">VIDEO SLOT</div><div class="f">unlisted YouTube, 16:9 &mdash; paste the ID into the commented iframe in this page's source</div></div>
-      <!--
-      <iframe src="https://www.youtube-nocookie.com/embed/VIDEO_ID" title="Variation Bench — the demo" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-      -->
+    <h2>&gt;&gt; WHY THESE EXIST</h2>
+    <div class="box" data-ph="positioning — GRANT PITCH owes the voice pass; the argument is theirs from MARKET.md, the words are mine">
+      <p>Game sound needs the same thing over and over: <b>the same footstep, twenty times, never identical</b>. The usual answers are to record twenty, or to jitter the pitch at runtime and hope nobody notices. Pitch-shifting scales a sound whole, which is exactly why a random-pitch footstep still sounds like one footstep.</p>
+      <p>The variation that actually fools the ear is <b>the timing between layers</b> &mdash; heel and scuff four milliseconds apart is a different footstep from fourteen, using the same files. Doing that at playback time costs you on every single play, forever. Doing it here costs you once, at design time, and the engine just plays a file.</p>
     </div>
-    <div class="cap" data-ph="video caption">Two waves in. Thirty out. One take, no cuts.</div>
   </div>
 
-  <!-- ===== WHAT IT DOES ===== -->
+  <div class="sec" id="tools">
+    <h2>&gt;&gt; THE THREE TOOLS</h2>
+
+    <div class="tool">
+      <div class="head">
+        <span class="num">1 OF 3</span><h3>MINI RECORDER</h3>
+        <div class="one">A sound into your project in ten seconds.</div>
+      </div>
+      <div class="body" data-ph="tool 1 copy — GRANT PITCH voice pass owed">
+        <p>Pick an input, watch the meter, hit record. Trim what you caught with two handles, name it, and send it straight to a <b>Mini DAW track</b> or a <b>Variation Designer slot</b> &mdash; or just save the WAV.</p>
+        <p>Mic or system audio, 48&nbsp;kHz, 24-bit, mono. <b>One path, no format menu</b> to get lost in.</p>
+      </div>
+      <img class="shot" src="images/tools/tool-01-recorder.jpg" width="1400" height="788" alt="Mini Recorder with a captured take, trim handles set." loading="lazy">
+      <a class="go" href="mini-recorder.html">&#9654; OPEN MINI RECORDER<span>needs mic permission &mdash; your browser will ask</span></a>
+    </div>
+
+    <div class="tool">
+      <div class="head">
+        <span class="num">2 OF 3</span><h3>MINI DAW</h3>
+        <div class="one">The quick edit, without leaving what you were doing.</div>
+      </div>
+      <div class="body" data-ph="tool 2 copy — GRANT PITCH voice pass owed">
+        <p>Four tracks, a timeline in <b>seconds rather than bars</b>, and a transport with a running clock. Gain, pan, pitch, mute, solo and real meters per track. Drag a clip to retime it, press <b>S</b> to split, loop a selection, then bounce what you have to a single WAV.</p>
+        <p>It is the tool you would otherwise open Reaper for, and it opens in about a second.</p>
+      </div>
+      <img class="shot" src="images/tools/tool-02-mini-daw.jpg" width="1400" height="788" alt="Mini DAW with the demo kit loaded across four tracks." loading="lazy">
+      <a class="go" href="mini-daw.html">&#9654; OPEN MINI DAW<span>press DEMO KIT and it fills itself &mdash; nothing to find first</span></a>
+    </div>
+
+    <div class="tool">
+      <div class="head">
+        <span class="num">3 OF 3</span><h3>VARIATION DESIGNER</h3>
+        <div class="one">Four layers, one knob, twenty finished variations.</div>
+      </div>
+      <div class="body" data-ph="tool 3 copy — GRANT PITCH voice pass owed">
+        <p>Drop a set of files into each of four layers. Say how far each layer may drift in <b>timing, pitch, level and tone</b>, then turn a single <b>VARIATION</b> knob to scale all of it at once. Bounce a sheet of takes, listen through them, keep the ones that earn it and re-roll the rest.</p>
+        <p>Every sheet has a <b>seed</b>: the same seed and the same dials give you the same takes, every time. Download the set as WAVs in a zip with a manifest &mdash; and the takes you culled never leave the app.</p>
+      </div>
+      <img class="shot" src="images/tools/tool-03-variation.jpg" width="1400" height="788" alt="Variation Designer: four layers with per-layer ranges and the summed bounce." loading="lazy">
+      <a class="go" href="variation-designer.html">&#9654; OPEN VARIATION DESIGNER<span>press DEMO KIT and it fills itself &mdash; nothing to find first</span></a>
+    </div>
+  </div>
+
   <div class="sec">
-    <h2>&gt;&gt; WHAT IT DOES</h2>
-    <div class="box" data-ph="WHAT IT DOES — GRANT PITCH copy. Stand-in describes the loop as the GRANT-DEMO charter specifies it"><p>Drop a WAV into each of the four slots &mdash; or a whole set per slot. Set how far each layer is allowed to move: timing, pitch, level, tone. Turn <b>VARIATION</b> up. Press <b>BOUNCE</b>, then audition the takes: keep the good ones, re-roll the rest, download the set as WAVs in a zip.</p><p>The variation that actually fools the ear is <b>timing between layers</b>. Doing that at runtime costs you on every playback, forever. Bake it at design time and it costs nothing.</p></div>
+    <h2>&gt;&gt; HOW THEY FIT TOGETHER</h2>
+    <div class="box">
+      <p>They are three tools, but one path. Anything one of them makes, the next one will take.</p>
+      <div class="flow">
+        <div class="step"><div class="t">RECORD</div><div class="d">catch it, trim it, name it</div></div>
+        <div class="arr">&#9656;</div>
+        <div class="step"><div class="t">EDIT</div><div class="d">layer it, time it, bounce it</div></div>
+        <div class="arr">&#9656;</div>
+        <div class="step"><div class="t">MULTIPLY</div><div class="d">one knob, a sheet of takes</div></div>
+      </div>
+    </div>
   </div>
 
-  <!-- ===== WHAT YOU GET ===== -->
   <div class="sec">
-    <h2>&gt;&gt; WHAT YOU GET</h2>
-    <div class="box" data-ph="feature list — every line is the GRANT-DEMO charter's TARGET, not a shipped fact. Rewrite after the Day 2 design gate and again at feature freeze (Day 7)"><ul class="feat"><li><b>Four layer slots</b> &mdash; each takes one file or a whole set, so four slots of five files is 625 combinations to pick from.</li><li><b>Per-layer ranges</b> &mdash; timing jitter, pitch, gain, tone. Ranges stay musical at 100.</li><li><b>The VARIATION knob</b> &mdash; one control, 0 to 100, scaling every range at once.</li><li><b>Audition loop</b> &mdash; play each take, keep it or cull it, re-roll what you culled. Nothing reaches your project un-heard.</li><li><b>Seeded</b> &mdash; same seed, same set, every time. Presets reload identical.</li><li><b>WAV and zip export</b> &mdash; N finished files, named, ready for the Content Browser.</li><li><b>Royalty free</b> &mdash; what you bounce is yours.</li></ul></div>
+    <h2>&gt;&gt; WHERE THIS IS GOING</h2>
+    <div class="box" data-ph="roadmap framing — GRANT PITCH owes the voice pass; keep it honest, the plugin is NOT released">
+      <p>The same three tools run as tabs <b>inside the Unreal Editor</b>, on 5.6, 5.7 and 5.8. That version is in development and <b>is not released yet</b> &mdash; the browser tools on this page are the ones you can use today, and they stay free permanently.</p>
+    </div>
+    <!-- NO EDITOR SCREENSHOT HERE, DELIBERATELY (WEBSITE, 27 Aug 2026).
+         Both available captures — docs/tab-variation-ue56.png and
+         docs/tab-mini-daw-ue56.png — are unpublishable as they stand:
+           1. The Unreal tab is titled "Sci Forge" — GRANT DEMO's placeholder
+              module name. On a Variation Bench page that reads as the wrong
+              product, to a grant reviewer above all.
+           2. Both carry the debug console overlay, which prints a local
+              file:/// path including the Windows username.
+         The claim above is TRUE and verified by GRANT DEMO on all three
+         engines, so it stays as text. Drop an <img> back in here when a clean
+         capture exists: real module name, no debug overlay, no local paths.
+         GRANT DEMO owns that capture — see the WEBSITE report. -->
   </div>
 
-  <!-- ===== GALLERY ===== -->
-  <div class="sec">
-    <h2>&gt;&gt; SEE IT</h2>
-    <div class="slot" data-ph="gallery 1 — WEBSITE, from the real demo UI once it exists"><div class="t">SHOT 02</div><div class="f">images/plugins/vb-02-layers.jpg &mdash; the four slots with sets loaded</div></div>
-    <div class="cap" data-ph="caption 1">Four slots. Each one can hold a whole set.</div>
-    <div class="slot" data-ph="gallery 2 — WEBSITE, from the real demo UI once it exists"><div class="t">SHOT 03</div><div class="f">images/plugins/vb-03-knob.jpg &mdash; the VARIATION knob and the per-layer ranges it drives</div></div>
-    <div class="cap" data-ph="caption 2">One knob. Every range follows it.</div>
-    <div class="slot" data-ph="gallery 3 — WEBSITE, from the real demo UI once it exists"><div class="t">SHOT 04</div><div class="f">images/plugins/vb-04-audition.jpg &mdash; the bounced takes, with keep / cull / re-roll</div></div>
-    <div class="cap" data-ph="caption 3">Thirty takes. Keep the ones that earn it.</div>
-  </div>
-
-  <!-- ===== THE TECHNICAL BIT ===== -->
   <div class="sec">
     <h2>&gt;&gt; THE TECHNICAL BIT</h2>
-    <div class="box" data-ph="technical facts — GRANT DEMO confirms sample rate, bit depth, file-size limits and accepted formats after the build. The bake-vs-runtime line below is worded to the market-notes PHRASING LAW: never claim a voice count for MetaSounds">
-      <p><b>Runs in your browser.</b> Your files never leave your machine &mdash; nothing is uploaded, there is no account.</p>
-      <p><b>Deterministic.</b> A seed names every set. Same seed, same files, same takes &mdash; so a preset recalls exactly.</p>
-      <p><b>Why bake it?</b> Layered at runtime, you pay the layering cost on every playback, forever. Baked, you pay once, at design time.</p>
-      <p><b>Export:</b> WAV files in a zip. <code>sample rate / bit depth / naming scheme TBC</code></p>
+    <div class="box">
+      <p><b>It all runs in your browser.</b> Your files are never uploaded, there is no account, and there are no trackers on this page.</p>
+      <p><b>Deterministic.</b> A seed names a sheet of takes. The same seed and the same dials produce the same takes, every time, so a preset recalls exactly what you had.</p>
+      <p><b>Export:</b> WAV, 44.1&nbsp;kHz or 48&nbsp;kHz, 16 or 24-bit, mono or stereo. Sets come down as a zip with a <code>manifest.json</code>.</p>
+      <p><b>Why bake it?</b> Layer at playback time and you pay for the layering on every play, forever. Bake it here and you pay once, at design time.</p>
+      <p><b>Royalty free.</b> What you make with these is yours &mdash; any project, commercial or not, no attribution.</p>
     </div>
   </div>
 
-  <!-- ===== IF SOMETHING BREAKS ===== -->
   <div class="sec">
     <h2>&gt;&gt; IF SOMETHING BREAKS</h2>
-    <div class="box fix" data-ph="self-help 1 — rewrite from the demo's real failure modes; TESTER's harness will enumerate them">
+    <div class="box fix">
       <div class="q">&#9658; Nothing plays when I press play</div>
-      <div class="a">Browsers keep audio asleep until you interact with the page. Click anywhere once, then play again.</div>
+      <div class="a">Browsers keep audio asleep until you interact with the page. Click anywhere on the tool once, then press play again.</div>
     </div>
-    <div class="box fix" data-ph="self-help 2 — confirm the accepted formats with GRANT DEMO before this goes live">
+    <div class="box fix">
+      <div class="q">&#9658; The recorder cannot see my microphone</div>
+      <div class="a">The browser has to ask you first, and it only asks on a real click of <b>ARM</b>. If you dismissed it, allow the microphone for this site in your browser's address bar and press <b>RESCAN</b>. System audio capture is a Chrome and Edge feature; Firefox and Safari will only offer you a microphone.</div>
+    </div>
+    <div class="box fix">
+      <div class="q">&#9658; I have nothing to load into it</div>
+      <div class="a">Press <b>DEMO KIT</b> in the Mini DAW or the Variation Designer. It synthesises four layers of a footstep on the spot, so the tool works with nothing to hand.</div>
+    </div>
+    <div class="box fix">
       <div class="q">&#9658; My file will not load</div>
-      <div class="a">The slots take <b>WAV</b> files. Convert anything else first.</div>
+      <div class="a">The tools take <b>WAV</b> files. Convert anything else first.</div>
     </div>
-    <!-- NO SUPPORT BOX, and that is deliberate (Director ruling, 21 Aug 2026).
-         A free browser tool routes support through this IF SOMETHING BREAKS
-         block and nothing else: no email, no support page. Verified against
-         the site — click-factory / shot-forge / scifi-shot-forge / impact-forge
-         / pewboy carry no help block and no mailto, and support.html was
-         deleted 21 Aug. The Fab support route exists only for paid listings.
-         Reviewer contact belongs in the grant dossier, not on this page. -->
+    <div class="box fix">
+      <div class="q">&#9658; It looks cramped / controls are off the edge</div>
+      <div class="a">These three are built for a desktop screen &mdash; they are laid out like hardware, not like a web page. A phone will struggle. Use a laptop or bigger.</div>
+    </div>
   </div>
 
-  <!-- ===== CTA (bottom) ===== -->
   <div class="cta">
-    <a class="try" data-ph="same target as the top CTA" href="variation-bench.html">&#9654; TRY IT FREE<span class="small">no install, no account</span></a>
+    <a class="try" href="#tools">&#9654; TRY THEM NOW<span class="small">free, in your browser, nothing to install</span></a>
     <span class="soon">&#9203; COMING TO UNREAL<span class="small">the editor plugin is on the roadmap</span></span>
   </div>
 
