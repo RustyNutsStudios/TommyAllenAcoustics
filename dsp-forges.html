@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — The DSP Forges</title>
+<meta name="description" content="Sound generators that synthesise game audio from physics rather than samples — gunfire, sci-fi weapons, impacts and UI. Free in the browser, three of them shipping as Unreal plugins.">
+<!--
+  ===== THE DSP FORGES — the landing page. WEBSITE dept, 31 Aug 2026 =====
+  Built to Tommy's order alongside audio-utilities.html: a purpose-built page
+  for the generator family so a visitor lands on the pitch, not the hub.
+
+  THE ONLY-REAL-THINGS LAW GOVERNS THIS PAGE. It is the one most at risk of
+  drifting, because it lists things that do not exist yet. The rules:
+   - IMPACT FORGE is LIVE and FREE, and it is HALF BUILT. Its own footer says
+     "IMPACT FORGE v5 — stages 1-3" and its stage bar greys out 4 MATERIAL,
+     5 RESULT and 6 DEBRIS. The page must say so in those terms. It is NOT a
+     "beta" — that word implies feature-complete-and-testing, which is false.
+   - THE SHIPPED TRIO are receipts: Shot Forge, Sci Forge and Click Factory
+     are on Fab today. Each links its OWN listing — a crossed link would send
+     a buyer to the wrong product, so the ids are checked as a matrix, never
+     by eye. Ids live on their unreal-*.html pages; read them from there.
+   - THE PLANNED FOUR (Footstep, Swing, Engine, Reverb) are NAMES ONLY. No
+     screenshots, no feature lists, no dates, no "coming soon" buttons — a
+     picture of an unbuilt tool is a lie with a border around it. If one gets
+     built, it graduates out of that section and gets a real block.
+  No store styling anywhere for anything that is not actually on sale.
+-->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Bungee+Shade&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0020;color:#ddd;font-family:'VT323',monospace;font-size:20px;min-height:100vh;overflow-x:hidden}
+  .bg{position:fixed;inset:0;z-index:0;background:
+    radial-gradient(ellipse at 20% 50%, rgba(139,92,246,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(6,182,212,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(217,70,239,0.05) 0%, transparent 50%)}
+  .scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);z-index:100;pointer-events:none}
+  .bar-top{position:fixed;top:0;left:0;right:0;height:4px;z-index:50;background:linear-gradient(90deg,#8b5cf6,#06b6d4,#d946ef,#f97316,#0f0,#8b5cf6);background-size:200% 100%;animation:barSlide 4s linear infinite}
+  @keyframes barSlide{0%{background-position:0% 0}100%{background-position:200% 0}}
+  .app{position:relative;z-index:10;max-width:860px;margin:0 auto;padding:30px 16px 80px}
+  .crumb{font-size:16px;color:#8b5cf6;margin-bottom:14px}
+  .crumb a{color:#06b6d4;text-decoration:none}.crumb a:hover{color:#fff}
+  .header{text-align:center;margin-bottom:14px;padding-bottom:14px;border-bottom:3px double #8b5cf6}
+  .header h1{font-family:'Bungee Shade',cursive;font-size:30px;color:#06b6d4;text-shadow:3px 3px 0 #8b5cf6,0 0 30px rgba(6,182,212,0.3);line-height:1.4}
+  .header .sub{font-size:19px;color:#a78bfa;letter-spacing:2px;margin-top:10px}
+  .hook{background:#1a0a2e;border:2px solid #ffcc00;padding:16px;margin-bottom:20px;text-align:center}
+  .hook p{color:#eee;font-size:20px;line-height:1.65}
+  .hook p+p{margin-top:10px}
+  .hook b{color:#ffcc00}
+  .shot{width:100%;height:auto;display:block;border:2px solid #8b5cf6;margin-bottom:6px;background:#0f0520}
+  .cap{font-size:16px;color:#a78bfa;text-align:center;margin-bottom:20px}
+  .sec{margin-bottom:24px}
+  .sec h2{font-family:'Press Start 2P',monospace;font-size:11px;color:#ffcc00;letter-spacing:2px;margin-bottom:12px;padding-bottom:6px;border-bottom:2px dashed #8b5cf6;text-shadow:0 0 4px #ffcc00}
+  .box{background:#1a0a2e;border:2px solid #8b5cf6;padding:16px}
+  .box p{color:#ccc;font-size:19px;line-height:1.7;margin-bottom:10px}
+  .box p:last-child{margin-bottom:0}
+  .box b{color:#06b6d4}
+  .cta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0}
+  .cta > a{display:block;text-align:center;padding:20px 14px;text-decoration:none;border:3px solid;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:2px;line-height:1.9}
+  .cta .try{border-color:#0f0;color:#0f0;background:#0f0520;text-shadow:0 0 6px #0f0}
+  .cta .try:hover{background:#0f0;color:#000;text-shadow:none}
+  .cta .alt{border-color:#06b6d4;color:#06b6d4;background:#0f0520;text-shadow:0 0 6px #06b6d4}
+  .cta .alt:hover{background:#06b6d4;color:#000;text-shadow:none}
+  .cta .small{display:block;border:none;padding:0;font-family:'VT323',monospace;font-size:17px;letter-spacing:0;margin-top:8px;color:#a78bfa}
+  .cta .try .small{color:#7ddb7d}
+  .cta .alt .small{color:#7ecdd9}
+  .footer{text-align:center;margin-top:26px;padding-top:16px;border-top:2px solid #8b5cf6}
+  .back{display:inline-block;font-family:'Press Start 2P',monospace;font-size:9px;color:#ffcc00;text-decoration:none;letter-spacing:2px;border:2px solid #ffcc00;padding:10px 18px;background:#1a0a2e}
+  .back:hover{background:#ffcc00;color:#000}
+  .colophon{font-family:'Press Start 2P',monospace;font-size:8px;color:#8b5cf6;letter-spacing:2px;margin-top:12px;line-height:2.2}
+  /* the featured tool block */
+  .tool{border:2px solid #8b5cf6;background:#1a0a2e;padding:0;margin-bottom:22px}
+  .tool .head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:14px 16px 10px;border-bottom:2px dashed #2a1050}
+  .tool h3{font-family:'Press Start 2P',monospace;font-size:13px;color:#06b6d4;letter-spacing:2px;text-shadow:0 0 6px rgba(6,182,212,0.4)}
+  .tool .tag{font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:1px;padding:5px 7px;border:1px solid #0f0;color:#0f0;background:#071b07}
+  .tool .one{color:#ffcc00;font-size:19px;width:100%;line-height:1.5}
+  .tool .body{padding:14px 16px 0}
+  .tool .body p{color:#ccc;font-size:19px;line-height:1.7;margin-bottom:10px}
+  .tool .body b{color:#06b6d4}
+  .tool .shot{border:none;border-top:2px solid #2a1050;border-bottom:2px solid #2a1050;margin:12px 0 0}
+  .tool .go{display:block;text-align:center;padding:18px 14px;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:2px;line-height:1.9;color:#0f0;background:#0f0520;border-top:3px solid #0f0;text-shadow:0 0 6px #0f0}
+  .tool .go:hover{background:#0f0;color:#000;text-shadow:none}
+  .tool .go span{display:block;font-family:'VT323',monospace;font-size:17px;letter-spacing:0;margin-top:8px;color:#7ddb7d}
+  .tool .go:hover span{color:#063}
+  /* the straight-talking box */
+  .plain{background:#0f0520;border:2px ridge #d946ef;padding:16px;margin-top:12px}
+  .plain .lbl{font-family:'Press Start 2P',monospace;font-size:9px;color:#d946ef;letter-spacing:2px;margin-bottom:10px;text-shadow:0 0 6px #d946ef}
+  .plain p{color:#ddd;font-size:19px;line-height:1.7;margin-bottom:10px}
+  .plain p:last-child{margin-bottom:0}
+  .plain b{color:#ffcc00}
+  /* shipped-product receipts */
+  .ship{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .ship .card{border:2px solid #ffcc00;background:#1a0a2e;padding:14px;display:flex;flex-direction:column;gap:8px}
+  .ship .card .n{font-family:'Press Start 2P',monospace;font-size:11px;color:#ffcc00;letter-spacing:1px;text-shadow:0 0 5px rgba(255,204,0,.4)}
+  .ship .card .d{color:#ccc;font-size:18px;line-height:1.5;flex:1}
+  .ship .card .links{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+  .ship .card a{font-family:'Press Start 2P',monospace;font-size:8px;letter-spacing:1px;text-decoration:none;padding:8px 9px;border:2px solid}
+  .ship .card a.page{border-color:#8b5cf6;color:#a78bfa;background:#0f0520}
+  .ship .card a.page:hover{background:#8b5cf6;color:#000}
+  .ship .card a.fab{border-color:#ffcc00;color:#ffcc00;background:#0f0520}
+  .ship .card a.fab:hover{background:#ffcc00;color:#000}
+  /* planned — names only, deliberately flat and unclickable */
+  .plan{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .plan .p{border:2px dashed #4b3a6b;background:#0d0620;padding:14px 10px;text-align:center;color:#8b7bb0}
+  .plan .p .n{font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1px;color:#a78bfa;display:block;margin-bottom:8px}
+  .plan .p .s{font-size:16px;color:#6f6392}
+  /* responsive LAST, so it overrides the grid rules above rather than losing to them */
+  @media(max-width:560px){
+    .header h1{font-size:20px}
+    .cta{grid-template-columns:1fr}
+    .ship{grid-template-columns:1fr}
+    .plan{grid-template-columns:1fr 1fr}
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="scanlines"></div><div class="bar-top"></div>
+<div class="app">
+
+  <div class="crumb"><a href="home.html">&lt;&lt; back to the hub</a></div>
+
+  <div class="header">
+    <h1>The DSP Forges</h1>
+    <div class="sub">SOUND BUILT FROM PHYSICS, NOT SAMPLE PACKS</div>
+  </div>
+
+  <div class="hook">
+    <p>Every Forge makes one family of sound <b>from scratch</b> &mdash; gunfire, sci-fi weapons, impacts, UI clicks. Nothing is pre-recorded. You dial the thing that made the sound, and the sound comes out the other end.</p>
+    <p>Which means <b>you never run out</b>, nothing is shared with every other game that bought the same pack, and what you make is yours.</p>
+  </div>
+
+  <div class="cta">
+    <a class="try" href="impact-forge.html">&#9654; TRY IMPACT FORGE FREE<span class="small">in your browser &mdash; nothing to install</span></a>
+    <a class="alt" href="audio-utilities.html">&#9670; THE AUDIO UTILITIES<span class="small">record, edit and multiply the sounds you have</span></a>
+  </div>
+
+  <div class="sec">
+    <h2>&gt;&gt; IMPACT FORGE &mdash; FREE, AND HONEST ABOUT ITSELF</h2>
+
+    <div class="tool">
+      <div class="head">
+        <h3>IMPACT FORGE</h3><span class="tag">FREE &middot; IN YOUR BROWSER</span>
+        <div class="one">Hertzian contact into modal resonance &mdash; hits, cracks and flybys.</div>
+      </div>
+      <div class="body">
+        <p>Pick a projectile and a target, set size, velocity, density, hardness and shape, and it works out what the collision would actually do &mdash; contact time, energy, ring-out, the modes that get excited. <b>The force is not the sound; it excites the modes.</b></p>
+        <p>It has a preset system and batch export, so a set of impacts comes out in one go.</p>
+      </div>
+      <img class="shot" src="images/tools/forge-01-impact.jpg" width="1400" height="788" alt="Impact Forge in the browser, with the projectile controls and the stage bar." loading="lazy">
+      <a class="go" href="impact-forge.html">&#9654; OPEN IMPACT FORGE<span>free, in your browser, no account</span></a>
+    </div>
+
+    <div class="plain">
+      <div class="lbl">&#9888; WHAT IT IS AND IS NOT</div>
+      <p>Impact Forge is <b>half built, and it says so on its own screen</b>. Six stages were planned; three exist. <b>1 AIR</b>, <b>2 IMPACT</b> and <b>3 TARGET</b> work &mdash; the approach, the contact, the target hit. <b>4 MATERIAL</b>, <b>5 RESULT</b> and <b>6 DEBRIS</b> are greyed out, and its footer reads <b>"stages 1-3"</b> so nobody has to guess.</p>
+      <p>It is free, it works, and it is genuinely useful for hits and flybys today. It is not finished, and there is no plugin version of it.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>&gt;&gt; THE ONES THAT SHIPPED</h2>
+    <div class="box"><p>Three Forges are finished and on Fab as Unreal Editor plugins. Each one designs sound in a tab inside the editor and writes <b>SoundCue and MetaSound assets</b> straight into your open project. Each has a free browser version too, so you can hear what it does before you spend anything.</p></div>
+    <div class="ship" style="margin-top:12px">
+      <div class="card">
+        <div class="n">SHOT FORGE</div>
+        <div class="d">Realistic gunfire &mdash; muzzle blast, ballistic crack, mechanism and room, from 26 physically-modelled layers.</div>
+        <div class="links">
+          <a class="page" href="unreal-shot-forge.html">THE PAGE</a>
+          <a class="fab" href="https://www.fab.com/listings/4419cb9b-cd75-4248-b9d0-c4205ba10eab" target="_blank" rel="noopener">ON FAB</a>
+        </div>
+      </div>
+      <div class="card">
+        <div class="n">SCI FORGE</div>
+        <div class="d">Sci-fi weapons &mdash; plasma, railguns, beams and cryo, with charge-up, discharge and cooldown, on real blast physics.</div>
+        <div class="links">
+          <a class="page" href="unreal-sci-forge.html">THE PAGE</a>
+          <a class="fab" href="https://www.fab.com/listings/19fb0cbe-b8b9-4ad2-92b2-202549f1e5b2" target="_blank" rel="noopener">ON FAB</a>
+        </div>
+      </div>
+      <div class="card">
+        <div class="n">CLICK FACTORY</div>
+        <div class="d">UI sound &mdash; click, tap, pop, snap and confirm, generated in the editor as matched variation sets.</div>
+        <div class="links">
+          <a class="page" href="unreal-click-factory.html">THE PAGE</a>
+          <a class="fab" href="https://www.fab.com/listings/2264595c-03d7-4bcc-bbb8-f7aaf752d14f" target="_blank" rel="noopener">ON FAB</a>
+        </div>
+      </div>
+      <div class="card">
+        <div class="n">TRY BEFORE THAT</div>
+        <div class="d">Every one of them has a free browser version. Same synthesis, no install, no account &mdash; go and make a noise first.</div>
+        <div class="links">
+          <a class="page" href="shot-forge.html">SHOT</a>
+          <a class="page" href="scifi-shot-forge.html">SCI-FI</a>
+          <a class="page" href="click-factory.html">CLICK</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>&gt;&gt; WHAT THE FAMILY IS FOR</h2>
+    <div class="box">
+      <p>One Forge per family of sound, each built on the physics of the thing that actually makes it. A gunshot is not a plasma bolt is not a crate hitting a floor, and pretending one synth covers all three is how you get sounds that are almost right.</p>
+      <p>Four more are planned. They are named below and <b>nothing else</b> &mdash; no screenshots and no promises, because none of them is built yet.</p>
+      <div class="plan" style="margin-top:14px">
+        <div class="p"><span class="n">FOOTSTEP</span><span class="s">planned &mdash; not built yet</span></div>
+        <div class="p"><span class="n">SWING</span><span class="s">planned &mdash; not built yet</span></div>
+        <div class="p"><span class="n">ENGINE</span><span class="s">planned &mdash; not built yet</span></div>
+        <div class="p"><span class="n">REVERB</span><span class="s">planned &mdash; not built yet</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>&gt;&gt; THE TECHNICAL BIT</h2>
+    <div class="box">
+      <p><b>The browser versions run entirely on your machine.</b> Nothing is uploaded, there is no account, and there are no trackers on this page.</p>
+      <p><b>The plugins are editor-only.</b> They add nothing to your packaged game &mdash; what they build are ordinary Unreal assets that ship like any other asset.</p>
+      <p><b>Royalty free.</b> Every sound you generate is yours, in any project, commercial or not, with no attribution.</p>
+      <p><b>Built for a desktop screen.</b> These are laid out like hardware, not like a web page. A phone will struggle.</p>
+    </div>
+  </div>
+
+  <div class="cta">
+    <a class="try" href="impact-forge.html">&#9654; TRY IMPACT FORGE FREE<span class="small">free, in your browser, nothing to install</span></a>
+    <a class="alt" href="home.html">&#9670; EVERYTHING ELSE<span class="small">the rest of the tools and experiments</span></a>
+  </div>
+
+  <div class="footer">
+    <a class="back" href="home.html">&lt;&lt; BACK TO THE HUB</a>
+    <div class="colophon">&copy; 2025-2026 TOMMY ALLEN ACOUSTICS</div>
+  </div>
+
+</div>
+</body>
+</html>

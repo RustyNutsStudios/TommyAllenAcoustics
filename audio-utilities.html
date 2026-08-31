@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOMMY ALLEN ACOUSTICS — Audio Utilities</title>
+<meta name="description" content="Three small audio tools that run in one Unreal Editor tab — record a sound, do the quick edit, turn it into twenty. Free browser versions available now.">
+<!--
+  ===== AUDIO UTILITIES — the landing page. WEBSITE dept, 31 Aug 2026 =====
+  Built to Tommy's order: a purpose-built page for the tool family, house
+  style, modelled on unreal-shot-forge.html, so a visitor lands on the pitch
+  instead of trawling the hub.
+
+  RELATIONSHIP TO variation-bench.html — READ BEFORE EDITING EITHER:
+  This page and variation-bench.html are BOTH about the same three tools, on
+  purpose, and they are NOT duplicates:
+      audio-utilities.html  = the SELL. What the family is, what it will be in
+                              the editor, why it exists. Leads with the plugin.
+      variation-bench.html  = the WORKSHOP. Go and use the three browser tools
+                              right now. Leads with TRY IT.
+  variation-bench.html is FROZEN and must not be renamed or retired — its URL
+  is cited verbatim inside a filed document. They cross-link once each. If you
+  ever merge them, variation-bench.html is the one that has to keep existing.
+
+  HONESTY RULES BAKED IN HERE, do not soften them:
+   - The Unreal plugin is NOT released. There is no listing, no store page and
+     no price. Nothing on this page may imply one — no "COMING TO FAB" button
+     styling, no buy button, no waitlist.
+   - The editor screenshots are real captures of it running on 5.6.
+   - The free browser versions are the way in TODAY, and they stay free.
+-->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Bungee+Shade&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0020;color:#ddd;font-family:'VT323',monospace;font-size:20px;min-height:100vh;overflow-x:hidden}
+  .bg{position:fixed;inset:0;z-index:0;background:
+    radial-gradient(ellipse at 20% 50%, rgba(139,92,246,0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(6,182,212,0.06) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 80%, rgba(217,70,239,0.05) 0%, transparent 50%)}
+  .scanlines{position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.12) 2px,rgba(0,0,0,0.12) 4px);z-index:100;pointer-events:none}
+  .bar-top{position:fixed;top:0;left:0;right:0;height:4px;z-index:50;background:linear-gradient(90deg,#8b5cf6,#06b6d4,#d946ef,#f97316,#0f0,#8b5cf6);background-size:200% 100%;animation:barSlide 4s linear infinite}
+  @keyframes barSlide{0%{background-position:0% 0}100%{background-position:200% 0}}
+  .app{position:relative;z-index:10;max-width:860px;margin:0 auto;padding:30px 16px 80px}
+  .crumb{font-size:16px;color:#8b5cf6;margin-bottom:14px}
+  .crumb a{color:#06b6d4;text-decoration:none}.crumb a:hover{color:#fff}
+  .header{text-align:center;margin-bottom:14px;padding-bottom:14px;border-bottom:3px double #8b5cf6}
+  .header h1{font-family:'Bungee Shade',cursive;font-size:30px;color:#06b6d4;text-shadow:3px 3px 0 #8b5cf6,0 0 30px rgba(6,182,212,0.3);line-height:1.4}
+  .header .sub{font-size:19px;color:#a78bfa;letter-spacing:2px;margin-top:10px}
+  .hook{background:#1a0a2e;border:2px solid #ffcc00;padding:16px;margin-bottom:20px;text-align:center}
+  .hook p{color:#eee;font-size:20px;line-height:1.65}
+  .hook p+p{margin-top:10px}
+  .hook b{color:#ffcc00}
+  .shot{width:100%;height:auto;display:block;border:2px solid #8b5cf6;margin-bottom:6px;background:#0f0520}
+  .cap{font-size:16px;color:#a78bfa;text-align:center;margin-bottom:20px}
+  .sec{margin-bottom:24px}
+  .sec h2{font-family:'Press Start 2P',monospace;font-size:11px;color:#ffcc00;letter-spacing:2px;margin-bottom:12px;padding-bottom:6px;border-bottom:2px dashed #8b5cf6;text-shadow:0 0 4px #ffcc00}
+  .box{background:#1a0a2e;border:2px solid #8b5cf6;padding:16px}
+  .box p{color:#ccc;font-size:19px;line-height:1.7;margin-bottom:10px}
+  .box p:last-child{margin-bottom:0}
+  .box b{color:#06b6d4}
+  .box code{background:#0f0520;border:1px solid #8b5cf6;padding:1px 6px;color:#0f0;font-size:17px}
+  .feat{list-style:none}
+  .feat li{color:#ccc;font-size:19px;line-height:1.6;padding:9px 0 9px 26px;border-bottom:1px dashed #2a1050;position:relative}
+  .feat li:last-child{border-bottom:none}
+  .feat li:before{content:"\25B8";position:absolute;left:4px;color:#d946ef}
+  .feat b{color:#06b6d4}
+  .cta{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0}
+  .cta > a{display:block;text-align:center;padding:20px 14px;text-decoration:none;border:3px solid;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:2px;line-height:1.9}
+  .cta .try{border-color:#0f0;color:#0f0;background:#0f0520;text-shadow:0 0 6px #0f0}
+  .cta .try:hover{background:#0f0;color:#000;text-shadow:none}
+  .cta .alt{border-color:#06b6d4;color:#06b6d4;background:#0f0520;text-shadow:0 0 6px #06b6d4}
+  .cta .alt:hover{background:#06b6d4;color:#000;text-shadow:none}
+  .cta .small{display:block;border:none;padding:0;font-family:'VT323',monospace;font-size:17px;letter-spacing:0;margin-top:8px;color:#a78bfa}
+  .cta .try .small{color:#7ddb7d}
+  .cta .alt .small{color:#7ecdd9}
+  .footer{text-align:center;margin-top:26px;padding-top:16px;border-top:2px solid #8b5cf6}
+  .back{display:inline-block;font-family:'Press Start 2P',monospace;font-size:9px;color:#ffcc00;text-decoration:none;letter-spacing:2px;border:2px solid #ffcc00;padding:10px 18px;background:#1a0a2e}
+  .back:hover{background:#ffcc00;color:#000}
+  .colophon{font-family:'Press Start 2P',monospace;font-size:8px;color:#8b5cf6;letter-spacing:2px;margin-top:12px;line-height:2.2}
+  @media(max-width:560px){.header h1{font-size:20px}.cta{grid-template-columns:1fr}}
+  /* per-tool block */
+  .tool{border:2px solid #8b5cf6;background:#1a0a2e;padding:0;margin-bottom:22px}
+  .tool .head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;padding:14px 16px 10px;border-bottom:2px dashed #2a1050}
+  .tool .num{font-family:'Press Start 2P',monospace;font-size:9px;color:#d946ef;letter-spacing:2px}
+  .tool h3{font-family:'Press Start 2P',monospace;font-size:13px;color:#06b6d4;letter-spacing:2px;text-shadow:0 0 6px rgba(6,182,212,0.4)}
+  .tool .one{color:#ffcc00;font-size:19px;width:100%;line-height:1.5}
+  .tool .body{padding:14px 16px 0}
+  .tool .body p{color:#ccc;font-size:19px;line-height:1.7;margin-bottom:10px}
+  .tool .body b{color:#06b6d4}
+  .tool .shot{border:none;border-top:2px solid #2a1050;border-bottom:2px solid #2a1050;margin:12px 0 0}
+  .tool .go{display:block;text-align:center;padding:18px 14px;text-decoration:none;font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:2px;line-height:1.9;color:#0f0;background:#0f0520;border-top:3px solid #0f0;text-shadow:0 0 6px #0f0}
+  .tool .go:hover{background:#0f0;color:#000;text-shadow:none}
+  .tool .go span{display:block;font-family:'VT323',monospace;font-size:17px;letter-spacing:0;margin-top:8px;color:#7ddb7d}
+  .tool .go:hover span{color:#063}
+  /* the straight-talking box — used for what is NOT built */
+  .plain{background:#0f0520;border:2px ridge #d946ef;padding:16px;margin-top:12px}
+  .plain .lbl{font-family:'Press Start 2P',monospace;font-size:9px;color:#d946ef;letter-spacing:2px;margin-bottom:10px;text-shadow:0 0 6px #d946ef}
+  .plain p{color:#ddd;font-size:19px;line-height:1.7;margin-bottom:10px}
+  .plain p:last-child{margin-bottom:0}
+  .plain b{color:#ffcc00}
+</style>
+</head>
+<body>
+<div class="bg"></div><div class="scanlines"></div><div class="bar-top"></div>
+<div class="app">
+
+  <div class="crumb"><a href="home.html">&lt;&lt; back to the hub</a></div>
+
+  <div class="header">
+    <h1>Audio Utilities</h1>
+    <div class="sub">THREE TOOLS, ONE EDITOR TAB</div>
+  </div>
+
+  <div class="hook">
+    <p>Get a sound in. Do the quick edit. Turn it into twenty. <b>Three small tools</b> that hand work to each other, built to live in a tab <b>inside the Unreal Editor</b> &mdash; so the job never sends you out to a DAW and back.</p>
+    <p>All three run <b>free in your browser right now</b>. No install, no account, and your files never leave your machine.</p>
+  </div>
+
+  <img class="shot" src="images/tools/tool-06-editor-variation.png" width="1006" height="606" alt="One of the tools running as a tab inside the Unreal Editor." loading="lazy">
+  <div class="cap">A tool tab, in the editor that owns your project.</div>
+
+  <div class="cta">
+    <a class="try" href="variation-bench.html">&#9654; TRY ALL THREE FREE<span class="small">in your browser &mdash; nothing to install</span></a>
+    <a class="alt" href="dsp-forges.html">&#9670; THE DSP FORGES<span class="small">the generators &mdash; gunfire, sci-fi, impacts, UI</span></a>
+  </div>
+
+  <div class="sec">
+    <h2>&gt;&gt; WHY THEY EXIST</h2>
+    <div class="box">
+      <p>Game sound needs the same thing over and over: <b>the same footstep, twenty times, never identical</b>. The usual answers are to record twenty, or to jitter the pitch at playback and hope nobody notices. Pitch-shifting scales a sound whole, which is exactly why a random-pitch footstep still sounds like one footstep.</p>
+      <p>The variation that actually fools the ear is <b>the timing between layers</b> &mdash; heel and scuff four milliseconds apart is a different footstep from fourteen, using the same files. Doing that at playback time costs you on every single play, forever. Doing it at design time costs you once, and the engine just plays a file.</p>
+      <p>So: a tool to catch the sound, a tool to do the quick edit, and a tool to turn it into a set. Small, sharp, and pointed at the job.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>&gt;&gt; THE THREE</h2>
+
+    <div class="tool">
+      <div class="head">
+        <span class="num">1 OF 3</span><h3>MINI RECORDER</h3>
+        <div class="one">A sound into your project in ten seconds.</div>
+      </div>
+      <div class="body">
+        <p>Pick an input, watch the meter, hit record. Trim what you caught with two handles, name it, and send it straight to a <b>Mini DAW track</b> or a <b>Variation Designer slot</b> &mdash; or just save the WAV. One path, no format menu to get lost in.</p>
+      </div>
+      <img class="shot" src="images/tools/tool-04-editor-recorder.png" width="1006" height="606" alt="Mini Recorder as an editor tab, armed with a live meter." loading="lazy">
+      <a class="go" href="mini-recorder.html">&#9654; TRY MINI RECORDER FREE<span>the browser version &mdash; needs mic permission</span></a>
+    </div>
+
+    <div class="tool">
+      <div class="head">
+        <span class="num">2 OF 3</span><h3>MINI DAW</h3>
+        <div class="one">The quick edit, without leaving what you were doing.</div>
+      </div>
+      <div class="body">
+        <p>Four tracks, a timeline in <b>seconds rather than bars</b>, and a transport with a running clock. Gain, pan, pitch, mute, solo and real meters per track. Drag a clip to retime it, press <b>S</b> to split, loop a selection, bounce to a single WAV. The tool you would otherwise open Reaper for.</p>
+      </div>
+      <img class="shot" src="images/tools/tool-05-editor-mini-daw.png" width="1006" height="606" alt="Mini DAW as an editor tab with clips across named tracks." loading="lazy">
+      <a class="go" href="mini-daw.html">&#9654; TRY MINI DAW FREE<span>the browser version &mdash; press DEMO KIT and it fills itself</span></a>
+    </div>
+
+    <div class="tool">
+      <div class="head">
+        <span class="num">3 OF 3</span><h3>VARIATION DESIGNER</h3>
+        <div class="one">Four layers, one knob, twenty finished variations.</div>
+      </div>
+      <div class="body">
+        <p>Drop a set of files into each of four layers. Say how far each may drift in <b>timing, pitch, level and tone</b>, then turn a single <b>VARIATION</b> knob to scale all of it at once. Bounce a sheet of takes, keep the ones that earn it, re-roll the rest. Every sheet has a <b>seed</b>, so the same seed and dials give the same takes every time.</p>
+      </div>
+      <img class="shot" src="images/tools/tool-06-editor-variation.png" width="1006" height="606" alt="Variation Designer as an editor tab with four layers loaded." loading="lazy">
+      <a class="go" href="variation-designer.html">&#9654; TRY VARIATION DESIGNER FREE<span>the browser version &mdash; press DEMO KIT and it fills itself</span></a>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>&gt;&gt; WHERE THIS IS UP TO</h2>
+    <div class="plain">
+      <div class="lbl">&#9888; STRAIGHT ANSWER</div>
+      <p>The pictures above are the three tools running as tabs <b>inside the Unreal Editor</b>, on <b>Unreal Engine 5.6</b>. They are real screenshots of it working, not mock-ups.</p>
+      <p>That editor version is <b>not released</b>. There is no store page for it and no price &mdash; it is in development, and this page is not a pre-order.</p>
+      <p>What you can use today is the <b>free browser version of all three</b>, linked above. Those are not a teaser: they do the actual work, they stay free, and what you make with them is yours.</p>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>&gt;&gt; THE TECHNICAL BIT</h2>
+    <div class="box">
+      <p><b>The browser versions run entirely on your machine.</b> Nothing is uploaded, there is no account, and there are no trackers on this page.</p>
+      <p><b>Deterministic.</b> A seed names a sheet of takes. Same seed and same dials, same takes &mdash; so a preset recalls exactly what you had.</p>
+      <p><b>Export:</b> WAV, 44.1&nbsp;kHz or 48&nbsp;kHz, 16 or 24-bit, mono or stereo. Sets come down as a zip with a <code>manifest.json</code>.</p>
+      <p><b>Royalty free.</b> Sounds you make are yours &mdash; any project, commercial or not, no attribution.</p>
+      <p><b>Built for a desktop screen.</b> They are laid out like hardware, not like a web page. A phone will struggle.</p>
+    </div>
+  </div>
+
+  <div class="cta">
+    <a class="try" href="variation-bench.html">&#9654; TRY ALL THREE FREE<span class="small">in your browser &mdash; nothing to install</span></a>
+    <a class="alt" href="home.html">&#9670; EVERYTHING ELSE<span class="small">the rest of the tools and experiments</span></a>
+  </div>
+
+  <div class="footer">
+    <a class="back" href="home.html">&lt;&lt; BACK TO THE HUB</a>
+    <div class="colophon">&copy; 2025-2026 TOMMY ALLEN ACOUSTICS</div>
+  </div>
+
+</div>
+</body>
+</html>
